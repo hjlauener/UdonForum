@@ -2,10 +2,6 @@
 
 declare(strict_types=1);
 
-if (is_file(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-}
-
 /**
  * Repository object plugin "Udon Forum" (type xudf) for ILIAS 11.
  */

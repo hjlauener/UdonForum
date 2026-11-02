@@ -12,61 +12,50 @@ vom Typ **„Udon Forum“** hinzufügen lässt.
 | ILIAS | 11.0 – 11.999 |
 | PHP | ≥ 8.3 |
 
-## Installation
+## Lokal entwickeln und testen
 
-1. Plugin in das Plugin-Verzeichnis von ILIAS klonen:
+Wie beim Gruppenmanagement-Plugin: Der Terminal-Befehl **`udf`** holt den
+neusten Stand von GitHub und lädt das Plugin im lokalen Docker-ILIAS neu.
+Einrichtung und alle Befehle: **[dev/README.md](dev/README.md)**.
 
-   ```bash
-   mkdir -p Customizing/global/plugins/Services/Repository/RepositoryObject
-   cd Customizing/global/plugins/Services/Repository/RepositoryObject
-   git clone https://github.com/hjlauener/UdonForum.git UdonForum
-   ```
+Kurzfassung:
 
-2. Im ILIAS-Hauptverzeichnis Autoloader und Artefakte neu erzeugen
-   (u. a. damit die ilCtrl-Struktur das Plugin kennt):
+```bash
+mkdir -p ~/Projekte && cd ~/Projekte
+```
 
-   ```bash
-   composer du
-   php cli/setup.php build-artifacts
-   php cli/setup.php update
-   ```
+```bash
+git clone -b claude/sleepy-ritchie-yxpcul https://github.com/hjlauener/forum.git UdonForum
+```
 
+```bash
+~/Projekte/UdonForum/dev/install-command.sh
+```
+
+Neues Terminal-Fenster öffnen, dann:
+
+```bash
+udf install
+```
+
+Danach genügt nach jeder Änderung:
+
+```bash
+udf
+```
+
+## Manuelle Installation
+
+1. Plugin-Ordner nach
+   `<ILIAS>/public/Customizing/global/plugins/Services/Repository/RepositoryObject/UdonForum`
+   kopieren.
+2. Im ILIAS-Verzeichnis `composer dump-autoload` ausführen (erzeugt ab ILIAS 10
+   auch die Artifacts, u. a. die ilCtrl-Struktur).
 3. In ILIAS unter **Administration › Erweiterungen › Plugins** das Plugin
    **UdonForum** installieren und aktivieren.
-
-4. Rechte vergeben: In der Rechteverwaltung der Kategorie/des Kurses (bzw.
-   in den Rollenvorlagen) das Recht **„Udon Forum anlegen“** (`create_xudf`)
-   für die gewünschten Rollen freischalten.
-
+4. Das Recht **„Udon Forum anlegen“** (`create_xudf`) für die gewünschten
+   Rollen freischalten.
 5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
-
-## Deployment ins lokale ILIAS (Terminal)
-
-Mit `deploy.sh` wird das Plugin per Befehl in ein lokales ILIAS kopiert
-(direkt auf dem Rechner oder in einem Docker-Container).
-
-Einmalig einrichten:
-
-```bash
-cp deploy.env.example deploy.env
-```
-
-In `deploy.env` mindestens `ILIAS_ROOT` (Pfad zum ILIAS-Verzeichnis) setzen,
-bei Docker zusätzlich `DOCKER_CONTAINER`. `deploy.env` wird nicht eingecheckt.
-
-Danach:
-
-```bash
-./deploy.sh              # kopieren + composer du + build-artifacts
-./deploy.sh --update     # zusätzlich: php cli/setup.php update
-./deploy.sh --copy-only  # nur Dateien kopieren
-```
-
-Das Skript kopiert das Plugin nach
-`<ILIAS>/Customizing/global/plugins/Services/Repository/RepositoryObject/UdonForum`
-(bzw. `public/Customizing/...`, falls vorhanden) und ersetzt dabei eine ältere Version.
-Beim ersten Mal muss das Plugin danach noch in der ILIAS-Administration
-installiert und aktiviert werden.
 
 ## Aktueller Stand
 
@@ -87,12 +76,12 @@ classes/
   class.ilObjUdonForumAccess.php   Zugriffsprüfung
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
-deploy.sh, deploy.env.example      Deployment ins lokale ILIAS
 templates/images/icon_xudf.svg     Objekt-Icon
+dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILIAS)
 ```
 
 ## Nächste Schritte
 
 - Datenbanktabellen für Themen und Beiträge (`sql/dbupdate.php`)
 - Themen anlegen, anzeigen, beantworten
-- Online/Offline-Einstellung, Moderation
+- Sichtbarkeit (sichtbar / nicht sichtbar), Moderation

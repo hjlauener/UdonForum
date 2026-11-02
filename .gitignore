@@ -1,5 +1,6 @@
 /vendor/
-composer.lock
 .idea/
 .DS_Store
-/deploy.env
+/dev/config.env
+.mount-check-*
+/dev/logs/

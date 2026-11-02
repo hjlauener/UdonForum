@@ -1,0 +1,10 @@
+# Beispiel: Plugin-Ordner live in den ILIAS-Container mounten.
+# Als docker-compose.override.yml neben deine ILIAS-docker-compose.yml legen,
+# Service-Namen und Pfade anpassen, dann: docker compose up -d
+services:
+  ilias:                       # <- Name des ILIAS-Service in deiner docker-compose.yml
+    volumes:
+      # links:  Pfad zu diesem Repository auf dem Mac
+      # rechts: Plugin-Ordner im Container (ILIAS 10/11: unter public/Customizing,
+      #         ILIAS 9: unter Customizing) – "udf status" zeigt den richtigen Pfad
+      - ~/Projekte/UdonForum:/var/www/html/public/Customizing/global/plugins/Services/Repository/RepositoryObject/UdonForum

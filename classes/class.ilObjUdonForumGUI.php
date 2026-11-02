@@ -22,17 +22,17 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     public const TAB_CONTENT = 'content';
     public const TAB_PROPERTIES = 'properties';
 
-    private UIFactory $uiFactory;
-    private UIRenderer $uiRenderer;
-    private ServerRequestInterface $httpRequest;
+    private UIFactory $udf_ui_factory;
+    private UIRenderer $udf_ui_renderer;
+    private ServerRequestInterface $udf_request;
 
     protected function afterConstructor(): void
     {
         global $DIC;
 
-        $this->uiFactory = $DIC->ui()->factory();
-        $this->uiRenderer = $DIC->ui()->renderer();
-        $this->httpRequest = $DIC->http()->request();
+        $this->udf_ui_factory = $DIC->ui()->factory();
+        $this->udf_ui_renderer = $DIC->ui()->renderer();
+        $this->udf_request = $DIC->http()->request();
     }
 
     final public function getType(): string
@@ -69,11 +69,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
     protected function setTabs(): void
     {
-        global $DIC;
-        $access = $DIC->access();
+        $ref_id = $this->object->getRefId();
 
-        if ($access->checkAccess('read', '', $this->object->getRefId())) {
-            $this->tabs_gui->addTab(
+        if ($this->access->checkAccess('read', '', $ref_id)) {
+            $this->tabs->addTab(
                 self::TAB_CONTENT,
                 $this->txt('content'),
                 $this->ctrl->getLinkTarget($this, self::CMD_SHOW_CONTENT)
@@ -82,8 +81,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         $this->addInfoTab();
 
-        if ($access->checkAccess('write', '', $this->object->getRefId())) {
-            $this->tabs_gui->addTab(
+        if ($this->access->checkAccess('write', '', $ref_id)) {
+            $this->tabs->addTab(
                 self::TAB_PROPERTIES,
                 $this->txt('properties'),
                 $this->ctrl->getLinkTarget($this, self::CMD_EDIT_PROPERTIES)
@@ -98,31 +97,31 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
      */
     protected function showContent(): void
     {
-        $this->tabs_gui->activateTab(self::TAB_CONTENT);
+        $this->tabs->activateTab(self::TAB_CONTENT);
 
-        $panel = $this->uiFactory->panel()->standard(
+        $panel = $this->udf_ui_factory->panel()->standard(
             $this->txt('threads'),
-            $this->uiFactory->messageBox()->info($this->txt('no_threads_yet'))
+            $this->udf_ui_factory->messageBox()->info($this->txt('no_threads_yet'))
         );
 
-        $this->tpl->setContent($this->uiRenderer->render($panel));
+        $this->tpl->setContent($this->udf_ui_renderer->render($panel));
     }
 
     protected function editProperties(): void
     {
-        $this->tabs_gui->activateTab(self::TAB_PROPERTIES);
-        $this->tpl->setContent($this->uiRenderer->render($this->buildPropertiesForm()));
+        $this->tabs->activateTab(self::TAB_PROPERTIES);
+        $this->tpl->setContent($this->udf_ui_renderer->render($this->buildPropertiesForm()));
     }
 
     protected function saveProperties(): void
     {
-        $this->tabs_gui->activateTab(self::TAB_PROPERTIES);
+        $this->tabs->activateTab(self::TAB_PROPERTIES);
 
-        $form = $this->buildPropertiesForm()->withRequest($this->httpRequest);
+        $form = $this->buildPropertiesForm()->withRequest($this->udf_request);
         $data = $form->getData();
 
         if ($data === null) {
-            $this->tpl->setContent($this->uiRenderer->render($form));
+            $this->tpl->setContent($this->udf_ui_renderer->render($form));
             return;
         }
 
@@ -136,7 +135,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
     private function buildPropertiesForm(): StandardForm
     {
-        $field = $this->uiFactory->input()->field();
+        $field = $this->udf_ui_factory->input()->field();
 
         $inputs = [
             'title' => $field->text($this->lng->txt('title'))
@@ -146,7 +145,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 ->withValue($this->object->getLongDescription()),
         ];
 
-        return $this->uiFactory->input()->container()->form()->standard(
+        return $this->udf_ui_factory->input()->container()->form()->standard(
             $this->ctrl->getFormAction($this, self::CMD_SAVE_PROPERTIES),
             $inputs
         );

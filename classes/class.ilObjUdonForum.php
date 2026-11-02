@@ -8,11 +8,11 @@ declare(strict_types=1);
  * For now the object only consists of the standard ILIAS object data
  * (title, description). Forum specific data (threads, posts) will follow.
  */
-class ilObjXForum extends ilObjectPlugin
+class ilObjUdonForum extends ilObjectPlugin
 {
     protected function initType(): void
     {
-        $this->setType(ilXForumPlugin::ID);
+        $this->setType(ilUdonForumPlugin::ID);
     }
 
     protected function doCreate(bool $clone_mode = false): void

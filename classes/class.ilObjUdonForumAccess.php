@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Access class of the forum repository object.
  */
-class ilObjXForumAccess extends ilObjectPluginAccess
+class ilObjUdonForumAccess extends ilObjectPluginAccess
 {
     public function _checkAccess(
         string $cmd,

@@ -1,19 +1,16 @@
-# Forum – ILIAS 11 Repository-Plugin
+# Udon Forum – ILIAS 11 Repository-Plugin
 
 Repository-Objekt-Plugin für **ILIAS 11**, mit dem sich im Magazin ein Objekt
-vom Typ **„Forum“** hinzufügen lässt.
+vom Typ **„Udon Forum“** hinzufügen lässt.
 
 | | |
 |---|---|
-| Plugin-Name | `XForum` |
+| Plugin-Name | `UdonForum` |
+| Anzeigename | Udon Forum |
 | Plugin-ID / Objekttyp | `xfrm` |
 | Slot | `Services/Repository/RepositoryObject` (`robj`) |
 | ILIAS | 11.0 – 11.999 |
 | PHP | ≥ 8.3 |
-
-> Der interne Name lautet `XForum` statt `Forum`, weil die Klassen
-> `ilObjForum` / `ilObjForumGUI` bereits zum ILIAS-Core-Forum gehören.
-> In der Oberfläche heisst das Objekt trotzdem **„Forum“**.
 
 ## Installation
 
@@ -22,7 +19,7 @@ vom Typ **„Forum“** hinzufügen lässt.
    ```bash
    mkdir -p Customizing/global/plugins/Services/Repository/RepositoryObject
    cd Customizing/global/plugins/Services/Repository/RepositoryObject
-   git clone https://github.com/hjlauener/forum.git XForum
+   git clone https://github.com/hjlauener/UdonForum.git UdonForum
    ```
 
 2. Im ILIAS-Hauptverzeichnis Autoloader und Artefakte neu erzeugen
@@ -35,17 +32,17 @@ vom Typ **„Forum“** hinzufügen lässt.
    ```
 
 3. In ILIAS unter **Administration › Erweiterungen › Plugins** das Plugin
-   **XForum** installieren und aktivieren.
+   **UdonForum** installieren und aktivieren.
 
 4. Rechte vergeben: In der Rechteverwaltung der Kategorie/des Kurses (bzw.
-   in den Rollenvorlagen) das Recht **„Forum anlegen“** (`create_xfrm`)
+   in den Rollenvorlagen) das Recht **„Udon Forum anlegen“** (`create_xfrm`)
    für die gewünschten Rollen freischalten.
 
-5. Im Magazin über **Neues Objekt hinzufügen › Forum** ein Forum anlegen.
+5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
 
 ## Aktueller Stand
 
-- Forum-Objekt anlegen (Titel, Beschreibung)
+- Udon-Forum-Objekt anlegen (Titel, Beschreibung)
 - Reiter **Inhalt** (Platzhalter für Themen/Beiträge)
 - Reiter **Info**, **Einstellungen** (Titel/Beschreibung bearbeiten), **Rechte**
 - Sprachdateien Deutsch/Englisch, eigenes Icon
@@ -55,11 +52,11 @@ vom Typ **„Forum“** hinzufügen lässt.
 ```
 plugin.php                         Plugin-Metadaten (ID, Version, ILIAS-Versionen)
 classes/
-  class.ilXForumPlugin.php         Plugin-Klasse
-  class.ilObjXForum.php            Anwendungsklasse (Daten/Persistenz)
-  class.ilObjXForumGUI.php         Oberfläche des Objekts
-  class.ilObjXForumListGUI.php     Darstellung in Listen des Magazins
-  class.ilObjXForumAccess.php      Zugriffsprüfung
+  class.ilUdonForumPlugin.php      Plugin-Klasse
+  class.ilObjUdonForum.php         Anwendungsklasse (Daten/Persistenz)
+  class.ilObjUdonForumGUI.php      Oberfläche des Objekts
+  class.ilObjUdonForumListGUI.php  Darstellung in Listen des Magazins
+  class.ilObjUdonForumAccess.php   Zugriffsprüfung
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xfrm.svg     Objekt-Icon

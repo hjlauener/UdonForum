@@ -1,6 +1,6 @@
 {
-    "name": "hjlauener/ilias-forum-plugin",
-    "description": "ILIAS 11 repository object plugin: Forum",
+    "name": "hjlauener/udon-forum",
+    "description": "ILIAS 11 repository object plugin: Udon Forum",
     "type": "project",
     "license": "GPL-3.0-only",
     "authors": [

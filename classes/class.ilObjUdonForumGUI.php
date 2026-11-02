@@ -10,10 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * GUI class of the forum repository object.
  *
- * @ilCtrl_isCalledBy ilObjXForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
- * @ilCtrl_Calls      ilObjXForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
+ * @ilCtrl_isCalledBy ilObjUdonForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
+ * @ilCtrl_Calls      ilObjUdonForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
  */
-class ilObjXForumGUI extends ilObjectPluginGUI
+class ilObjUdonForumGUI extends ilObjectPluginGUI
 {
     public const CMD_SHOW_CONTENT = 'showContent';
     public const CMD_EDIT_PROPERTIES = 'editProperties';
@@ -37,7 +37,7 @@ class ilObjXForumGUI extends ilObjectPluginGUI
 
     final public function getType(): string
     {
-        return ilXForumPlugin::ID;
+        return ilUdonForumPlugin::ID;
     }
 
     public function getAfterCreationCmd(): string

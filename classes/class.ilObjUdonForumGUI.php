@@ -102,11 +102,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private ilObjUser $udf_user;
 
     /** @var array<int, string> user id => escaped name */
-    private array $name_cache = [];
+    private array $udf_name_cache = [];
     /** @var array<int, bool> user id => has write permission */
-    private array $lecturer_cache = [];
+    private array $udf_lecturer_cache = [];
     /** @var ilUdfCategory[]|null */
-    private ?array $categories = null;
+    private ?array $udf_categories = null;
 
     protected function afterConstructor(): void
     {
@@ -136,15 +136,15 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
     public function performCommand(string $cmd): void
     {
-        $this->ensureDefaultCategories();
-
         if (in_array($cmd, self::WRITE_COMMANDS, true)) {
             $this->checkPermission('write');
+            $this->ensureDefaultCategories();
             $this->$cmd();
             return;
         }
 
         $this->checkPermission('read');
+        $this->ensureDefaultCategories();
         if (in_array($cmd, self::READ_COMMANDS, true)) {
             $this->$cmd();
             return;
@@ -271,6 +271,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 $this->txt('mark_all_read'),
                 $this->ctrl->getLinkTarget($this, 'markAllRead')
             ));
+        }
+
+        if ($this->isLoggedIn()) {
+            // the first visit defines from when on posts count as new
+            $this->getReadSince();
         }
 
         $state = $this->getFeedState();
@@ -660,9 +665,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $async = $this->udf_post->has(self::POST_FIELD_ASYNC);
         $type = $this->getRequestedString($this->udf_query, self::PARAM_VOTE_TYPE);
         $id = $this->getRequestedInt($this->udf_query, self::PARAM_VOTE_ID);
-        $direction = $this->udf_post->has(self::POST_FIELD_DIRECTION)
-            ? $this->udf_post->retrieve(self::POST_FIELD_DIRECTION, $this->udf_refinery->kindlyTo()->int())
-            : 0;
+        $direction = $this->getRequestedSignedInt($this->udf_post, self::POST_FIELD_DIRECTION);
 
         // find the item and check that it belongs to this forum
         $post = null;
@@ -1191,9 +1194,7 @@ JS);
             $depth = $parent->getDepth() + 1;
         }
 
-        $body = $this->udf_post->has(self::POST_FIELD_BODY)
-            ? trim($this->udf_post->retrieve(self::POST_FIELD_BODY, $this->udf_refinery->kindlyTo()->string()))
-            : '';
+        $body = trim($this->getRequestedString($this->udf_post, self::POST_FIELD_BODY));
         if ($body === '') {
             $this->tpl->setOnScreenMessage('failure', $this->txt('comment_empty'), true);
             $this->redirectToPost($post);
@@ -1352,7 +1353,7 @@ JS);
 
         $this->udf_repo->markCategoriesInitialized($forum->getId());
         $forum->setCategoriesInitialized(true);
-        $this->categories = null;
+        $this->udf_categories = null;
     }
 
     protected function showCategories(): void
@@ -1528,10 +1529,10 @@ JS);
      */
     private function getCategories(): array
     {
-        if ($this->categories === null) {
-            $this->categories = $this->udf_repo->getCategories($this->object->getId());
+        if ($this->udf_categories === null) {
+            $this->udf_categories = $this->udf_repo->getCategories($this->object->getId());
         }
-        return $this->categories;
+        return $this->udf_categories;
     }
 
     /**
@@ -1627,10 +1628,22 @@ JS);
 
     private function getRequestedInt(ArrayBasedRequestWrapper $wrapper, string $key): int
     {
+        return max(0, $this->getRequestedSignedInt($wrapper, $key));
+    }
+
+    /**
+     * Integer from the request; 0 if missing or not a number.
+     */
+    private function getRequestedSignedInt(ArrayBasedRequestWrapper $wrapper, string $key): int
+    {
         if (!$wrapper->has($key)) {
             return 0;
         }
-        return max(0, $wrapper->retrieve($key, $this->udf_refinery->kindlyTo()->int()));
+        try {
+            return $wrapper->retrieve($key, $this->udf_refinery->kindlyTo()->int());
+        } catch (Throwable $e) {
+            return 0;
+        }
     }
 
     private function getRequestedString(ArrayBasedRequestWrapper $wrapper, string $key): string
@@ -1638,7 +1651,11 @@ JS);
         if (!$wrapper->has($key)) {
             return '';
         }
-        return $wrapper->retrieve($key, $this->udf_refinery->kindlyTo()->string());
+        try {
+            return $wrapper->retrieve($key, $this->udf_refinery->kindlyTo()->string());
+        } catch (Throwable $e) {
+            return '';
+        }
     }
 
     /**
@@ -1760,7 +1777,7 @@ JS);
     {
         $html = $this->esc($text);
         $html = (string) preg_replace_callback(
-            '~https?://[^\s<]+~u',
+            '~https?://(?:(?!&quot;|&#039;|&lt;|&gt;)[^\s<])+~u',
             static function (array $m): string {
                 // punctuation at the end belongs to the sentence, not to the address
                 $url = rtrim($m[0], '.,;:!?)');
@@ -1808,11 +1825,11 @@ JS);
      */
     private function isLecturer(int $user_id): bool
     {
-        if (!isset($this->lecturer_cache[$user_id])) {
-            $this->lecturer_cache[$user_id] = $user_id !== ANONYMOUS_USER_ID
+        if (!isset($this->udf_lecturer_cache[$user_id])) {
+            $this->udf_lecturer_cache[$user_id] = $user_id !== ANONYMOUS_USER_ID
                 && $this->access->checkAccessOfUser($user_id, 'write', '', $this->object->getRefId());
         }
-        return $this->lecturer_cache[$user_id];
+        return $this->udf_lecturer_cache[$user_id];
     }
 
     /**
@@ -1820,17 +1837,17 @@ JS);
      */
     private function getUserName(int $user_id): string
     {
-        if (!isset($this->name_cache[$user_id])) {
+        if (!isset($this->udf_name_cache[$user_id])) {
             $name = ilObjUser::_lookupName($user_id);
             if (($name['login'] ?? '') === '') {
-                $this->name_cache[$user_id] = $this->txt('deleted_user');
+                $this->udf_name_cache[$user_id] = $this->txt('deleted_user');
             } else {
-                $this->name_cache[$user_id] = $this->esc(trim(
+                $this->udf_name_cache[$user_id] = $this->esc(trim(
                     ($name['firstname'] ?? '') . ' ' . ($name['lastname'] ?? '')
                 ));
             }
         }
-        return $this->name_cache[$user_id];
+        return $this->udf_name_cache[$user_id];
     }
 
     private function esc(string $text): string

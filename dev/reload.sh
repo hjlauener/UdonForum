@@ -193,7 +193,7 @@ cleanup_wrong_location() {
     local old dir
     [ "$PLUGIN_BASE" = "public/Customizing/global/plugins" ] || return 0
     old="${ILIAS_DIR:?}/Customizing/global/plugins/$PLUGIN_SLOT_PATH"
-    if in_container grep -qs '"xudf"' "$old/plugin.php"; then
+    if in_container grep -qsE "[\"']xudf[\"']" "$old/plugin.php"; then
         step "Entferne alte Kopie am falschen Ort ($old)"
         in_root find "$old" -mindepth 1 -delete
         in_root rmdir "$old"

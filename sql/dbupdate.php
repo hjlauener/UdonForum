@@ -21,7 +21,7 @@ if (!$ilDB->tableExists('rep_robj_xudf_post')) {
         'id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
         'obj_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
         'user_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
-        'title' => ['type' => 'text', 'length' => 255, 'notnull' => true, 'default' => ''],
+        'title' => ['type' => 'text', 'length' => 255, 'notnull' => false],
         'body' => ['type' => 'clob', 'notnull' => false],
         'created' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
         'updated' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
@@ -74,7 +74,7 @@ if (!$ilDB->tableExists('rep_robj_xudf_cat')) {
     $ilDB->createTable('rep_robj_xudf_cat', [
         'id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
         'obj_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
-        'title' => ['type' => 'text', 'length' => 255, 'notnull' => true, 'default' => ''],
+        'title' => ['type' => 'text', 'length' => 255, 'notnull' => false],
         'sort_order' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
     ]);
     $ilDB->addPrimaryKey('rep_robj_xudf_cat', ['id']);

@@ -1,0 +1,23 @@
+{
+    "name": "hjlauener/ilias-forum-plugin",
+    "description": "ILIAS 11 repository object plugin: Forum",
+    "type": "project",
+    "license": "GPL-3.0-only",
+    "authors": [
+        {
+            "name": "Hansjörg Lauener",
+            "email": "hansjoerg.lauener@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.3"
+    },
+    "autoload": {
+        "classmap": [
+            "classes/"
+        ]
+    },
+    "config": {
+        "classmap-authoritative": true
+    }
+}

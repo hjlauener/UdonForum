@@ -11,8 +11,27 @@ class ilUdfRepository
     public const TABLE_POST = 'rep_robj_xudf_post';
     public const TABLE_COMMENT = 'rep_robj_xudf_cmt';
     public const TABLE_CATEGORY = 'rep_robj_xudf_cat';
+    public const TABLE_VOTE = 'rep_robj_xudf_vote';
+    public const TABLE_READ = 'rep_robj_xudf_read';
 
-    public const TABLES = [self::TABLE_DATA, self::TABLE_POST, self::TABLE_COMMENT, self::TABLE_CATEGORY];
+    public const TABLES = [
+        self::TABLE_DATA,
+        self::TABLE_POST,
+        self::TABLE_COMMENT,
+        self::TABLE_CATEGORY,
+        self::TABLE_VOTE,
+        self::TABLE_READ,
+    ];
+
+    public const ITEM_POST = 'p';
+    public const ITEM_COMMENT = 'c';
+
+    /** feed order: popular (votes and age, like Reddit "hot") */
+    public const SORT_POPULAR = 'hot';
+    /** feed order: newest first */
+    public const SORT_NEW = 'new';
+    /** feed order: highest score first */
+    public const SORT_TOP = 'top';
 
     private ilDBInterface $db;
 
@@ -28,8 +47,10 @@ class ilUdfRepository
     /**
      * Posts of a forum, newest first.
      *
-     * @param int  $cat_id           only posts of this category (0 = all)
-     * @param bool $only_unanswered  only posts without accepted answer
+     * @param int    $cat_id          only posts of this category (0 = all)
+     * @param bool   $only_unanswered only posts without accepted answer
+     * @param string $sort            one of the SORT_* constants
+     * @param int    $since           only posts created after this time (0 = all)
      * @return ilUdfPost[]
      */
     public function getPostsForObject(
@@ -37,7 +58,9 @@ class ilUdfRepository
         int $limit,
         int $offset,
         int $cat_id = 0,
-        bool $only_unanswered = false
+        bool $only_unanswered = false,
+        string $sort = self::SORT_NEW,
+        int $since = 0
     ): array {
         $where = ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer');
         if ($cat_id > 0) {
@@ -46,12 +69,23 @@ class ilUdfRepository
         if ($only_unanswered) {
             $where .= ' AND accepted_id = ' . $this->db->quote(0, 'integer');
         }
+        if ($since > 0) {
+            $where .= ' AND created > ' . $this->db->quote($since, 'integer');
+        }
+
+        switch ($sort) {
+            case self::SORT_POPULAR:
+                $order = ' ORDER BY hot DESC, id DESC';
+                break;
+            case self::SORT_TOP:
+                $order = ' ORDER BY score DESC, created DESC, id DESC';
+                break;
+            default:
+                $order = ' ORDER BY created DESC, id DESC';
+        }
 
         $this->db->setLimit($limit, $offset);
-        $set = $this->db->query(
-            'SELECT * FROM ' . self::TABLE_POST . $where .
-            ' ORDER BY created DESC, id DESC'
-        );
+        $set = $this->db->query('SELECT * FROM ' . self::TABLE_POST . $where . $order);
         $list = [];
         while ($rec = $this->db->fetchAssoc($set)) {
             $list[] = $this->buildPost($rec);
@@ -83,8 +117,11 @@ class ilUdfRepository
         ];
 
         if ($post->getId() === 0) {
+            // the score is only changed by votes (see vote())
             $post->setId($this->db->nextId(self::TABLE_POST));
             $fields['id'] = ['integer', $post->getId()];
+            $fields['score'] = ['integer', 0];
+            $fields['hot'] = ['float', self::calculateHot(0, $post->getCreated())];
             $this->db->insert(self::TABLE_POST, $fields);
             return;
         }
@@ -97,6 +134,21 @@ class ilUdfRepository
      */
     public function deletePost(ilUdfPost $post): void
     {
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote(self::ITEM_COMMENT, 'text') .
+            ' AND item_id IN (SELECT id FROM ' . self::TABLE_COMMENT .
+            ' WHERE post_id = ' . $this->db->quote($post->getId(), 'integer') . ')'
+        );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote(self::ITEM_POST, 'text') .
+            ' AND item_id = ' . $this->db->quote($post->getId(), 'integer')
+        );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_READ .
+            ' WHERE post_id = ' . $this->db->quote($post->getId(), 'integer')
+        );
         $this->db->manipulate(
             'DELETE FROM ' . self::TABLE_COMMENT .
             ' WHERE post_id = ' . $this->db->quote($post->getId(), 'integer')
@@ -112,6 +164,20 @@ class ilUdfRepository
      */
     public function deleteAllForObject(int $obj_id): void
     {
+        $posts_of_object = 'SELECT id FROM ' . self::TABLE_POST . ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer');
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote(self::ITEM_COMMENT, 'text') .
+            ' AND item_id IN (SELECT id FROM ' . self::TABLE_COMMENT . ' WHERE post_id IN (' . $posts_of_object . '))'
+        );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote(self::ITEM_POST, 'text') .
+            ' AND item_id IN (' . $posts_of_object . ')'
+        );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_READ . ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
+        );
         $this->db->manipulate(
             'DELETE FROM ' . self::TABLE_COMMENT . ' WHERE post_id IN (' .
             'SELECT id FROM ' . self::TABLE_POST . ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer') . ')'
@@ -200,6 +266,7 @@ class ilUdfRepository
         if ($comment->getId() === 0) {
             $comment->setId($this->db->nextId(self::TABLE_COMMENT));
             $fields['id'] = ['integer', $comment->getId()];
+            $fields['score'] = ['integer', 0];
             $this->db->insert(self::TABLE_COMMENT, $fields);
             return;
         }
@@ -232,6 +299,11 @@ class ilUdfRepository
             'DELETE FROM ' . self::TABLE_COMMENT .
             ' WHERE id = ' . $this->db->quote($comment->getId(), 'integer')
         );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote(self::ITEM_COMMENT, 'text') .
+            ' AND item_id = ' . $this->db->quote($comment->getId(), 'integer')
+        );
 
         $parent = $comment->getParentId() > 0 ? $this->getComment($comment->getParentId()) : null;
         if ($parent !== null && $parent->isDeleted() && !$this->hasReplies($parent->getId())) {
@@ -247,6 +319,166 @@ class ilUdfRepository
         );
         $rec = $this->db->fetchAssoc($set);
         return (int) ($rec['cnt'] ?? 0) > 0;
+    }
+
+    // ------------------------------------------------------------------
+    // Votes
+    // ------------------------------------------------------------------
+
+    /**
+     * Sets the vote of a user (+1, -1 or 0 = remove) and updates the score.
+     *
+     * @return int the new score of the item
+     */
+    public function vote(string $item_type, int $item_id, int $user_id, int $vote): int
+    {
+        $key = [
+            'item_type' => ['text', $item_type],
+            'item_id' => ['integer', $item_id],
+            'user_id' => ['integer', $user_id],
+        ];
+        if ($vote === 0) {
+            $this->db->manipulate(
+                'DELETE FROM ' . self::TABLE_VOTE .
+                ' WHERE item_type = ' . $this->db->quote($item_type, 'text') .
+                ' AND item_id = ' . $this->db->quote($item_id, 'integer') .
+                ' AND user_id = ' . $this->db->quote($user_id, 'integer')
+            );
+        } else {
+            $this->db->replace(self::TABLE_VOTE, $key, ['vote_val' => ['integer', $vote > 0 ? 1 : -1]]);
+        }
+
+        $set = $this->db->query(
+            'SELECT SUM(vote_val) score FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote($item_type, 'text') .
+            ' AND item_id = ' . $this->db->quote($item_id, 'integer')
+        );
+        $rec = $this->db->fetchAssoc($set);
+        $score = (int) ($rec['score'] ?? 0);
+
+        if ($item_type === self::ITEM_POST) {
+            $post = $this->getPost($item_id);
+            $this->db->update(self::TABLE_POST, [
+                'score' => ['integer', $score],
+                'hot' => ['float', self::calculateHot($score, $post !== null ? $post->getCreated() : time())],
+            ], ['id' => ['integer', $item_id]]);
+        } else {
+            $this->db->update(self::TABLE_COMMENT, [
+                'score' => ['integer', $score],
+            ], ['id' => ['integer', $item_id]]);
+        }
+
+        return $score;
+    }
+
+    /**
+     * Votes of a user for the given items.
+     *
+     * @param int[] $item_ids
+     * @return array<int, int> item id => +1 / -1
+     */
+    public function getUserVotes(string $item_type, array $item_ids, int $user_id): array
+    {
+        if ($item_ids === []) {
+            return [];
+        }
+        $set = $this->db->query(
+            'SELECT item_id, vote_val FROM ' . self::TABLE_VOTE .
+            ' WHERE item_type = ' . $this->db->quote($item_type, 'text') .
+            ' AND user_id = ' . $this->db->quote($user_id, 'integer') .
+            ' AND ' . $this->db->in('item_id', $item_ids, false, 'integer')
+        );
+        $votes = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $votes[(int) $rec['item_id']] = (int) $rec['vote_val'];
+        }
+        return $votes;
+    }
+
+    /**
+     * Ranking value for "popular" (same idea as Reddit "hot"): every ten
+     * points count as much as being 12.5 hours newer.
+     */
+    public static function calculateHot(int $score, int $created): float
+    {
+        $order = log10(max(abs($score), 1));
+        $sign = $score <=> 0;
+        return round($sign * $order + ($created - 1700000000) / 45000, 7);
+    }
+
+    // ------------------------------------------------------------------
+    // Read status
+    // ------------------------------------------------------------------
+
+    /**
+     * Time from which on posts and comments count as new for the user
+     * (first visit or "mark all as read"); null if never visited.
+     */
+    public function getForumReadTime(int $user_id, int $obj_id): ?int
+    {
+        $times = $this->getReadTimes($user_id, $obj_id, [0]);
+        return $times[0] ?? null;
+    }
+
+    /**
+     * @param int[] $post_ids
+     * @return array<int, int> post id => time the user last opened the post
+     */
+    public function getReadTimes(int $user_id, int $obj_id, array $post_ids): array
+    {
+        if ($post_ids === []) {
+            return [];
+        }
+        $set = $this->db->query(
+            'SELECT post_id, read_ts FROM ' . self::TABLE_READ .
+            ' WHERE user_id = ' . $this->db->quote($user_id, 'integer') .
+            ' AND obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' AND ' . $this->db->in('post_id', $post_ids, false, 'integer')
+        );
+        $times = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $times[(int) $rec['post_id']] = (int) $rec['read_ts'];
+        }
+        return $times;
+    }
+
+    /**
+     * @param int $post_id 0 = whole forum ("mark all as read" / first visit)
+     */
+    public function setReadTime(int $user_id, int $obj_id, int $post_id, int $time): void
+    {
+        $this->db->replace(self::TABLE_READ, [
+            'user_id' => ['integer', $user_id],
+            'obj_id' => ['integer', $obj_id],
+            'post_id' => ['integer', $post_id],
+        ], [
+            'read_ts' => ['integer', $time],
+        ]);
+    }
+
+    /**
+     * Creation times of other users' comments since a given time.
+     *
+     * @param int[] $post_ids
+     * @return array<int, int[]> post id => creation times
+     */
+    public function getForeignCommentTimes(array $post_ids, int $user_id, int $since): array
+    {
+        if ($post_ids === []) {
+            return [];
+        }
+        $set = $this->db->query(
+            'SELECT post_id, created FROM ' . self::TABLE_COMMENT .
+            ' WHERE ' . $this->db->in('post_id', $post_ids, false, 'integer') .
+            ' AND user_id <> ' . $this->db->quote($user_id, 'integer') .
+            ' AND is_deleted = ' . $this->db->quote(0, 'integer') .
+            ' AND created > ' . $this->db->quote($since, 'integer')
+        );
+        $times = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $times[(int) $rec['post_id']][] = (int) $rec['created'];
+        }
+        return $times;
     }
 
     // ------------------------------------------------------------------
@@ -391,6 +623,7 @@ class ilUdfRepository
         $post->setUpdated((int) $rec['updated']);
         $post->setCatId((int) ($rec['cat_id'] ?? 0));
         $post->setAcceptedId((int) ($rec['accepted_id'] ?? 0));
+        $post->setScore((int) ($rec['score'] ?? 0));
         return $post;
     }
 
@@ -409,6 +642,7 @@ class ilUdfRepository
         $comment->setDeleted((bool) $rec['is_deleted']);
         $comment->setCreated((int) $rec['created']);
         $comment->setUpdated((int) $rec['updated']);
+        $comment->setScore((int) ($rec['score'] ?? 0));
         return $comment;
     }
 

@@ -14,8 +14,6 @@ object_offline_info#:#Dieses Forum ist für Kursmitglieder nicht sichtbar. Sie k
 confirm#:#Bestätigen
 no_permission#:#Dafür fehlt Ihnen die Berechtigung.
 no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den ersten Beitrag!
-newer_posts#:#Neuere Beiträge
-older_posts#:#Ältere Beiträge
 back_to_forum#:#Zurück zum Forum
 new_post#:#Neuer Beitrag
 edit_post#:#Beitrag bearbeiten
@@ -84,3 +82,24 @@ unaccept#:#Nicht mehr akzeptieren
 answer_accepted#:#Die Antwort wurde akzeptiert.
 answer_unaccepted#:#Die Antwort ist nicht mehr akzeptiert.
 show_in_discussion#:#In der Diskussion anzeigen
+sorting#:#Sortierung
+filter#:#Filter
+sort_popular#:#Beliebt
+sort_new#:#Neu
+sort_top#:#Bestbewertet
+period_week#:#Diese Woche
+period_month#:#Dieser Monat
+period_all#:#Gesamt
+csort_best#:#Beste
+csort_new#:#Neueste
+csort_old#:#Älteste
+previous_page#:#Vorherige Seite
+next_page#:#Nächste Seite
+points#:#Punkte
+vote_up#:#Positiv bewerten
+vote_down#:#Negativ bewerten
+new#:#Neu
+new_comment_one#:#1 neuer
+new_comments#:#%s neue
+mark_all_read#:#Alle als gelesen markieren
+marked_all_read#:#Alle Beiträge und Kommentare gelten jetzt als gelesen.

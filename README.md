@@ -61,9 +61,18 @@ udf
 
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
 - **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
-- **Feed** mit Beitragskarten (Kategorie, Titel, Autor, Zeit, Vorschau, Anzahl
-  Kommentare), neueste zuerst, 25 pro Seite
+- **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau,
+  Anzahl Kommentare), 25 pro Seite
+- **Sortierung** im Feed: *Beliebt* (Punkte und Alter, wie Reddit), *Neu*,
+  *Bestbewertet* (diese Woche / dieser Monat / gesamt)
 - **Filter** im Feed: Alle / pro Kategorie, zusätzlich „Unbeantwortet“
+- **Bewerten wie Reddit**: ▲/▼ bei Beiträgen und Kommentaren, erneuter Klick
+  nimmt die Stimme zurück, ohne Neuladen der Seite; eigene Inhalte können nicht
+  bewertet werden
+- **Ungelesen**: Etikett „Neu“ für neue Beiträge, „3 neue“ bei neuen Kommentaren,
+  neue Kommentare in der Diskussion markiert; „Alle als gelesen markieren“.
+  Beim ersten Besuch gilt alles Bestehende als gelesen.
+- **Kommentare sortieren**: Beste / Neueste / Älteste
 - **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Dozierende)
 - **Kommentare** mit Antworten bis zur **4. Ebene**, einklappbar;
   gelöschte Kommentare mit Antworten bleiben als „[gelöscht]“ stehen
@@ -101,7 +110,5 @@ dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILI
 
 ## Nächste Schritte
 
-- Etappe 2: Bewerten wie Reddit (▲/▼, Punktzahl), Sortierung Beliebt/Neu/Top,
-  Ungelesen-Markierung
 - Etappe 3 (Rest): Anheften/Schliessen von Beiträgen, Beiträge verschieben
 - Etappe 4: Benachrichtigungen, @Erwähnungen, Merken, Bilder/Dateien, Suche

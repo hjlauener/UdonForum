@@ -18,6 +18,7 @@ class ilUdfComment
     private bool $deleted = false;
     private int $created = 0;
     private int $updated = 0;
+    private int $score = 0;
 
     public function getId(): int
     {
@@ -127,5 +128,18 @@ class ilUdfComment
     public function isEdited(): bool
     {
         return $this->updated > $this->created;
+    }
+
+    /**
+     * Sum of all votes (+1 / -1)
+     */
+    public function getScore(): int
+    {
+        return $this->score;
+    }
+
+    public function setScore(int $score): void
+    {
+        $this->score = $score;
     }
 }

@@ -14,6 +14,7 @@ class ilUdfPost
     private string $body = '';
     private int $created = 0;
     private int $updated = 0;
+    private int $score = 0;
     private int $cat_id = 0;
     private int $accepted_id = 0;
 
@@ -121,5 +122,18 @@ class ilUdfPost
     public function isAnswered(): bool
     {
         return $this->accepted_id > 0;
+    }
+
+    /**
+     * Sum of all votes (+1 / -1)
+     */
+    public function getScore(): int
+    {
+        return $this->score;
+    }
+
+    public function setScore(int $score): void
+    {
+        $this->score = $score;
     }
 }

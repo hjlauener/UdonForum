@@ -14,8 +14,6 @@ object_offline_info#:#This forum is not visible for course members. You can make
 confirm#:#Confirm
 no_permission#:#You do not have permission to do this.
 no_posts#:#There are no posts in this forum yet. Create the first post!
-newer_posts#:#Newer posts
-older_posts#:#Older posts
 back_to_forum#:#Back to the forum
 new_post#:#New post
 edit_post#:#Edit post
@@ -84,3 +82,24 @@ unaccept#:#Remove acceptance
 answer_accepted#:#The answer has been accepted.
 answer_unaccepted#:#The answer is no longer accepted.
 show_in_discussion#:#Show in the discussion
+sorting#:#Sorting
+filter#:#Filter
+sort_popular#:#Popular
+sort_new#:#New
+sort_top#:#Best rated
+period_week#:#This week
+period_month#:#This month
+period_all#:#All time
+csort_best#:#Best
+csort_new#:#Newest
+csort_old#:#Oldest
+previous_page#:#Previous page
+next_page#:#Next page
+points#:#Points
+vote_up#:#Vote up
+vote_down#:#Vote down
+new#:#New
+new_comment_one#:#1 new
+new_comments#:#%s new
+mark_all_read#:#Mark all as read
+marked_all_read#:#All posts and comments are now marked as read.

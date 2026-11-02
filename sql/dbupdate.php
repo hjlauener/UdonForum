@@ -82,3 +82,40 @@ if (!$ilDB->tableExists('rep_robj_xudf_cat')) {
     $ilDB->createSequence('rep_robj_xudf_cat');
 }
 ?>
+<#7>
+<?php
+/** @var ilDBInterface $ilDB */
+if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'score')) {
+    $ilDB->addTableColumn('rep_robj_xudf_post', 'score', ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0]);
+}
+if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'hot')) {
+    $ilDB->addTableColumn('rep_robj_xudf_post', 'hot', ['type' => 'float', 'notnull' => true, 'default' => 0]);
+}
+if (!$ilDB->tableColumnExists('rep_robj_xudf_cmt', 'score')) {
+    $ilDB->addTableColumn('rep_robj_xudf_cmt', 'score', ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0]);
+}
+// ranking value "popular" for existing posts (score 0 => only the creation time counts)
+$ilDB->manipulate('UPDATE rep_robj_xudf_post SET hot = (created - 1700000000) / 45000');
+?>
+<#8>
+<?php
+/** @var ilDBInterface $ilDB */
+if (!$ilDB->tableExists('rep_robj_xudf_vote')) {
+    $ilDB->createTable('rep_robj_xudf_vote', [
+        'item_type' => ['type' => 'text', 'length' => 1, 'notnull' => true, 'default' => 'p'],
+        'item_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'user_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'vote_val' => ['type' => 'integer', 'length' => 1, 'notnull' => true, 'default' => 0],
+    ]);
+    $ilDB->addPrimaryKey('rep_robj_xudf_vote', ['item_type', 'item_id', 'user_id']);
+}
+if (!$ilDB->tableExists('rep_robj_xudf_read')) {
+    $ilDB->createTable('rep_robj_xudf_read', [
+        'user_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'obj_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'post_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
+        'read_ts' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
+    ]);
+    $ilDB->addPrimaryKey('rep_robj_xudf_read', ['user_id', 'obj_id', 'post_id']);
+}
+?>

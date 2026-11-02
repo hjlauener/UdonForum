@@ -17,7 +17,27 @@ class ilUdonForumPlugin extends ilRepositoryObjectPlugin
 
     protected function uninstallCustom(): void
     {
-        // Tables created in sql/dbupdate.php are removed here once they exist.
+        global $DIC;
+        $db = $DIC->database();
+
+        foreach (ilUdfRepository::TABLES as $table) {
+            if ($db->tableExists($table)) {
+                $db->dropTable($table, false);
+            }
+            if ($db->sequenceExists($table)) {
+                $db->dropSequence($table);
+            }
+        }
+    }
+
+    /**
+     * An Udon Forum can only be created directly in courses and groups.
+     *
+     * @return string[]
+     */
+    public function getParentTypes(): array
+    {
+        return ['crs', 'grp'];
     }
 
     public function allowCopy(): bool

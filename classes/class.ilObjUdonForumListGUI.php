@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 /**
- * List GUI of the forum repository object (presentation in the repository).
+ * List GUI of the Udon Forum repository object (presentation in the
+ * repository container lists).
  */
 class ilObjUdonForumListGUI extends ilObjectPluginListGUI
 {
@@ -22,15 +23,30 @@ class ilObjUdonForumListGUI extends ilObjectPluginListGUI
         return [
             [
                 'permission' => 'read',
-                'cmd' => ilObjUdonForumGUI::CMD_SHOW_CONTENT,
+                'cmd' => 'showContent',
                 'default' => true,
             ],
             [
                 'permission' => 'write',
-                'cmd' => ilObjUdonForumGUI::CMD_EDIT_PROPERTIES,
+                'cmd' => 'editProperties',
                 'txt' => $this->txt('edit'),
                 'default' => false,
             ],
         ];
+    }
+
+    public function getProperties(): array
+    {
+        $props = [];
+
+        if (!ilObjUdonForumAccess::checkOnline($this->obj_id)) {
+            $props[] = [
+                'alert' => true,
+                'property' => $this->txt('status'),
+                'value' => $this->txt('offline'),
+            ];
+        }
+
+        return $props;
     }
 }

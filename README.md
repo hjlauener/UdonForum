@@ -57,12 +57,20 @@ udf
    Rollen freischalten.
 5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
 
-## Aktueller Stand
+## Aktueller Stand (Etappe 1)
 
-- Udon-Forum-Objekt anlegen (Titel, Beschreibung)
-- Reiter **Inhalt** (Platzhalter für Themen/Beiträge)
-- Reiter **Info**, **Einstellungen** (Titel/Beschreibung bearbeiten), **Rechte**
-- Sprachdateien Deutsch/Englisch, eigenes Icon
+- Udon Forum nur in **Kursen und Gruppen** anlegbar
+- **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
+- **Feed** mit Beitragskarten (Titel, Autor, Zeit, Vorschau, Anzahl Kommentare),
+  neueste zuerst, 25 pro Seite
+- **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Dozierende)
+- **Kommentare** mit Antworten bis zur **4. Ebene**, einklappbar;
+  gelöschte Kommentare mit Antworten bleiben als „[gelöscht]“ stehen
+- Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
+- Web-Adressen im Text werden zu Links, Rückfragen als Overlay
+
+Rechte: *Lesen* = lesen und mitschreiben; *Bearbeiten* = Einstellungen und
+Beiträge/Kommentare anderer löschen.
 
 ## Struktur
 
@@ -74,6 +82,9 @@ classes/
   class.ilObjUdonForumGUI.php      Oberfläche des Objekts
   class.ilObjUdonForumListGUI.php  Darstellung in Listen des Magazins
   class.ilObjUdonForumAccess.php   Zugriffsprüfung
+  class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kommentare)
+  class.ilUdfPost.php              Beitrag
+  class.ilUdfComment.php           Kommentar (max. 4 Ebenen)
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon
@@ -82,6 +93,7 @@ dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILI
 
 ## Nächste Schritte
 
-- Datenbanktabellen für Themen und Beiträge (`sql/dbupdate.php`)
-- Themen anlegen, anzeigen, beantworten
-- Sichtbarkeit (sichtbar / nicht sichtbar), Moderation
+- Etappe 2: Bewerten wie Reddit (▲/▼, Punktzahl), Sortierung Beliebt/Neu/Top,
+  Ungelesen-Markierung
+- Etappe 3: Kategorien, Anheften/Schliessen, evtl. akzeptierte Antworten
+- Etappe 4: Benachrichtigungen, @Erwähnungen, Merken, Bilder/Dateien, Suche

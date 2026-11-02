@@ -6,5 +6,51 @@ obj_xudf_duplicate#:#Udon Forum kopieren
 edit#:#Bearbeiten
 content#:#Inhalt
 properties#:#Einstellungen
-threads#:#Themen
-no_threads_yet#:#In diesem Forum gibt es noch keine Themen.
+status#:#Status
+online#:#Sichtbar
+online_info#:#Nur wenn das Forum sichtbar geschaltet ist, können Kursmitglieder es sehen.
+offline#:#Nicht sichtbar
+object_offline_info#:#Dieses Forum ist für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ sichtbar schalten.
+confirm#:#Bestätigen
+no_permission#:#Dafür fehlt Ihnen die Berechtigung.
+latest_posts#:#Neueste Beiträge
+no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den ersten Beitrag!
+newer_posts#:#Neuere Beiträge
+older_posts#:#Ältere Beiträge
+back_to_forum#:#Zurück zum Forum
+new_post#:#Neuer Beitrag
+edit_post#:#Beitrag bearbeiten
+post_title#:#Titel
+post_body#:#Text
+publish#:#Veröffentlichen
+post_created#:#Der Beitrag wurde veröffentlicht.
+post_updated#:#Der Beitrag wurde gespeichert.
+post_deleted#:#Der Beitrag wurde gelöscht.
+post_not_found#:#Der Beitrag wurde nicht gefunden.
+confirm_delete_post#:#Soll dieser Beitrag mit allen Kommentaren gelöscht werden?
+comment#:#Kommentar
+comment_count_one#:#1 Kommentar
+comment_count#:#%s Kommentare
+no_comments#:#Noch keine Kommentare.
+write_comment#:#Kommentar schreiben …
+send_comment#:#Kommentieren
+reply#:#Antworten
+write_reply#:#Antwort schreiben …
+send_reply#:#Antwort senden
+reply_not_possible#:#Auf diesen Kommentar kann nicht geantwortet werden.
+edit_comment#:#Kommentar bearbeiten
+comment_saved#:#Der Kommentar wurde veröffentlicht.
+comment_updated#:#Der Kommentar wurde gespeichert.
+comment_deleted#:#Der Kommentar wurde gelöscht.
+comment_empty#:#Bitte geben Sie einen Text ein.
+comment_not_found#:#Der Kommentar wurde nicht gefunden.
+confirm_delete_comment#:#Soll dieser Kommentar gelöscht werden?
+deleted_comment#:#[gelöscht]
+deleted_user#:#Gelöschter Benutzer
+lecturer#:#Dozierende
+edited#:#bearbeitet
+time_just_now#:#gerade eben
+time_minutes#:#vor %s Min.
+time_hours#:#vor %s Std.
+time_yesterday#:#gestern
+time_days#:#vor %s Tagen

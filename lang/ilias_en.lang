@@ -6,5 +6,51 @@ obj_xudf_duplicate#:#Copy Udon Forum
 edit#:#Edit
 content#:#Content
 properties#:#Settings
-threads#:#Threads
-no_threads_yet#:#There are no threads in this forum yet.
+status#:#Status
+online#:#Visible
+online_info#:#Course members can only see the forum if it is visible.
+offline#:#Not visible
+object_offline_info#:#This forum is not visible for course members. You can make it visible under “Settings”.
+confirm#:#Confirm
+no_permission#:#You do not have permission to do this.
+latest_posts#:#Latest posts
+no_posts#:#There are no posts in this forum yet. Create the first post!
+newer_posts#:#Newer posts
+older_posts#:#Older posts
+back_to_forum#:#Back to the forum
+new_post#:#New post
+edit_post#:#Edit post
+post_title#:#Title
+post_body#:#Text
+publish#:#Publish
+post_created#:#The post has been published.
+post_updated#:#The post has been saved.
+post_deleted#:#The post has been deleted.
+post_not_found#:#The post was not found.
+confirm_delete_post#:#Do you really want to delete this post including all comments?
+comment#:#Comment
+comment_count_one#:#1 comment
+comment_count#:#%s comments
+no_comments#:#No comments yet.
+write_comment#:#Write a comment …
+send_comment#:#Comment
+reply#:#Reply
+write_reply#:#Write a reply …
+send_reply#:#Send reply
+reply_not_possible#:#It is not possible to reply to this comment.
+edit_comment#:#Edit comment
+comment_saved#:#The comment has been published.
+comment_updated#:#The comment has been saved.
+comment_deleted#:#The comment has been deleted.
+comment_empty#:#Please enter a text.
+comment_not_found#:#The comment was not found.
+confirm_delete_comment#:#Do you really want to delete this comment?
+deleted_comment#:#[deleted]
+deleted_user#:#Deleted user
+lecturer#:#Lecturer
+edited#:#edited
+time_just_now#:#just now
+time_minutes#:#%s min. ago
+time_hours#:#%s hrs. ago
+time_yesterday#:#yesterday
+time_days#:#%s days ago

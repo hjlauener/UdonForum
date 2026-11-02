@@ -40,6 +40,34 @@ vom Typ **„Udon Forum“** hinzufügen lässt.
 
 5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
 
+## Deployment ins lokale ILIAS (Terminal)
+
+Mit `deploy.sh` wird das Plugin per Befehl in ein lokales ILIAS kopiert
+(direkt auf dem Rechner oder in einem Docker-Container).
+
+Einmalig einrichten:
+
+```bash
+cp deploy.env.example deploy.env
+```
+
+In `deploy.env` mindestens `ILIAS_ROOT` (Pfad zum ILIAS-Verzeichnis) setzen,
+bei Docker zusätzlich `DOCKER_CONTAINER`. `deploy.env` wird nicht eingecheckt.
+
+Danach:
+
+```bash
+./deploy.sh              # kopieren + composer du + build-artifacts
+./deploy.sh --update     # zusätzlich: php cli/setup.php update
+./deploy.sh --copy-only  # nur Dateien kopieren
+```
+
+Das Skript kopiert das Plugin nach
+`<ILIAS>/Customizing/global/plugins/Services/Repository/RepositoryObject/UdonForum`
+(bzw. `public/Customizing/...`, falls vorhanden) und ersetzt dabei eine ältere Version.
+Beim ersten Mal muss das Plugin danach noch in der ILIAS-Administration
+installiert und aktiviert werden.
+
 ## Aktueller Stand
 
 - Udon-Forum-Objekt anlegen (Titel, Beschreibung)
@@ -59,6 +87,7 @@ classes/
   class.ilObjUdonForumAccess.php   Zugriffsprüfung
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
+deploy.sh, deploy.env.example      Deployment ins lokale ILIAS
 templates/images/icon_xudf.svg     Objekt-Icon
 ```
 

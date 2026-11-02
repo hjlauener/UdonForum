@@ -57,15 +57,22 @@ udf
    Rollen freischalten.
 5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
 
-## Aktueller Stand (Etappe 1)
+## Aktueller Stand
 
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
 - **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
-- **Feed** mit Beitragskarten (Titel, Autor, Zeit, Vorschau, Anzahl Kommentare),
-  neueste zuerst, 25 pro Seite
+- **Feed** mit Beitragskarten (Kategorie, Titel, Autor, Zeit, Vorschau, Anzahl
+  Kommentare), neueste zuerst, 25 pro Seite
+- **Filter** im Feed: Alle / pro Kategorie, zusätzlich „Unbeantwortet“
 - **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Dozierende)
 - **Kommentare** mit Antworten bis zur **4. Ebene**, einklappbar;
   gelöschte Kommentare mit Antworten bleiben als „[gelöscht]“ stehen
+- **Kategorien** (Reiter *Kategorien*): Dozierende legen sie an, benennen um,
+  sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
+  und *Prüfung*.
+- **Akzeptierte Antwort**: eine Antwort pro Beitrag, zuoberst grün angezeigt,
+  Beitrag erhält „✔ Beantwortet“. In den *Einstellungen* wählbar, wer
+  akzeptieren darf: Ersteller/in des Beitrags oder Kursleitung.
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
 - Web-Adressen im Text werden zu Links, Rückfragen als Overlay
 
@@ -85,6 +92,7 @@ classes/
   class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kommentare)
   class.ilUdfPost.php              Beitrag
   class.ilUdfComment.php           Kommentar (max. 4 Ebenen)
+  class.ilUdfCategory.php          Kategorie
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon
@@ -95,5 +103,5 @@ dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILI
 
 - Etappe 2: Bewerten wie Reddit (▲/▼, Punktzahl), Sortierung Beliebt/Neu/Top,
   Ungelesen-Markierung
-- Etappe 3: Kategorien, Anheften/Schliessen, evtl. akzeptierte Antworten
+- Etappe 3 (Rest): Anheften/Schliessen von Beiträgen, Beiträge verschieben
 - Etappe 4: Benachrichtigungen, @Erwähnungen, Merken, Bilder/Dateien, Suche

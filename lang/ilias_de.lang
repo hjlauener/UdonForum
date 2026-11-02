@@ -13,7 +13,6 @@ offline#:#Nicht sichtbar
 object_offline_info#:#Dieses Forum ist für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ sichtbar schalten.
 confirm#:#Bestätigen
 no_permission#:#Dafür fehlt Ihnen die Berechtigung.
-latest_posts#:#Neueste Beiträge
 no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den ersten Beitrag!
 newer_posts#:#Neuere Beiträge
 older_posts#:#Ältere Beiträge
@@ -54,3 +53,34 @@ time_minutes#:#vor %s Min.
 time_hours#:#vor %s Std.
 time_yesterday#:#gestern
 time_days#:#vor %s Tagen
+all_posts#:#Alle
+no_posts_filtered#:#Keine Beiträge gefunden.
+categories#:#Kategorien
+category#:#Kategorie
+choose_category#:#– Bitte wählen –
+new_category#:#Neue Kategorie
+edit_category#:#Kategorie bearbeiten
+category_title#:#Name der Kategorie
+no_categories#:#Es gibt noch keine Kategorien. Beiträge können dann ohne Kategorie erstellt werden.
+category_saved#:#Die Kategorie wurde gespeichert.
+category_deleted#:#Die Kategorie wurde gelöscht.
+category_not_found#:#Die Kategorie wurde nicht gefunden.
+confirm_delete_category#:#Soll diese Kategorie gelöscht werden? Die Beiträge bleiben erhalten und sind danach keiner Kategorie mehr zugeordnet.
+move_up#:#Nach oben
+move_down#:#Nach unten
+posts#:#Beiträge
+default_cat_general#:#Allgemeines
+default_cat_questions#:#Fragen
+default_cat_exam#:#Prüfung
+accept_mode#:#Akzeptierte Antworten
+accept_mode_info#:#Eine akzeptierte Antwort wird zuoberst bei den Kommentaren angezeigt, und der Beitrag gilt als beantwortet.
+accept_mode_author#:#Die Person, die den Beitrag erstellt hat, markiert die akzeptierte Antwort
+accept_mode_admin#:#Die Kursleitung (Personen mit Bearbeitungsrecht) markiert die akzeptierte Antwort
+accepted_answer#:#Akzeptierte Antwort
+answered#:#Beantwortet
+unanswered#:#Unbeantwortet
+accept#:#Als Antwort akzeptieren
+unaccept#:#Nicht mehr akzeptieren
+answer_accepted#:#Die Antwort wurde akzeptiert.
+answer_unaccepted#:#Die Antwort ist nicht mehr akzeptiert.
+show_in_discussion#:#In der Diskussion anzeigen

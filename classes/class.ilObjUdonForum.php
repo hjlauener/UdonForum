@@ -10,8 +10,15 @@ declare(strict_types=1);
  */
 class ilObjUdonForum extends ilObjectPlugin
 {
+    /** the author of a post may mark an answer as accepted */
+    public const ACCEPT_AUTHOR = 'author';
+    /** course/group admins (write permission) may mark an answer as accepted */
+    public const ACCEPT_ADMIN = 'admin';
+
     protected ilDBInterface $udf_db;
     protected bool $online = false;
+    protected string $accept_mode = self::ACCEPT_AUTHOR;
+    protected bool $categories_initialized = false;
 
     public function __construct(int $a_ref_id = 0)
     {
@@ -27,20 +34,19 @@ class ilObjUdonForum extends ilObjectPlugin
 
     protected function doCreate(bool $clone_mode = false): void
     {
-        $this->udf_db->insert(ilUdfRepository::TABLE_DATA, [
-            'id' => ['integer', $this->getId()],
-            'is_online' => ['integer', (int) $this->online],
-        ]);
+        $this->udf_db->insert(ilUdfRepository::TABLE_DATA, ['id' => ['integer', $this->getId()]] + $this->getDataFields());
     }
 
     protected function doRead(): void
     {
         $set = $this->udf_db->query(
-            'SELECT is_online FROM ' . ilUdfRepository::TABLE_DATA .
+            'SELECT * FROM ' . ilUdfRepository::TABLE_DATA .
             ' WHERE id = ' . $this->udf_db->quote($this->getId(), 'integer')
         );
         if ($rec = $this->udf_db->fetchAssoc($set)) {
             $this->online = (bool) $rec['is_online'];
+            $this->accept_mode = $rec['accept_mode'] === self::ACCEPT_ADMIN ? self::ACCEPT_ADMIN : self::ACCEPT_AUTHOR;
+            $this->categories_initialized = (bool) $rec['cats_init'];
         }
     }
 
@@ -49,8 +55,20 @@ class ilObjUdonForum extends ilObjectPlugin
         $this->udf_db->replace(
             ilUdfRepository::TABLE_DATA,
             ['id' => ['integer', $this->getId()]],
-            ['is_online' => ['integer', (int) $this->online]]
+            $this->getDataFields()
         );
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: mixed}>
+     */
+    private function getDataFields(): array
+    {
+        return [
+            'is_online' => ['integer', (int) $this->online],
+            'accept_mode' => ['text', $this->accept_mode],
+            'cats_init' => ['integer', (int) $this->categories_initialized],
+        ];
     }
 
     protected function doDelete(): void
@@ -66,5 +84,29 @@ class ilObjUdonForum extends ilObjectPlugin
     public function setOnline(bool $online): void
     {
         $this->online = $online;
+    }
+
+    public function getAcceptMode(): string
+    {
+        return $this->accept_mode;
+    }
+
+    public function setAcceptMode(string $accept_mode): void
+    {
+        $this->accept_mode = $accept_mode === self::ACCEPT_ADMIN ? self::ACCEPT_ADMIN : self::ACCEPT_AUTHOR;
+    }
+
+    /**
+     * The default categories are created once; afterwards the lecturer
+     * manages them (and may also delete them).
+     */
+    public function areCategoriesInitialized(): bool
+    {
+        return $this->categories_initialized;
+    }
+
+    public function setCategoriesInitialized(bool $initialized): void
+    {
+        $this->categories_initialized = $initialized;
     }
 }

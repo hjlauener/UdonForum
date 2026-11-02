@@ -14,6 +14,8 @@ class ilUdfPost
     private string $body = '';
     private int $created = 0;
     private int $updated = 0;
+    private int $cat_id = 0;
+    private int $accepted_id = 0;
 
     public function getId(): int
     {
@@ -88,5 +90,36 @@ class ilUdfPost
     public function isEdited(): bool
     {
         return $this->updated > $this->created;
+    }
+
+    /**
+     * 0 = no category
+     */
+    public function getCatId(): int
+    {
+        return $this->cat_id;
+    }
+
+    public function setCatId(int $cat_id): void
+    {
+        $this->cat_id = $cat_id;
+    }
+
+    /**
+     * Id of the accepted answer (comment), 0 = none
+     */
+    public function getAcceptedId(): int
+    {
+        return $this->accepted_id;
+    }
+
+    public function setAcceptedId(int $accepted_id): void
+    {
+        $this->accepted_id = $accepted_id;
+    }
+
+    public function isAnswered(): bool
+    {
+        return $this->accepted_id > 0;
     }
 }

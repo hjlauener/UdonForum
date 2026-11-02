@@ -14,7 +14,10 @@ use ILIAS\UI\Component\Modal\Interruptive;
  *
  * Permissions:
  * - read:  read the forum, write posts and comments, edit/delete own ones
- * - write: settings, visibility, delete posts and comments of others
+ * - write: settings, visibility, categories, delete posts and comments of others
+ *
+ * Accepted answers: depending on the setting, the author of a post or the
+ * course/group admins (write permission) can mark one comment as accepted.
  *
  * @ilCtrl_isCalledBy ilObjUdonForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjUdonForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
@@ -23,20 +26,35 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 {
     private const TAB_CONTENT = 'content';
     private const TAB_PROPERTIES = 'properties';
+    private const TAB_CATEGORIES = 'categories';
 
     private const PARAM_POST = 'post_id';
     private const PARAM_COMMENT = 'comment_id';
     private const PARAM_PARENT = 'parent_id';
     private const PARAM_PAGE = 'page';
+    private const PARAM_CATEGORY = 'cat_id';
+    /** feed filter: category */
+    private const PARAM_FILTER_CAT = 'fcat';
+    /** feed filter: only posts without accepted answer */
+    private const PARAM_FILTER_OPEN = 'fopen';
     private const POST_FIELD_BODY = 'udf_body';
 
     private const POSTS_PER_PAGE = 25;
     private const PREVIEW_LENGTH = 300;
+    private const CATEGORY_COLORS = ['#e3ecf7', '#fdecc8', '#e6f4ea', '#f3e5f5', '#fde2e1', '#e0f2f1'];
 
     /** Commands that need write permission */
     private const WRITE_COMMANDS = [
         'editProperties',
         'updateProperties',
+        'showCategories',
+        'createCategory',
+        'saveCategory',
+        'editCategory',
+        'updateCategory',
+        'deleteCategory',
+        'moveCategoryUp',
+        'moveCategoryDown',
     ];
 
     /** Commands that need read permission (further checks inside) */
@@ -52,6 +70,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editComment',
         'updateComment',
         'deleteComment',
+        'acceptComment',
+        'unacceptComment',
     ];
 
     private ilUdfRepository $udf_repo;
@@ -64,6 +84,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private array $name_cache = [];
     /** @var array<int, bool> user id => has write permission */
     private array $lecturer_cache = [];
+    /** @var ilUdfCategory[]|null */
+    private ?array $categories = null;
 
     protected function afterConstructor(): void
     {
@@ -93,6 +115,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
     public function performCommand(string $cmd): void
     {
+        $this->ensureDefaultCategories();
+
         if (in_array($cmd, self::WRITE_COMMANDS, true)) {
             $this->checkPermission('write');
             $this->$cmd();
@@ -127,6 +151,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 $this->txt('properties'),
                 $this->ctrl->getLinkTarget($this, 'editProperties')
             );
+            $this->tabs->addTab(
+                self::TAB_CATEGORIES,
+                $this->txt('categories'),
+                $this->ctrl->getLinkTarget($this, 'showCategories')
+            );
         }
 
         $this->addPermissionTab();
@@ -146,6 +175,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 'title' => $this->object->getTitle(),
                 'desc' => $this->object->getLongDescription(),
                 'online' => $this->getForum()->isOnline(),
+                'accept_mode' => $this->getForum()->getAcceptMode(),
             ]);
         }
 
@@ -165,6 +195,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $forum->setTitle((string) $form->getInput('title'));
         $forum->setDescription((string) $form->getInput('desc'));
         $forum->setOnline((bool) $form->getInput('online'));
+        $forum->setAcceptMode((string) $form->getInput('accept_mode'));
         $forum->update();
 
         $this->tpl->setOnScreenMessage('success', $this->lng->txt('msg_obj_modified'), true);
@@ -190,6 +221,12 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $online->setInfo($this->txt('online_info'));
         $form->addItem($online);
 
+        $accept = new ilRadioGroupInputGUI($this->txt('accept_mode'), 'accept_mode');
+        $accept->setInfo($this->txt('accept_mode_info'));
+        $accept->addOption(new ilRadioOption($this->txt('accept_mode_author'), ilObjUdonForum::ACCEPT_AUTHOR));
+        $accept->addOption(new ilRadioOption($this->txt('accept_mode_admin'), ilObjUdonForum::ACCEPT_ADMIN));
+        $form->addItem($accept);
+
         $form->addCommandButton('updateProperties', $this->lng->txt('save'));
 
         return $form;
@@ -212,16 +249,29 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         }
 
         $page = $this->getRequestedInt($this->udf_query, self::PARAM_PAGE);
+        $filter_cat = $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_CAT);
+        if ($filter_cat > 0 && $this->getCategoryTitle($filter_cat) === null) {
+            $filter_cat = 0;
+        }
+        $filter_open = $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_OPEN) === 1;
+
         $posts = $this->udf_repo->getPostsForObject(
             $this->object->getId(),
             self::POSTS_PER_PAGE + 1,
-            $page * self::POSTS_PER_PAGE
+            $page * self::POSTS_PER_PAGE,
+            $filter_cat,
+            $filter_open
         );
         $has_more = count($posts) > self::POSTS_PER_PAGE;
         $posts = array_slice($posts, 0, self::POSTS_PER_PAGE);
 
+        $html = $this->getStyles() . '<div class="udf">';
+        $html .= $this->renderFilters($filter_cat, $filter_open);
+
         if ($posts === []) {
-            $this->tpl->setOnScreenMessage('info', $this->txt('no_posts'));
+            $message = ($filter_cat > 0 || $filter_open) ? $this->txt('no_posts_filtered') : $this->txt('no_posts');
+            $html .= '<p class="udf-empty">' . $this->esc($message) . '</p></div>';
+            $this->tpl->setContent($html);
             return;
         }
 
@@ -229,12 +279,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             array_map(static fn(ilUdfPost $p): int => $p->getId(), $posts)
         );
 
-        $html = $this->getStyles() . '<div class="udf">';
-        $html .= '<h2 class="udf-heading">' . $this->txt('latest_posts') . '</h2>';
         foreach ($posts as $post) {
             $html .= $this->renderPostCard($post, $counts[$post->getId()] ?? 0);
         }
-        $html .= $this->renderPager($page, $has_more);
+        $html .= $this->renderPager($page, $has_more, $filter_cat, $filter_open);
         $html .= '</div>';
 
         $this->tpl->setContent($html);
@@ -250,6 +298,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         }
 
         return '<article class="udf-card">'
+            . $this->renderPostLabels($post)
             . '<h3 class="udf-title"><a href="' . $this->esc($link) . '">' . $this->esc($post->getTitle()) . '</a></h3>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
             . ($preview !== '' ? '<div class="udf-preview">' . $this->esc($preview) . '</div>' : '')
@@ -258,7 +307,54 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             . '</article>';
     }
 
-    private function renderPager(int $page, bool $has_more): string
+    /**
+     * Category badge and "answered" badge above the title.
+     */
+    private function renderPostLabels(ilUdfPost $post): string
+    {
+        $labels = [];
+        $cat_title = $this->getCategoryTitle($post->getCatId());
+        if ($cat_title !== null) {
+            $labels[] = '<span class="udf-cat" style="background:' . $this->getCategoryColor($post->getCatId()) . '">'
+                . $this->esc($cat_title) . '</span>';
+        }
+        if ($post->isAnswered()) {
+            $labels[] = '<span class="udf-answered">✔ ' . $this->txt('answered') . '</span>';
+        }
+        return $labels !== [] ? '<div class="udf-labels">' . implode(' ', $labels) . '</div>' : '';
+    }
+
+    /**
+     * Filter chips: all / categories, and "unanswered".
+     */
+    private function renderFilters(int $filter_cat, bool $filter_open): string
+    {
+        $chips = [$this->renderChip($this->txt('all_posts'), $this->linkToFeed(0, 0, $filter_open), $filter_cat === 0)];
+        foreach ($this->getCategories() as $cat) {
+            $chips[] = $this->renderChip(
+                $cat->getTitle(),
+                $this->linkToFeed(0, $cat->getId(), $filter_open),
+                $filter_cat === $cat->getId()
+            );
+        }
+
+        $open_chip = $this->renderChip(
+            $this->txt('unanswered'),
+            $this->linkToFeed(0, $filter_cat, !$filter_open),
+            $filter_open
+        );
+
+        return '<nav class="udf-filters">' . implode('', $chips)
+            . '<span class="udf-filter-sep"></span>' . $open_chip . '</nav>';
+    }
+
+    private function renderChip(string $label, string $url, bool $active): string
+    {
+        return '<a class="udf-chip' . ($active ? ' udf-chip-active' : '') . '" href="' . $this->esc($url) . '"'
+            . ($active ? ' aria-current="true"' : '') . '>' . $this->esc($label) . '</a>';
+    }
+
+    private function renderPager(int $page, bool $has_more, int $filter_cat, bool $filter_open): string
     {
         if ($page === 0 && !$has_more) {
             return '';
@@ -266,20 +362,37 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         $buttons = [];
         if ($page > 0) {
-            $buttons[] = $this->ui_factory->button()->standard($this->txt('newer_posts'), $this->linkToPage($page - 1));
+            $buttons[] = $this->ui_factory->button()->standard(
+                $this->txt('newer_posts'),
+                $this->linkToFeed($page - 1, $filter_cat, $filter_open)
+            );
         }
         if ($has_more) {
-            $buttons[] = $this->ui_factory->button()->standard($this->txt('older_posts'), $this->linkToPage($page + 1));
+            $buttons[] = $this->ui_factory->button()->standard(
+                $this->txt('older_posts'),
+                $this->linkToFeed($page + 1, $filter_cat, $filter_open)
+            );
         }
 
         return '<div class="udf-pager">' . $this->ui_renderer->render($buttons) . '</div>';
     }
 
-    private function linkToPage(int $page): string
+    private function linkToFeed(int $page, int $filter_cat, bool $filter_open): string
     {
-        $this->ctrl->setParameter($this, self::PARAM_PAGE, $page);
+        $params = [
+            self::PARAM_PAGE => $page,
+            self::PARAM_FILTER_CAT => $filter_cat,
+            self::PARAM_FILTER_OPEN => (int) $filter_open,
+        ];
+        foreach ($params as $key => $value) {
+            if ($value > 0) {
+                $this->ctrl->setParameter($this, $key, $value);
+            }
+        }
         $link = $this->ctrl->getLinkTarget($this, 'showContent');
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_PAGE);
+        foreach (array_keys($params) as $key) {
+            $this->ctrl->clearParameterByClass(self::class, $key);
+        }
         return $link;
     }
 
@@ -321,6 +434,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         }
 
         $html .= '<article class="udf-card udf-card-full">'
+            . $this->renderPostLabels($post)
             . '<h2 class="udf-title">' . $this->esc($post->getTitle()) . '</h2>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
             . '<div class="udf-body">' . $this->formatText($post->getBody()) . '</div>'
@@ -331,10 +445,14 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $comments = $this->udf_repo->getCommentsForPost($post->getId());
         $children = [];
         $visible = 0;
+        $accepted = null;
         foreach ($comments as $comment) {
             $children[$comment->getParentId()][] = $comment;
             if (!$comment->isDeleted()) {
                 $visible++;
+                if ($comment->getId() === $post->getAcceptedId()) {
+                    $accepted = $comment;
+                }
             }
         }
 
@@ -343,6 +461,15 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         if ($this->canParticipate()) {
             $html .= $this->renderCommentForm($post, 0, $this->txt('write_comment'), $this->txt('send_comment'));
+        }
+
+        if ($accepted !== null) {
+            $html .= '<div class="udf-accepted-box">'
+                . '<div class="udf-accepted-label">✔ ' . $this->txt('accepted_answer') . '</div>'
+                . '<div class="udf-meta">' . $this->renderMeta($accepted->getUserId(), $accepted->getCreated(), $accepted->isEdited()) . '</div>'
+                . '<div class="udf-body">' . $this->formatText($accepted->getBody()) . '</div>'
+                . '<div class="udf-actions"><a href="#udf-c' . $accepted->getId() . '">' . $this->txt('show_in_discussion') . '</a></div>'
+                . '</div>';
         }
 
         if ($comments === []) {
@@ -368,11 +495,13 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         $html = '';
         foreach ($children[$parent_id] as $comment) {
-            $html .= '<details class="udf-comment" open id="udf-c' . $comment->getId() . '">';
+            $is_accepted = !$comment->isDeleted() && $comment->getId() === $post->getAcceptedId();
+            $html .= '<details class="udf-comment' . ($is_accepted ? ' udf-accepted' : '') . '" open id="udf-c' . $comment->getId() . '">';
             $html .= '<summary class="udf-meta">'
                 . ($comment->isDeleted()
                     ? '<span class="udf-deleted">' . $this->txt('deleted_comment') . '</span>'
                     : $this->renderMeta($comment->getUserId(), $comment->getCreated(), $comment->isEdited()))
+                . ($is_accepted ? ' <span class="udf-answered">✔ ' . $this->txt('accepted_answer') . '</span>' : '')
                 . '</summary>';
 
             if (!$comment->isDeleted()) {
@@ -398,6 +527,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $reply_form = '<details class="udf-reply"><summary>' . $this->txt('reply') . '</summary>'
                 . $this->renderCommentForm($post, $comment->getId(), $this->txt('write_reply'), $this->txt('send_reply'))
                 . '</details>';
+        }
+        if ($this->canAccept($post)) {
+            $actions[] = $comment->getId() === $post->getAcceptedId()
+                ? $this->renderLink($this->txt('unaccept'), $this->linkToComment('unacceptComment', $post, $comment))
+                : $this->renderLink($this->txt('accept'), $this->linkToComment('acceptComment', $post, $comment));
         }
         if ($this->isAuthor($comment->getUserId())) {
             $actions[] = $this->renderLink($this->txt('edit'), $this->linkToComment('editComment', $post, $comment));
@@ -471,6 +605,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $post->setUserId($this->udf_user->getId());
         $post->setTitle(trim((string) $form->getInput('title')));
         $post->setBody(trim((string) $form->getInput('body')));
+        $post->setCatId($this->getCategoryInput($form));
         $post->setCreated($now);
         $post->setUpdated($now);
         $this->udf_repo->savePost($post);
@@ -490,6 +625,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $form->setValuesByArray([
                 'title' => $post->getTitle(),
                 'body' => $post->getBody(),
+                'cat_id' => (string) $post->getCatId(),
             ]);
         }
         $this->tpl->setContent($form->getHTML());
@@ -509,6 +645,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         $post->setTitle(trim((string) $form->getInput('title')));
         $post->setBody(trim((string) $form->getInput('body')));
+        $post->setCatId($this->getCategoryInput($form));
         $post->setUpdated(time());
         $this->udf_repo->savePost($post);
 
@@ -539,6 +676,18 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $this->ctrl->setParameter($this, self::PARAM_POST, $post->getId());
             $form->setFormAction($this->ctrl->getFormAction($this, 'updatePost'));
             $this->ctrl->clearParameterByClass(self::class, self::PARAM_POST);
+        }
+
+        $categories = $this->getCategories();
+        if ($categories !== []) {
+            $options = ['' => $this->txt('choose_category')];
+            foreach ($categories as $cat) {
+                $options[(string) $cat->getId()] = $cat->getTitle();
+            }
+            $cat_input = new ilSelectInputGUI($this->txt('category'), 'cat_id');
+            $cat_input->setOptions($options);
+            $cat_input->setRequired(true);
+            $form->addItem($cat_input);
         }
 
         $title = new ilTextInputGUI($this->txt('post_title'), 'title');
@@ -670,6 +819,289 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $form->addCommandButton('showPost', $this->lng->txt('cancel'));
 
         return $form;
+    }
+
+    // ------------------------------------------------------------------
+    // Accepted answers
+    // ------------------------------------------------------------------
+
+    protected function acceptComment(): void
+    {
+        $post = $this->requirePost();
+        $comment = $this->requireComment($post);
+        if (!$this->canAccept($post)) {
+            $this->denyAndReturn($post);
+        }
+
+        $post->setAcceptedId($comment->getId());
+        $this->udf_repo->savePost($post);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('answer_accepted'), true);
+        $this->redirectToPost($post, 'udf-comments');
+    }
+
+    protected function unacceptComment(): void
+    {
+        $post = $this->requirePost();
+        if (!$this->canAccept($post)) {
+            $this->denyAndReturn($post);
+        }
+
+        $post->setAcceptedId(0);
+        $this->udf_repo->savePost($post);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('answer_unaccepted'), true);
+        $this->redirectToPost($post, 'udf-comments');
+    }
+
+    /**
+     * Depending on the setting: the author of the post, or course/group admins.
+     */
+    private function canAccept(ilUdfPost $post): bool
+    {
+        if ($this->getForum()->getAcceptMode() === ilObjUdonForum::ACCEPT_ADMIN) {
+            return $this->isModerator();
+        }
+        return $this->isAuthor($post->getUserId());
+    }
+
+    // ------------------------------------------------------------------
+    // Categories (lecturers)
+    // ------------------------------------------------------------------
+
+    /**
+     * Creates the default categories once per forum.
+     */
+    private function ensureDefaultCategories(): void
+    {
+        $forum = $this->getForum();
+        if ($forum->getId() <= 0 || $forum->areCategoriesInitialized()) {
+            return;
+        }
+
+        if ($this->udf_repo->getCategories($forum->getId()) === []) {
+            foreach (['default_cat_general', 'default_cat_questions', 'default_cat_exam'] as $key) {
+                $cat = new ilUdfCategory();
+                $cat->setObjId($forum->getId());
+                $cat->setTitle($this->txt($key));
+                $this->udf_repo->saveCategory($cat);
+            }
+        }
+
+        $this->udf_repo->markCategoriesInitialized($forum->getId());
+        $forum->setCategoriesInitialized(true);
+        $this->categories = null;
+    }
+
+    protected function showCategories(): void
+    {
+        $this->tabs->activateTab(self::TAB_CATEGORIES);
+
+        $this->toolbar->addComponent($this->ui_factory->button()->primary(
+            $this->txt('new_category'),
+            $this->ctrl->getLinkTarget($this, 'createCategory')
+        ));
+
+        $categories = $this->getCategories();
+        if ($categories === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('no_categories'));
+            return;
+        }
+
+        $counts = $this->udf_repo->countPostsPerCategory($this->object->getId());
+        $items = [];
+        $modals = [];
+        $last = count($categories) - 1;
+        foreach ($categories as $i => $cat) {
+            $actions = [
+                $this->ui_factory->button()->shy($this->txt('edit'), $this->linkToCategory('editCategory', $cat)),
+            ];
+            if ($i > 0) {
+                $actions[] = $this->ui_factory->button()->shy($this->txt('move_up'), $this->linkToCategory('moveCategoryUp', $cat));
+            }
+            if ($i < $last) {
+                $actions[] = $this->ui_factory->button()->shy($this->txt('move_down'), $this->linkToCategory('moveCategoryDown', $cat));
+            }
+            $modal = $this->buildConfirmModal(
+                $this->txt('confirm_delete_category'),
+                $this->linkToCategory('deleteCategory', $cat, true),
+                $cat->getId(),
+                $cat->getTitle(),
+                $this->lng->txt('delete')
+            );
+            $modals[] = $modal;
+            $actions[] = $this->ui_factory->button()->shy($this->lng->txt('delete'), '')
+                ->withOnClick($modal->getShowSignal());
+
+            $items[] = $this->ui_factory->item()->standard($this->esc($cat->getTitle()))
+                ->withProperties([$this->txt('posts') => (string) ($counts[$cat->getId()] ?? 0)])
+                ->withActions($this->ui_factory->dropdown()->standard($actions));
+        }
+
+        $panel = $this->ui_factory->panel()->listing()->standard(
+            $this->txt('categories'),
+            [$this->ui_factory->item()->group('', $items)]
+        );
+
+        $this->tpl->setContent($this->ui_renderer->render(array_merge([$panel], $modals)));
+    }
+
+    protected function createCategory(?ilPropertyFormGUI $form = null): void
+    {
+        $this->tabs->activateTab(self::TAB_CATEGORIES);
+        $form ??= $this->initCategoryForm(null);
+        $this->tpl->setContent($form->getHTML());
+    }
+
+    protected function saveCategory(): void
+    {
+        $form = $this->initCategoryForm(null);
+        if (!$form->checkInput()) {
+            $form->setValuesByPost();
+            $this->createCategory($form);
+            return;
+        }
+
+        $cat = new ilUdfCategory();
+        $cat->setObjId($this->object->getId());
+        $cat->setTitle(trim((string) $form->getInput('title')));
+        $this->udf_repo->saveCategory($cat);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('category_saved'), true);
+        $this->ctrl->redirect($this, 'showCategories');
+    }
+
+    protected function editCategory(?ilPropertyFormGUI $form = null): void
+    {
+        $cat = $this->requireCategory();
+        $this->tabs->activateTab(self::TAB_CATEGORIES);
+        if ($form === null) {
+            $form = $this->initCategoryForm($cat);
+            $form->setValuesByArray(['title' => $cat->getTitle()]);
+        }
+        $this->tpl->setContent($form->getHTML());
+    }
+
+    protected function updateCategory(): void
+    {
+        $cat = $this->requireCategory();
+        $form = $this->initCategoryForm($cat);
+        if (!$form->checkInput()) {
+            $form->setValuesByPost();
+            $this->editCategory($form);
+            return;
+        }
+
+        $cat->setTitle(trim((string) $form->getInput('title')));
+        $this->udf_repo->saveCategory($cat);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('category_saved'), true);
+        $this->ctrl->redirect($this, 'showCategories');
+    }
+
+    protected function deleteCategory(): void
+    {
+        $cat = $this->requireCategory();
+        $this->udf_repo->deleteCategory($cat);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('category_deleted'), true);
+        $this->ctrl->redirect($this, 'showCategories');
+    }
+
+    protected function moveCategoryUp(): void
+    {
+        $this->udf_repo->moveCategory($this->requireCategory(), -1);
+        $this->ctrl->redirect($this, 'showCategories');
+    }
+
+    protected function moveCategoryDown(): void
+    {
+        $this->udf_repo->moveCategory($this->requireCategory(), 1);
+        $this->ctrl->redirect($this, 'showCategories');
+    }
+
+    private function initCategoryForm(?ilUdfCategory $cat): ilPropertyFormGUI
+    {
+        $form = new ilPropertyFormGUI();
+        if ($cat === null) {
+            $form->setTitle($this->txt('new_category'));
+            $form->setFormAction($this->ctrl->getFormAction($this, 'saveCategory'));
+            $form->addCommandButton('saveCategory', $this->lng->txt('save'));
+        } else {
+            $form->setTitle($this->txt('edit_category'));
+            $form->setFormAction($this->linkToCategory('updateCategory', $cat, true));
+            $form->addCommandButton('updateCategory', $this->lng->txt('save'));
+        }
+        $form->addCommandButton('showCategories', $this->lng->txt('cancel'));
+
+        $title = new ilTextInputGUI($this->txt('category_title'), 'title');
+        $title->setRequired(true);
+        $title->setMaxLength(255);
+        $form->addItem($title);
+
+        return $form;
+    }
+
+    private function requireCategory(): ilUdfCategory
+    {
+        $id = $this->getRequestedInt($this->udf_query, self::PARAM_CATEGORY);
+        $cat = $id > 0 ? $this->udf_repo->getCategory($id) : null;
+        if ($cat === null || $cat->getObjId() !== $this->object->getId()) {
+            $this->tpl->setOnScreenMessage('failure', $this->txt('category_not_found'), true);
+            $this->ctrl->redirect($this, 'showCategories');
+        }
+        return $cat;
+    }
+
+    private function linkToCategory(string $cmd, ilUdfCategory $cat, bool $form_action = false): string
+    {
+        $this->ctrl->setParameter($this, self::PARAM_CATEGORY, $cat->getId());
+        $link = $form_action ? $this->ctrl->getFormAction($this, $cmd) : $this->ctrl->getLinkTarget($this, $cmd);
+        $this->ctrl->clearParameterByClass(self::class, self::PARAM_CATEGORY);
+        return $link;
+    }
+
+    /**
+     * @return ilUdfCategory[]
+     */
+    private function getCategories(): array
+    {
+        if ($this->categories === null) {
+            $this->categories = $this->udf_repo->getCategories($this->object->getId());
+        }
+        return $this->categories;
+    }
+
+    /**
+     * Title of a category of this forum, null if it does not exist (any more).
+     */
+    private function getCategoryTitle(int $cat_id): ?string
+    {
+        foreach ($this->getCategories() as $cat) {
+            if ($cat->getId() === $cat_id) {
+                return $cat->getTitle();
+            }
+        }
+        return null;
+    }
+
+    private function getCategoryColor(int $cat_id): string
+    {
+        foreach ($this->getCategories() as $i => $cat) {
+            if ($cat->getId() === $cat_id) {
+                return self::CATEGORY_COLORS[$i % count(self::CATEGORY_COLORS)];
+            }
+        }
+        return self::CATEGORY_COLORS[0];
+    }
+
+    /**
+     * Selected category of the post form; only categories of this forum are accepted.
+     */
+    private function getCategoryInput(ilPropertyFormGUI $form): int
+    {
+        $cat_id = (int) $form->getInput('cat_id');
+        return $this->getCategoryTitle($cat_id) !== null ? $cat_id : 0;
     }
 
     // ------------------------------------------------------------------
@@ -967,6 +1399,18 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 .udf-reply > summary { cursor: pointer; display: inline; font-weight: 600; color: #4c6586; }
 .udf-reply[open] { display: block; }
 .udf-pager { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.udf-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.25rem 0 1rem; }
+.udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #c8c8c8; border-radius: 999px; font-size: 0.85rem; color: #333; text-decoration: none; background: #fff; }
+.udf-chip:hover { border-color: #6f6f6f; text-decoration: none; }
+.udf-chip-active { background: #4c6586; border-color: #4c6586; color: #fff; }
+.udf-chip-active:hover { color: #fff; }
+.udf-filter-sep { width: 1px; height: 1.4rem; background: #d6d6d6; margin: 0 0.3rem; }
+.udf-labels { margin-bottom: 0.3rem; }
+.udf-cat { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; color: #333; }
+.udf-answered { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; background: #dff3e4; color: #1e7b34; }
+.udf-accepted-box { border: 2px solid #3d9b55; border-radius: 8px; padding: 0.6rem 0.9rem; margin: 0.5rem 0 1rem; background: #f4fbf6; }
+.udf-accepted-label { font-weight: 700; color: #1e7b34; margin-bottom: 0.2rem; }
+.udf-comment.udf-accepted { border-left-color: #3d9b55; border-left-width: 3px; }
 </style>
 CSS;
     }

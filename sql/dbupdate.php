@@ -51,3 +51,34 @@ if (!$ilDB->tableExists('rep_robj_xudf_cmt')) {
     $ilDB->createSequence('rep_robj_xudf_cmt');
 }
 ?>
+<#5>
+<?php
+/** @var ilDBInterface $ilDB */
+if (!$ilDB->tableColumnExists('rep_robj_xudf_data', 'accept_mode')) {
+    $ilDB->addTableColumn('rep_robj_xudf_data', 'accept_mode', ['type' => 'text', 'length' => 16, 'notnull' => true, 'default' => 'author']);
+}
+if (!$ilDB->tableColumnExists('rep_robj_xudf_data', 'cats_init')) {
+    $ilDB->addTableColumn('rep_robj_xudf_data', 'cats_init', ['type' => 'integer', 'length' => 1, 'notnull' => true, 'default' => 0]);
+}
+if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'cat_id')) {
+    $ilDB->addTableColumn('rep_robj_xudf_post', 'cat_id', ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0]);
+}
+if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'accepted_id')) {
+    $ilDB->addTableColumn('rep_robj_xudf_post', 'accepted_id', ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0]);
+}
+?>
+<#6>
+<?php
+/** @var ilDBInterface $ilDB */
+if (!$ilDB->tableExists('rep_robj_xudf_cat')) {
+    $ilDB->createTable('rep_robj_xudf_cat', [
+        'id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'obj_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'title' => ['type' => 'text', 'length' => 255, 'notnull' => true, 'default' => ''],
+        'sort_order' => ['type' => 'integer', 'length' => 4, 'notnull' => true, 'default' => 0],
+    ]);
+    $ilDB->addPrimaryKey('rep_robj_xudf_cat', ['id']);
+    $ilDB->addIndex('rep_robj_xudf_cat', ['obj_id'], 'i1');
+    $ilDB->createSequence('rep_robj_xudf_cat');
+}
+?>

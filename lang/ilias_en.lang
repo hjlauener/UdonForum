@@ -13,7 +13,6 @@ offline#:#Not visible
 object_offline_info#:#This forum is not visible for course members. You can make it visible under “Settings”.
 confirm#:#Confirm
 no_permission#:#You do not have permission to do this.
-latest_posts#:#Latest posts
 no_posts#:#There are no posts in this forum yet. Create the first post!
 newer_posts#:#Newer posts
 older_posts#:#Older posts
@@ -54,3 +53,34 @@ time_minutes#:#%s min. ago
 time_hours#:#%s hrs. ago
 time_yesterday#:#yesterday
 time_days#:#%s days ago
+all_posts#:#All
+no_posts_filtered#:#No posts found.
+categories#:#Categories
+category#:#Category
+choose_category#:#– Please choose –
+new_category#:#New category
+edit_category#:#Edit category
+category_title#:#Name of the category
+no_categories#:#There are no categories yet. Posts can then be created without a category.
+category_saved#:#The category has been saved.
+category_deleted#:#The category has been deleted.
+category_not_found#:#The category was not found.
+confirm_delete_category#:#Do you really want to delete this category? The posts are kept and will no longer belong to a category.
+move_up#:#Move up
+move_down#:#Move down
+posts#:#Posts
+default_cat_general#:#General
+default_cat_questions#:#Questions
+default_cat_exam#:#Exam
+accept_mode#:#Accepted answers
+accept_mode_info#:#An accepted answer is shown at the top of the comments, and the post counts as answered.
+accept_mode_author#:#The person who created the post marks the accepted answer
+accept_mode_admin#:#The course admins (persons with edit permission) mark the accepted answer
+accepted_answer#:#Accepted answer
+answered#:#Answered
+unanswered#:#Unanswered
+accept#:#Accept as answer
+unaccept#:#Remove acceptance
+answer_accepted#:#The answer has been accepted.
+answer_unaccepted#:#The answer is no longer accepted.
+show_in_discussion#:#Show in the discussion

@@ -7,11 +7,11 @@ if (is_file(__DIR__ . '/../vendor/autoload.php')) {
 }
 
 /**
- * Repository object plugin "Udon Forum" (type xfrm) for ILIAS 11.
+ * Repository object plugin "Udon Forum" (type xudf) for ILIAS 11.
  */
 class ilUdonForumPlugin extends ilRepositoryObjectPlugin
 {
-    public const ID = 'xfrm';
+    public const ID = 'xudf';
     public const NAME = 'UdonForum';
 
     public function getPluginName(): string

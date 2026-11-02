@@ -1,8 +1,8 @@
-obj_xfrm#:#Udon Forum
-objs_xfrm#:#Udon Foren
-xfrm_new#:#Neues Udon Forum
-xfrm_add#:#Udon Forum hinzufügen
-obj_xfrm_duplicate#:#Udon Forum kopieren
+obj_xudf#:#Udon Forum
+objs_xudf#:#Udon Foren
+xudf_new#:#Neues Udon Forum
+xudf_add#:#Udon Forum hinzufügen
+obj_xudf_duplicate#:#Udon Forum kopieren
 edit#:#Bearbeiten
 content#:#Inhalt
 properties#:#Einstellungen

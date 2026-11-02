@@ -7,7 +7,7 @@ vom Typ **„Udon Forum“** hinzufügen lässt.
 |---|---|
 | Plugin-Name | `UdonForum` |
 | Anzeigename | Udon Forum |
-| Plugin-ID / Objekttyp | `xfrm` |
+| Plugin-ID / Objekttyp | `xudf` |
 | Slot | `Services/Repository/RepositoryObject` (`robj`) |
 | ILIAS | 11.0 – 11.999 |
 | PHP | ≥ 8.3 |
@@ -35,7 +35,7 @@ vom Typ **„Udon Forum“** hinzufügen lässt.
    **UdonForum** installieren und aktivieren.
 
 4. Rechte vergeben: In der Rechteverwaltung der Kategorie/des Kurses (bzw.
-   in den Rollenvorlagen) das Recht **„Udon Forum anlegen“** (`create_xfrm`)
+   in den Rollenvorlagen) das Recht **„Udon Forum anlegen“** (`create_xudf`)
    für die gewünschten Rollen freischalten.
 
 5. Im Magazin über **Neues Objekt hinzufügen › Udon Forum** ein Forum anlegen.
@@ -59,7 +59,7 @@ classes/
   class.ilObjUdonForumAccess.php   Zugriffsprüfung
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
-templates/images/icon_xfrm.svg     Objekt-Icon
+templates/images/icon_xudf.svg     Objekt-Icon
 ```
 
 ## Nächste Schritte

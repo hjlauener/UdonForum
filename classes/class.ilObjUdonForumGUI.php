@@ -181,6 +181,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 'title' => $this->object->getTitle(),
                 'desc' => $this->object->getLongDescription(),
                 'online' => $this->getForum()->isOnline(),
+                'use_markdown' => $this->getForum()->usesMarkdown(),
             ]);
         }
 
@@ -200,6 +201,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $forum->setTitle((string) $form->getInput('title'));
         $forum->setDescription((string) $form->getInput('desc'));
         $forum->setOnline((bool) $form->getInput('online'));
+        $forum->setUseMarkdown((bool) $form->getInput('use_markdown'));
         $forum->update();
 
         $this->tpl->setOnScreenMessage('success', $this->lng->txt('msg_obj_modified'), true);
@@ -224,6 +226,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $online = new ilCheckboxInputGUI($this->txt('online'), 'online');
         $online->setInfo($this->txt('online_info'));
         $form->addItem($online);
+
+        $markdown = new ilCheckboxInputGUI($this->txt('use_markdown'), 'use_markdown');
+        $markdown->setInfo($this->txt('use_markdown_info'));
+        $form->addItem($markdown);
 
         $form->addCommandButton('updateProperties', $this->lng->txt('save'));
 
@@ -322,7 +328,9 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     ): string {
         $link = $this->linkToPost('showPost', $post);
 
-        $preview = $this->getMarkdownRenderer()->toPlainText($post->getBody());
+        $preview = $post->isMarkdown()
+            ? $this->getMarkdownRenderer()->toPlainText($post->getBody())
+            : trim((string) preg_replace('/\s+/u', ' ', $post->getBody()));
         if (mb_strlen($preview) > self::PREVIEW_LENGTH) {
             $preview = rtrim(mb_substr($preview, 0, self::PREVIEW_LENGTH)) . ' …';
         }
@@ -835,7 +843,7 @@ JS);
             . $this->renderPostLabels($post)
             . '<h2 class="udf-title">' . $this->esc($post->getTitle()) . '</h2>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
-            . '<div class="udf-body udf-md">' . $this->getMarkdownRenderer()->render($post->getBody()) . '</div>'
+            . '<div class="udf-body udf-md">' . $this->renderBody($post) . '</div>'
             . '</div></article>';
 
         $html .= '</div>';
@@ -970,8 +978,17 @@ JS);
             ->withMaxLength(255)
             ->withValue($post !== null ? $post->getTitle() : '');
 
-        $inputs['body'] = $field->markdown($this->getMarkdownRenderer(), $this->txt('post_body'), $this->txt('post_body_info'))
-            ->withValue($post !== null ? $post->getBody() : '');
+        // text is required; only spaces do not count as text
+        $body = $this->getForum()->usesMarkdown()
+            ? $field->markdown($this->getMarkdownRenderer(), $this->txt('post_body'), $this->txt('post_body_info'))
+            : $field->textarea($this->txt('post_body'));
+        $inputs['body'] = $body
+            ->withRequired(true)
+            ->withValue($post !== null ? $post->getBody() : '')
+            ->withAdditionalTransformation($this->udf_refinery->custom()->constraint(
+                static fn($value): bool => trim((string) $value) !== '',
+                $this->txt('body_required')
+            ));
 
         $action = $post === null
             ? $this->ctrl->getFormAction($this, 'savePost')
@@ -990,6 +1007,7 @@ JS);
         $post->setCatId($this->getCategoryTitle($cat_id) !== null ? $cat_id : 0);
         $post->setTitle(trim((string) ($data['title'] ?? '')));
         $post->setBody(trim((string) ($data['body'] ?? '')));
+        $post->setBodyFormat($this->getForum()->usesMarkdown() ? ilUdfPost::FORMAT_MARKDOWN : ilUdfPost::FORMAT_TEXT);
     }
 
     private function showPostForm(StandardForm $form, string $title, ?ilUdfPost $post = null): void
@@ -1005,6 +1023,16 @@ JS);
             . $this->ui_renderer->render($form)
             . '</div>'
         );
+    }
+
+    /**
+     * Text of a post as HTML: Markdown or plain text, depending on how it was written.
+     */
+    private function renderBody(ilUdfPost $post): string
+    {
+        return $post->isMarkdown()
+            ? $this->getMarkdownRenderer()->render($post->getBody())
+            : $this->getMarkdownRenderer()->renderPlain($post->getBody());
     }
 
     private function getMarkdownRenderer(): ilUdfMarkdownRenderer
@@ -1508,8 +1536,11 @@ JS);
 .udf { max-width: 860px; }
 /* post form: full width, the text field (Markdown) with the label above it and taller */
 .udf.udf-post-form { max-width: none; }
-.udf-post-form .c-input[data-il-ui-component="markdown-field-input"] { grid-template-columns: 100%; grid-template-areas: "label" "field" "error" "help"; }
-.udf-post-form .c-input[data-il-ui-component="markdown-field-input"] > label { margin-bottom: 0.5rem; }
+.udf-post-form .c-input[data-il-ui-component="markdown-field-input"],
+.udf-post-form .c-input[data-il-ui-component="textarea-field-input"] { grid-template-columns: 100%; grid-template-areas: "label" "field" "error" "help"; }
+.udf-post-form .c-input[data-il-ui-component="markdown-field-input"] > label,
+.udf-post-form .c-input[data-il-ui-component="textarea-field-input"] > label { margin-bottom: 0.5rem; }
+.udf-post-form [data-il-ui-component="textarea-field-input"] .c-input__field textarea { height: 26rem !important; min-height: 16rem; width: 100%; }
 .udf-post-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea { height: 26rem !important; min-height: 16rem; width: 100%; }
 .udf-post-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 26rem; }
 .udf-heading { font-size: 1.1rem; margin: 0.5rem 0 0.75rem; }

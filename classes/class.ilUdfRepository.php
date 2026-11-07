@@ -112,6 +112,7 @@ class ilUdfRepository
             'created' => ['integer', $post->getCreated()],
             'updated' => ['integer', $post->getUpdated()],
             'cat_id' => ['integer', $post->getCatId()],
+            'body_format' => ['text', $post->getBodyFormat()],
         ];
 
         if ($post->getId() === 0) {
@@ -475,6 +476,7 @@ class ilUdfRepository
         $post->setUpdated((int) $rec['updated']);
         $post->setCatId((int) ($rec['cat_id'] ?? 0));
         $post->setScore((int) ($rec['score'] ?? 0));
+        $post->setBodyFormat((string) ($rec['body_format'] ?? ilUdfPost::FORMAT_MARKDOWN));
         return $post;
     }
 

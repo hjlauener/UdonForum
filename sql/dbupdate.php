@@ -119,3 +119,15 @@ if (!$ilDB->tableExists('rep_robj_xudf_read')) {
     $ilDB->addPrimaryKey('rep_robj_xudf_read', ['user_id', 'obj_id', 'post_id']);
 }
 ?>
+<#9>
+<?php
+/** @var ilDBInterface $ilDB */
+// setting "Markdown editor" (on by default)
+if (!$ilDB->tableColumnExists('rep_robj_xudf_data', 'use_markdown')) {
+    $ilDB->addTableColumn('rep_robj_xudf_data', 'use_markdown', ['type' => 'integer', 'length' => 1, 'notnull' => true, 'default' => 1]);
+}
+// format of a post: 'md' = Markdown, 'text' = plain text
+if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'body_format')) {
+    $ilDB->addTableColumn('rep_robj_xudf_post', 'body_format', ['type' => 'text', 'length' => 8, 'notnull' => true, 'default' => 'md']);
+}
+?>

@@ -78,6 +78,9 @@ bewertet, sortiert und nach Kategorien gefiltert werden.
 - **Markdown-Editor** von ILIAS (UI-Formular): Knöpfe für fett, kursiv, Listen,
   Links, Überschriften und eine Vorschau. Angezeigt wird der Text mit der
   Markdown-Umwandlung von ILIAS (HTML im Text wird nicht ausgeführt).
+  In den *Einstellungen* abschaltbar (bei neuen Foren eingeschaltet); dann gibt
+  es ein einfaches Textfeld. Jeder Beitrag wird so angezeigt, wie er
+  geschrieben wurde. Der Text eines Beitrags ist Pflicht.
 - **Kategorien** (Reiter *Kategorien*): Dozierende legen sie an, benennen um,
   sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
   und *Prüfung*.

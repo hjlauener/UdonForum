@@ -8,7 +8,7 @@ use ILIAS\UI\Component\Input\Field\MarkdownRenderer;
 
 /**
  * Markdown for the Udon Forum: preview of the Markdown input field (ILIAS UI)
- * and conversion of stored posts to HTML.
+ * and conversion of stored posts (Markdown or plain text) to HTML.
  *
  * The conversion uses the ILIAS Refinery (CommonMark): raw HTML in the text
  * is escaped, unsafe links (e.g. javascript:) are not allowed, single line
@@ -62,6 +62,23 @@ class ilUdfMarkdownRenderer implements MarkdownRenderer
             return '';
         }
         $html = $this->refinery->string()->markdown()->toHTML()->transform($markdown_text);
+        return $this->makeClickable($html);
+    }
+
+    /**
+     * Plain text (written without Markdown editor): escaped, line breaks kept,
+     * web addresses clickable.
+     */
+    public function renderPlain(string $text): string
+    {
+        if (trim($text) === '') {
+            return '';
+        }
+        return '<p>' . nl2br($this->makeClickable(htmlspecialchars($text, ENT_QUOTES, 'UTF-8'))) . '</p>';
+    }
+
+    private function makeClickable(string $html): string
+    {
         $html = $this->refinery->string()->makeClickable()->transform($html);
 
         // punctuation at the end of a web address belongs to the sentence, not to the link

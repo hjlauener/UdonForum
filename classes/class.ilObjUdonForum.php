@@ -13,6 +13,7 @@ class ilObjUdonForum extends ilObjectPlugin
     protected ilDBInterface $udf_db;
     protected bool $online = false;
     protected bool $categories_initialized = false;
+    protected bool $use_markdown = true;
 
     public function __construct(int $a_ref_id = 0)
     {
@@ -40,6 +41,7 @@ class ilObjUdonForum extends ilObjectPlugin
         if ($rec = $this->udf_db->fetchAssoc($set)) {
             $this->online = (bool) $rec['is_online'];
             $this->categories_initialized = (bool) $rec['cats_init'];
+            $this->use_markdown = (bool) ($rec['use_markdown'] ?? 1);
         }
     }
 
@@ -60,6 +62,7 @@ class ilObjUdonForum extends ilObjectPlugin
         return [
             'is_online' => ['integer', (int) $this->online],
             'cats_init' => ['integer', (int) $this->categories_initialized],
+            'use_markdown' => ['integer', (int) $this->use_markdown],
         ];
     }
 
@@ -92,5 +95,19 @@ class ilObjUdonForum extends ilObjectPlugin
     public function setCategoriesInitialized(bool $initialized): void
     {
         $this->categories_initialized = $initialized;
+    }
+
+    /**
+     * Setting "Markdown editor": posts are written with the Markdown editor
+     * (on by default) or with a simple text field.
+     */
+    public function usesMarkdown(): bool
+    {
+        return $this->use_markdown;
+    }
+
+    public function setUseMarkdown(bool $use_markdown): void
+    {
+        $this->use_markdown = $use_markdown;
     }
 }

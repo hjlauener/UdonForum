@@ -9,6 +9,8 @@ properties#:#Settings
 status#:#Status
 online#:#Visible
 online_info#:#Course members can only see the forum if it is visible.
+use_markdown#:#Markdown editor
+use_markdown_info#:#Posts are written with the Markdown editor: buttons for bold, italic, lists and links as well as a preview. Without the Markdown editor there is a simple text field. Existing posts are still shown as they were written.
 offline#:#Not visible
 object_offline_info#:#This forum is not visible for course members. You can make it visible under “Settings”.
 confirm#:#Confirm
@@ -24,6 +26,7 @@ actions#:#Actions
 post_title#:#Title
 post_body#:#Text
 post_body_info#:#The buttons above the field help with formatting (bold, italic, lists, links). The preview shows how the post will look.
+body_required#:#Please enter a text.
 publish#:#Publish
 post_created#:#The post has been published.
 post_updated#:#The post has been saved.

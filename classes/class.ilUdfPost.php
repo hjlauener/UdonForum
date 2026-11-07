@@ -7,6 +7,11 @@ declare(strict_types=1);
  */
 class ilUdfPost
 {
+    /** text written with the Markdown editor */
+    public const FORMAT_MARKDOWN = 'md';
+    /** plain text (simple text field) */
+    public const FORMAT_TEXT = 'text';
+
     private int $id = 0;
     private int $obj_id = 0;
     private int $user_id = 0;
@@ -15,6 +20,7 @@ class ilUdfPost
     private int $created = 0;
     private int $updated = 0;
     private int $score = 0;
+    private string $body_format = self::FORMAT_MARKDOWN;
     private int $cat_id = 0;
 
     public function getId(): int
@@ -119,5 +125,20 @@ class ilUdfPost
     public function setScore(int $score): void
     {
         $this->score = $score;
+    }
+
+    public function getBodyFormat(): string
+    {
+        return $this->body_format;
+    }
+
+    public function setBodyFormat(string $body_format): void
+    {
+        $this->body_format = $body_format === self::FORMAT_TEXT ? self::FORMAT_TEXT : self::FORMAT_MARKDOWN;
+    }
+
+    public function isMarkdown(): bool
+    {
+        return $this->body_format === self::FORMAT_MARKDOWN;
     }
 }

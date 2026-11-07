@@ -9,6 +9,8 @@ properties#:#Einstellungen
 status#:#Status
 online#:#Sichtbar
 online_info#:#Nur wenn das Forum sichtbar geschaltet ist, können Kursmitglieder es sehen.
+use_markdown#:#Markdown-Editor
+use_markdown_info#:#Beiträge werden mit dem Markdown-Editor geschrieben: Knöpfe für fett, kursiv, Listen und Links sowie eine Vorschau. Ohne Markdown-Editor gibt es ein einfaches Textfeld. Bestehende Beiträge werden weiterhin so angezeigt, wie sie geschrieben wurden.
 offline#:#Nicht sichtbar
 object_offline_info#:#Dieses Forum ist für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ sichtbar schalten.
 confirm#:#Bestätigen
@@ -24,6 +26,7 @@ actions#:#Aktionen
 post_title#:#Titel
 post_body#:#Text
 post_body_info#:#Die Knöpfe über dem Feld helfen beim Formatieren (fett, kursiv, Listen, Links). Die Vorschau zeigt, wie der Beitrag aussehen wird.
+body_required#:#Bitte geben Sie einen Text ein.
 publish#:#Veröffentlichen
 post_created#:#Der Beitrag wurde veröffentlicht.
 post_updated#:#Der Beitrag wurde gespeichert.

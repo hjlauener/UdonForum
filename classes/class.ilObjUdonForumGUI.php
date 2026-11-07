@@ -997,7 +997,7 @@ JS);
         $back = $post !== null ? $this->linkToPost('showPost', $post) : $this->ctrl->getLinkTarget($this, 'showContent');
         $this->tpl->setContent(
             $this->getStyles()
-            . '<div class="udf">'
+            . '<div class="udf udf-post-form">'
             . '<p class="udf-back">' . $this->ui_renderer->render(
                 $this->ui_factory->link()->standard('← ' . $this->txt($post !== null ? 'back_to_post' : 'back_to_forum'), $back)
             ) . '</p>'
@@ -1506,6 +1506,12 @@ JS);
         return <<<'CSS'
 <style>
 .udf { max-width: 860px; }
+/* post form: full width, the text field (Markdown) with the label above it and taller */
+.udf.udf-post-form { max-width: none; }
+.udf-post-form .c-input[data-il-ui-component="markdown-field-input"] { grid-template-columns: 100%; grid-template-areas: "label" "field" "error" "help"; }
+.udf-post-form .c-input[data-il-ui-component="markdown-field-input"] > label { margin-bottom: 0.5rem; }
+.udf-post-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea { height: 26rem !important; min-height: 16rem; width: 100%; }
+.udf-post-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 26rem; }
 .udf-heading { font-size: 1.1rem; margin: 0.5rem 0 0.75rem; }
 .udf-card { border: 1px solid #d6d6d6; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; background: #fff; }
 .udf-card:hover { border-color: #9a9a9a; }

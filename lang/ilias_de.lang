@@ -92,6 +92,14 @@ bubbles_tooltip#:#%s: %s Beiträge, %s Antworten, %s aktive Personen
 bubbles_legend_size#:#Kreis: ein Thema (Kategorie) – je grösser, desto mehr Beiträge
 bubbles_legend_overlap#:#Überlappung: verwandte Themen, in denen dieselben Personen aktiv sind
 bubbles_legend_pie#:#Kuchendiagramm: Anteil Beiträge (dunkel) und Antworten (hell)
+stat_pearls#:#Perlenkette
+pearls_count#:#%s Perlen
+pearls_count_one#:#1 Perle
+pearl_tooltip_post#:#%s · %s · Beitrag eröffnet: „%s“
+pearl_tooltip_reply#:#%s · %s · Antwort auf „%s“
+pearls_legend_post#:#Perle: Beitrag eröffnet
+pearls_legend_reply#:#Ring: Antwort
+pearls_legend_line#:#Linie: verbindet die Beiträge einer Person in zeitlicher Reihenfolge – sortiert nach Anzahl Perlen
 stat_participants#:#Teilnehmende
 stat_lastname#:#Name
 stat_firstname#:#Vorname

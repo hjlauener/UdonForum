@@ -105,6 +105,10 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
     grösser, desto mehr Beiträge; verwandte Themen (dieselben aktiven Personen)
     überlappen sich, nicht verwandte nie; in der Mitte ein Kuchendiagramm mit
     dem Anteil Beiträge und Antworten
+  - Unterreiter *Perlenkette*: pro Person eine Zeile auf einer gemeinsamen
+    Zeitachse; jeder Beitrag ist eine Perle (gefüllt: Beitrag eröffnet, Ring:
+    Antwort), die Perlen einer Person sind mit einer Linie verbunden; sortiert
+    nach Anzahl Perlen
   - Beim Einführen des Rechts erhalten es alle Rollen, die das Forum
     bearbeiten dürfen.
 - **Mitglieder** (Reiter für alle): Unterreiter *Ansicht* mit allen Teilnehmenden
@@ -141,6 +145,7 @@ classes/
   class.ilUdfStatisticsTable.php   Daten und Sortierung der Statistik-Tabelle
   class.ilUdfNetworkGraph.php      Spinnennetz (Layout und SVG)
   class.ilUdfBubbleChart.php       Bubble-Charts (Layout und SVG)
+  class.ilUdfPearlChart.php        Perlenkette (Zeitachse und SVG)
   class.ilUdfCreatures.php         1000 ways Forum: die vier Figuren, Icons, Verteilung
   class.ilUdfMembersTable.php      Daten und Sortierung der Mitglieder-Tabelle
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen

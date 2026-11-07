@@ -407,6 +407,34 @@ class ilUdfRepository
         ]);
     }
 
+    /**
+     * All contributions of a forum in time order (for the "Perlenkette").
+     *
+     * @return array<int, array{user_id: int, created: int, type: string, title: string}> type: 'post' or 'reply'
+     */
+    public function getContributionTimeline(int $obj_id): array
+    {
+        $list = [];
+        $set = $this->db->query(
+            'SELECT user_id, created, title FROM ' . self::TABLE_POST .
+            ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'post', 'title' => (string) $rec['title']];
+        }
+        $set = $this->db->query(
+            'SELECT c.user_id, c.created, p.title FROM ' . self::TABLE_COMMENT . ' c' .
+            ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+            ' WHERE p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' AND c.is_deleted = ' . $this->db->quote(0, 'integer')
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'reply', 'title' => (string) $rec['title']];
+        }
+        usort($list, static fn(array $a, array $b): int => $a['created'] <=> $b['created']);
+        return $list;
+    }
+
     // ------------------------------------------------------------------
     // Votes
     // ------------------------------------------------------------------

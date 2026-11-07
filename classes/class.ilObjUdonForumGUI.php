@@ -43,6 +43,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const SUBTAB_STAT_STANDARD = 'stat_standard';
     private const SUBTAB_STAT_NETWORK = 'stat_network';
     private const SUBTAB_STAT_BUBBLES = 'stat_bubbles';
+    private const SUBTAB_STAT_PEARLS = 'stat_pearls';
     /** colours of the topics in the bubble chart (distinguishable when overlapping) */
     private const BUBBLE_COLORS = ['#c95100', '#1971c2', '#2f9e44', '#ae3ec9', '#e03131', '#0c8599', '#f08c00', '#5f3dc4'];
     private const BUBBLE_COLOR_NO_CATEGORY = '#868e96';
@@ -94,6 +95,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'showStatistics',
         'showNetwork',
         'showBubbles',
+        'showPearls',
     ];
 
     /** Commands that need read permission (further checks inside) */
@@ -1751,6 +1753,11 @@ JS);
             $this->txt('stat_bubbles'),
             $this->ctrl->getLinkTarget($this, 'showBubbles')
         );
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_PEARLS,
+            $this->txt('stat_pearls'),
+            $this->ctrl->getLinkTarget($this, 'showPearls')
+        );
         $this->tabs->activateSubTab($active);
     }
 
@@ -1787,6 +1794,56 @@ JS);
 
         // the sort button of the table is hidden; sorting via the column headers stays
         $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $this->ui_renderer->render($table) . '</div>');
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Perlenkette": one row per person on a time
+     * axis, every post (filled) and reply (ring) is a pearl, connected by a
+     * line; sorted by the number of pearls.
+     */
+    protected function showPearls(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_PEARLS);
+
+        $timeline = $this->udf_repo->getContributionTimeline($this->object->getId());
+        if ($timeline === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('stat_no_activity'));
+            return;
+        }
+
+        $rows = [];
+        foreach ($timeline as $item) {
+            $user_id = $item['user_id'];
+            if (!isset($rows[$user_id])) {
+                $rows[$user_id] = [
+                    'label' => html_entity_decode($this->getUserName($user_id), ENT_QUOTES, 'UTF-8'),
+                    'items' => [],
+                ];
+            }
+            $rows[$user_id]['items'][] = [
+                $item['created'],
+                $item['type'] === 'post' ? ilUdfPearlChart::TYPE_POST : ilUdfPearlChart::TYPE_REPLY,
+                sprintf(
+                    $this->txt($item['type'] === 'post' ? 'pearl_tooltip_post' : 'pearl_tooltip_reply'),
+                    $rows[$user_id]['label'],
+                    $this->formatDate($item['created']),
+                    $item['title']
+                ),
+            ];
+        }
+
+        $chart = new ilUdfPearlChart($rows);
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf-stat">'
+            . '<p class="udf-network-legend">'
+            . '<span class="udf-legend-pearl"></span> ' . $this->esc($this->txt('pearls_legend_post'))
+            . '<span class="udf-legend-pearl udf-legend-pearl-reply"></span> ' . $this->esc($this->txt('pearls_legend_reply'))
+            . '<span class="udf-legend-line"></span> ' . $this->esc($this->txt('pearls_legend_line'))
+            . '</p>'
+            . '<div class="udf-network-box">' . $chart->toSvg($this->txt('stat_pearls'), $this->txt('pearls_count'), $this->txt('pearls_count_one')) . '</div>'
+            . '</div>'
+        );
     }
 
     /**
@@ -2500,6 +2557,10 @@ JS);
 .udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c95100; background: radial-gradient(circle, #000 0 3px, rgba(247,166,74,0.35) 3.5px); }
 .udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(169,66,8,0.45); margin-left: 1rem; }
 .udf-bubbles { width: 100%; height: auto; display: block; }
+.udf-pearls { width: 100%; height: auto; display: block; }
+.udf-pearl:hover { stroke-width: 4; }
+.udf-legend-pearl { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #c95100; border: 2px solid #c95100; }
+.udf-legend-pearl-reply { background: #fff; margin-left: 1rem; }
 .udf-bubble { cursor: default; }
 .udf-legend-bubble { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #1971c2; background: rgba(25,113,194,0.22); }
 .udf-legend-overlap { display: inline-block; width: 30px; height: 18px; margin-left: 1rem; background:

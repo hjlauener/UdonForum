@@ -92,6 +92,14 @@ bubbles_tooltip#:#%s: %s posts, %s replies, %s active people
 bubbles_legend_size#:#Circle: one topic (category) – the larger, the more posts
 bubbles_legend_overlap#:#Overlap: related topics in which the same people are active
 bubbles_legend_pie#:#Pie chart: share of posts (dark) and replies (light)
+stat_pearls#:#String of pearls
+pearls_count#:#%s pearls
+pearls_count_one#:#1 pearl
+pearl_tooltip_post#:#%s · %s · post opened: “%s”
+pearl_tooltip_reply#:#%s · %s · reply to “%s”
+pearls_legend_post#:#Pearl: post opened
+pearls_legend_reply#:#Ring: reply
+pearls_legend_line#:#Line: connects the contributions of a person in time order – sorted by number of pearls
 stat_participants#:#Participants
 stat_lastname#:#Last name
 stat_firstname#:#First name

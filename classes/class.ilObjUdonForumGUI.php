@@ -1479,10 +1479,12 @@ JS);
 .udf-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .udf-sorting { justify-content: flex-end; margin-left: auto; }
 .udf-sorting-periods { display: flex; flex-wrap: wrap; gap: 0.4rem; flex-basis: 100%; justify-content: flex-end; }
-.udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #c8c8c8; border-radius: 999px; font-size: 0.85rem; color: #333; text-decoration: none; background: #fff; }
-.udf-chip:hover { border-color: #6f6f6f; text-decoration: none; }
-.udf-chip-active { background: #4c6586; border-color: #4c6586; color: #fff; }
-.udf-chip-active:hover { color: #fff; }
+.udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #f0b27a; border-radius: 999px; font-size: 0.85rem; color: #a94208; text-decoration: none; background: #fff; }
+.udf-chip:hover, .udf-chip:focus { border-color: #c95100; background: #fff4e6; color: #a94208; text-decoration: none; }
+.udf-chip-active, .udf-chip-active:hover, .udf-chip-active:focus { background: #c95100; border-color: #c95100; color: #fff; }
+/* "Neuer Beitrag" (primary button in the toolbar of the forum) in orange */
+.c-toolbar .btn.btn-primary { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
+.c-toolbar .btn.btn-primary:hover, .c-toolbar .btn.btn-primary:focus { background-color: #a94208 !important; border-color: #a94208 !important; color: #fff !important; }
 .udf-labels { margin-bottom: 0.3rem; }
 .udf-cat { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; color: #333; }
 .udf-card-voted { display: flex; gap: 0.75rem; align-items: flex-start; }

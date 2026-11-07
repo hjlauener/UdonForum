@@ -63,7 +63,8 @@ Forum im Stil von Reddit: Beiträge werden bewertet, sortiert und nach
 Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
 
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
-- **Online / offline** (Reiter *Einstellungen*)
+- **Online / offline** und **Markdown-Editor** direkt im Formular beim Anlegen
+  (Online aus, Markdown-Editor ein); später änderbar im Reiter *Einstellungen*
 - **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau),
   25 pro Seite; Klick auf den Titel öffnet den ganzen Beitrag
 - **Filter** links: Alle / pro Kategorie. Kategorie und Sortierung bleiben pro

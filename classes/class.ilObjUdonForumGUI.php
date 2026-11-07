@@ -45,6 +45,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const PARAM_RETURN = 'ret';
     private const POST_FIELD_DIRECTION = 'udf_dir';
     private const POST_FIELD_ASYNC = 'udf_async';
+    private const CREATE_FIELD_ONLINE = 'udf_online';
+    private const CREATE_FIELD_MARKDOWN = 'udf_markdown';
 
     private const PERIOD_WEEK = 'week';
     private const PERIOD_MONTH = 'month';
@@ -127,7 +129,53 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
     public function getAfterCreationCmd(): string
     {
-        return 'editProperties';
+        // "Online" and "Markdown-Editor" are already set in the creation form
+        return 'showContent';
+    }
+
+    /**
+     * Creation form: title and description (as in ILIAS) plus the settings
+     * "Online" (off) and "Markdown-Editor" (on).
+     */
+    protected function initCreateForm(string $new_type): StandardForm|ilPropertyFormGUI|array
+    {
+        $field = $this->ui_factory->input()->field();
+
+        $fields = [];
+        $fields['title_and_description'] = (new ilObject())->getObjectProperties()
+            ->getPropertyTitleAndDescription()
+            ->toForm($this->lng, $field, $this->refinery);
+
+        $didactic_templates = $this->didacticTemplatesToForm();
+        if ($didactic_templates !== null) {
+            $fields['didactic_templates'] = $didactic_templates;
+        }
+
+        $fields[self::CREATE_FIELD_ONLINE] = $field->checkbox($this->txt('online'), $this->txt('online_info'))
+            ->withValue(false);
+        $fields[self::CREATE_FIELD_MARKDOWN] = $field->checkbox($this->txt('use_markdown'), $this->txt('use_markdown_info'))
+            ->withValue(true);
+
+        return $this->ui_factory->input()->container()->form()->standard(
+            $this->ctrl->getFormAction($this, 'save'),
+            $fields
+        )->withSubmitLabel($this->txt(ilUdonForumPlugin::ID . '_add'));
+    }
+
+    /**
+     * After creating: store "Online" and "Markdown-Editor" from the creation form.
+     */
+    protected function afterSave(ilObject $new_object): void
+    {
+        if ($new_object instanceof ilObjUdonForum) {
+            $data = $this->initCreateForm(ilUdonForumPlugin::ID)->withRequest($this->udf_request)->getData();
+            if (is_array($data)) {
+                $new_object->setOnline((bool) ($data[self::CREATE_FIELD_ONLINE] ?? false));
+                $new_object->setUseMarkdown((bool) ($data[self::CREATE_FIELD_MARKDOWN] ?? true));
+                $new_object->update();
+            }
+        }
+        parent::afterSave($new_object);
     }
 
     public function getStandardCmd(): string

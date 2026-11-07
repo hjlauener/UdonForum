@@ -31,7 +31,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 {
     private const TAB_CONTENT = 'content';
     private const TAB_PROPERTIES = 'properties';
-    private const TAB_CATEGORIES = 'categories';
+    private const SUBTAB_SETTINGS = 'settings';
+    private const SUBTAB_CATEGORIES = 'categories';
     private const TAB_STATISTICS = 'statistics';
     private const TAB_MEMBERS = 'members';
     private const SUBTAB_MEMBERS_VIEW = 'members_view';
@@ -180,16 +181,42 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $fields[self::CREATE_FIELD_MARKDOWN] = $field->checkbox($this->txt('use_markdown'), $this->txt('use_markdown_info'))
             ->withValue(true);
 
-        // cursor directly in the first field (title)
-        $this->tpl->addOnLoadCode(
-            "(function () { var f = document.querySelector('form.c-form input[type=\"text\"], form.c-form textarea');"
-            . " if (f) { f.focus(); } })();"
-        );
+        // cursor directly in the title
+        $this->addFocusTitleScript();
 
         return $this->ui_factory->input()->container()->form()->standard(
             $this->ctrl->getFormAction($this, 'save'),
             $fields
         )->withSubmitLabel($this->txt(ilUdonForumPlugin::ID . '_add'));
+    }
+
+    /**
+     * Puts the cursor into the title field of the form on the page. ILIAS may
+     * move the focus after loading the page (e.g. main bar), therefore the
+     * focus is checked again shortly afterwards – but only as long as the
+     * cursor is not already in another field of the form.
+     */
+    private function addFocusTitleScript(): void
+    {
+        $this->tpl->addOnLoadCode(<<<'JS'
+(function () {
+    var selector = 'form.c-form [data-il-ui-component="text-field-input"] input, form.c-form input[type="text"]';
+    function focusTitle() {
+        var title = document.querySelector(selector);
+        if (!title) { return; }
+        var active = document.activeElement;
+        if (active && active !== document.body && active !== title && active.closest && active.closest('form.c-form')) {
+            return; // the user is already working in the form
+        }
+        if (active !== title) {
+            title.focus();
+            title.setSelectionRange(title.value.length, title.value.length);
+        }
+    }
+    focusTitle();
+    [100, 400, 1000].forEach(function (t) { window.setTimeout(focusTitle, t); });
+})();
+JS);
     }
 
     /**
@@ -262,11 +289,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 $this->txt('properties'),
                 $this->ctrl->getLinkTarget($this, 'editProperties')
             );
-            $this->tabs->addTab(
-                self::TAB_CATEGORIES,
-                $this->txt('categories'),
-                $this->ctrl->getLinkTarget($this, 'showCategories')
-            );
         }
 
         if ($this->canViewStatistics()) {
@@ -284,9 +306,20 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     // Settings of the repository object
     // ------------------------------------------------------------------
 
-    protected function editProperties(?ilPropertyFormGUI $form = null): void
+    /**
+     * Tab "Einstellungen" with the sub tabs "Einstellungen" and "Kategorien".
+     */
+    private function setSettingsSubTabs(string $active): void
     {
         $this->tabs->activateTab(self::TAB_PROPERTIES);
+        $this->tabs->addSubTab(self::SUBTAB_SETTINGS, $this->txt('properties'), $this->ctrl->getLinkTarget($this, 'editProperties'));
+        $this->tabs->addSubTab(self::SUBTAB_CATEGORIES, $this->txt('categories'), $this->ctrl->getLinkTarget($this, 'showCategories'));
+        $this->tabs->activateSubTab($active);
+    }
+
+    protected function editProperties(?ilPropertyFormGUI $form = null): void
+    {
+        $this->setSettingsSubTabs(self::SUBTAB_SETTINGS);
 
         if ($form === null) {
             $form = $this->initPropertiesForm();
@@ -1200,12 +1233,20 @@ JS);
         });
     }
     if (form.querySelector('.c-input__error-msg')) { return; }
-    if (title && (!select || select.value !== '')) {
-        title.focus();
-        title.setSelectionRange(title.value.length, title.value.length);
-    } else if (select) {
-        select.focus();
+    var target = (title && (!select || select.value !== '')) ? title : select;
+    function focusTarget() {
+        if (!target) { return; }
+        var active = document.activeElement;
+        if (active && active !== document.body && active !== target && form.contains(active)) {
+            return; // the user is already working in the form
+        }
+        if (active !== target) {
+            target.focus();
+            if (target === title) { title.setSelectionRange(title.value.length, title.value.length); }
+        }
     }
+    focusTarget();
+    [100, 400, 1000].forEach(function (t) { window.setTimeout(focusTarget, t); });
 })();
 JS);
     }
@@ -1954,7 +1995,7 @@ JS);
 
     protected function showCategories(): void
     {
-        $this->tabs->activateTab(self::TAB_CATEGORIES);
+        $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
 
         $this->toolbar->addComponent($this->ui_factory->button()->primary(
             $this->txt('new_category'),
@@ -2007,7 +2048,7 @@ JS);
 
     protected function createCategory(?ilPropertyFormGUI $form = null): void
     {
-        $this->tabs->activateTab(self::TAB_CATEGORIES);
+        $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
         $form ??= $this->initCategoryForm(null);
         $this->tpl->setContent($form->getHTML());
     }
@@ -2033,7 +2074,7 @@ JS);
     protected function editCategory(?ilPropertyFormGUI $form = null): void
     {
         $cat = $this->requireCategory();
-        $this->tabs->activateTab(self::TAB_CATEGORIES);
+        $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
         if ($form === null) {
             $form = $this->initCategoryForm($cat);
             $form->setValuesByArray(['title' => $cat->getTitle()]);

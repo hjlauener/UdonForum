@@ -85,7 +85,7 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   In den *Einstellungen* abschaltbar (bei neuen Foren eingeschaltet); dann gibt
   es ein einfaches Textfeld. Jeder Beitrag wird so angezeigt, wie er
   geschrieben wurde. Der Text eines Beitrags ist Pflicht.
-- **Kategorien** (Reiter *Kategorien*): Dozierende legen sie an, benennen um,
+- **Kategorien** (Reiter *Einstellungen*, Unterreiter *Kategorien*): Dozierende legen sie an, benennen um,
   sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
   und *Prüfung*.
 - **Ungelesen**: Etikett „Neu“ für neue Beiträge anderer; „Alle als gelesen

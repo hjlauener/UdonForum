@@ -120,7 +120,9 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   *Tanuki* (Beispiele), *Kodama* (Verbinden und Schlichten). Zusätzliche Spalte
   in *Mitglieder*, Etikett mit Icon neben dem Namen in Beiträgen und Antworten,
   Hinweis über dem Schreibfeld. Dozierende ändern die Rollen im Unterreiter
-  *Rollen zuteilen* oder mischen sie neu.
+  *Rollen zuteilen* oder mischen sie neu. Die Dozierenden (Administratoren des
+  Kurses/der Gruppe) haben die Rolle *Chef* (大将) mit Krone – bei mehreren
+  *Chef 1*, *Chef 2* usw. (Reihenfolge nach Benutzerkonto).
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
 
 Rechte: *Lesen* = lesen, Beiträge und Antworten schreiben, bewerten;

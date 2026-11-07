@@ -142,6 +142,11 @@ creature_tanuki_hint#:#Like the shape-shifting raccoon dog, you make abstract th
 creature_kodama#:#Kodama
 creature_kodama_role#:#The connector
 creature_kodama_hint#:#Like the tree spirit carrying the echo through the forest, you connect: link posts, summarise, look for common ground and mediate. For example: “If I combine A and B …”, “You both actually mean …”, “In summary: …”.
+creature_chef#:#Chef
+creature_chef_numbered#:#Chef %s
+creature_chef_role#:#Leads the discussion
+creature_chef_hint#:#As chef you lead the discussion: set impulses and questions, make sure that all four roles have their say, and record the results at the end. For example: “What do you think about …?”, “Kitsune, what speaks against it?”, “Let us record: …”.
+chef_info#:#The lecturers (administrators of the course or group) automatically have the role “Chef”, with several “Chef 1”, “Chef 2” and so on.
 reshuffle#:#Reshuffle
 confirm_reshuffle#:#Do you want to distribute the roles of all members anew at random? The current assignment will be lost.
 roles_saved#:#The roles have been saved.

@@ -1530,15 +1530,31 @@ JS);
         if (!$this->getForum()->isThousandWays()) {
             return null;
         }
+        if (($this->getMembers()[$user_id] ?? null) === self::ROLE_ADMIN) {
+            return ilUdfCreatures::CHEF;
+        }
         $this->udf_creatures ??= $this->udf_repo->getCreatures($this->object->getId());
         return $this->udf_creatures[$user_id] ?? null;
     }
 
-    private function renderCreatureLabel(string $creature): string
+    /**
+     * Name of the role of a person: "Kitsune", "Chef" or "Chef 2" (several admins).
+     */
+    private function getCreatureName(string $creature, int $user_id): string
+    {
+        if ($creature !== ilUdfCreatures::CHEF) {
+            return $this->txt('creature_' . $creature);
+        }
+        $admins = array_keys(array_filter($this->getMembers(), static fn(string $role): bool => $role === self::ROLE_ADMIN));
+        $number = ilUdfCreatures::chefNumbers($admins)[$user_id] ?? 0;
+        return $number > 0 ? sprintf($this->txt('creature_chef_numbered'), $number) : $this->txt('creature_chef');
+    }
+
+    private function renderCreatureLabel(string $creature, int $user_id): string
     {
         return '<span class="udf-creature" style="--udf-creature:' . ilUdfCreatures::color($creature) . '"'
             . ' title="' . $this->esc($this->txt('creature_' . $creature . '_role')) . '">'
-            . ilUdfCreatures::icon($creature, 16) . $this->esc($this->txt('creature_' . $creature)) . '</span>';
+            . ilUdfCreatures::icon($creature, 16) . $this->esc($this->getCreatureName($creature, $user_id)) . '</span>';
     }
 
     /**
@@ -1546,7 +1562,8 @@ JS);
      */
     private function renderCreatureHint(): string
     {
-        $creature = $this->getCreatureOf($this->udf_user->getId());
+        $user_id = $this->udf_user->getId();
+        $creature = $this->getCreatureOf($user_id);
         if ($creature === null) {
             return '';
         }
@@ -1555,7 +1572,7 @@ JS);
             . '<div><div class="udf-creature-hint-title">'
             . $this->esc(sprintf(
                 $this->txt('creature_your_role'),
-                $this->txt('creature_' . $creature),
+                $this->getCreatureName($creature, $user_id),
                 ilUdfCreatures::kanji($creature),
                 $this->txt('creature_' . $creature . '_role')
             ))
@@ -1600,7 +1617,7 @@ JS);
             ];
             if ($thousand_ways) {
                 $records[$user_id]['creature'] = $creature !== null
-                    ? $this->txt('creature_' . $creature) . ' – ' . $this->txt('creature_' . $creature . '_role')
+                    ? $this->getCreatureName($creature, $user_id) . ' – ' . $this->txt('creature_' . $creature . '_role')
                     : '–';
             }
         }
@@ -1626,7 +1643,7 @@ JS);
         $legend = '';
         if ($thousand_ways) {
             $legend = '<div class="udf-creature-legend">';
-            foreach (ilUdfCreatures::ALL as $creature) {
+            foreach ([ilUdfCreatures::CHEF, ...ilUdfCreatures::ALL] as $creature) {
                 $legend .= '<div class="udf-creature-card" style="--udf-creature:' . ilUdfCreatures::color($creature) . '">'
                     . ilUdfCreatures::icon($creature, 36)
                     . '<div><strong>' . $this->esc($this->txt('creature_' . $creature)) . '</strong> '
@@ -1668,6 +1685,7 @@ JS);
     {
         $form = new ilPropertyFormGUI();
         $form->setTitle($this->txt('members_roles'));
+        $form->setDescription($this->txt('chef_info'));
         $form->setFormAction($this->ctrl->getFormAction($this, 'saveCreatures'));
 
         $options = [];
@@ -2423,9 +2441,10 @@ JS);
     private function renderMeta(int $user_id, int $created, bool $edited): string
     {
         $creature = $this->getCreatureOf($user_id);
+        $is_chef = $creature === ilUdfCreatures::CHEF;
         $parts = ['<span class="udf-author">' . $this->getUserName($user_id) . '</span>'
-            . ($this->isLecturer($user_id) ? ' <span class="udf-badge">' . $this->txt('lecturer') . '</span>' : '')
-            . ($creature !== null ? ' ' . $this->renderCreatureLabel($creature) : '')];
+            . (!$is_chef && $this->isLecturer($user_id) ? ' <span class="udf-badge">' . $this->txt('lecturer') . '</span>' : '')
+            . ($creature !== null ? ' ' . $this->renderCreatureLabel($creature, $user_id) : '')];
         $parts[] = '<span title="' . $this->esc($this->formatDate($created)) . '">' . $this->esc($this->formatRelativeTime($created)) . '</span>';
         if ($edited) {
             $parts[] = '<span class="udf-edited">' . $this->txt('edited') . '</span>';

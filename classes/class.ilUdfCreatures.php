@@ -11,6 +11,10 @@ declare(strict_types=1);
  * - Tanuki   (狸):   brings examples and makes things concrete
  * - Kodama   (木霊): connects, summarises and mediates
  *
+ * The course/group admins (lecturers) do not take part in the random
+ * distribution: they have the role "Chef" (大将, taishō), with several admins
+ * numbered "Chef 1", "Chef 2", ...
+ *
  * Texts (name, role, hint) come from the language files:
  * creature_<key>, creature_<key>_role, creature_<key>_hint.
  */
@@ -20,6 +24,8 @@ class ilUdfCreatures
     public const KITSUNE = 'kitsune';
     public const TANUKI = 'tanuki';
     public const KODAMA = 'kodama';
+    /** role of the lecturers (course/group admins), not distributed randomly */
+    public const CHEF = 'chef';
 
     public const ALL = [self::HAKUTAKU, self::KITSUNE, self::TANUKI, self::KODAMA];
 
@@ -28,6 +34,7 @@ class ilUdfCreatures
         self::KITSUNE => '#d9480f',
         self::TANUKI => '#8d5a2b',
         self::KODAMA => '#2f9e44',
+        self::CHEF => '#212529',
     ];
 
     private const KANJI = [
@@ -35,11 +42,36 @@ class ilUdfCreatures
         self::KITSUNE => '狐',
         self::TANUKI => '狸',
         self::KODAMA => '木霊',
+        self::CHEF => '大将',
     ];
 
+    /**
+     * One of the four creatures that are distributed among the members.
+     */
     public static function isValid(string $creature): bool
     {
         return in_array($creature, self::ALL, true);
+    }
+
+    /**
+     * Numbers of the chefs: with one admin no number (0), with several
+     * 1, 2, ... in the order of their user accounts (stable).
+     *
+     * @param int[] $admin_ids
+     * @return array<int, int> user id => number (0 = only one chef)
+     */
+    public static function chefNumbers(array $admin_ids): array
+    {
+        $ids = array_values(array_unique(array_map('intval', $admin_ids)));
+        sort($ids);
+        if (count($ids) === 1) {
+            return [$ids[0] => 0];
+        }
+        $numbers = [];
+        foreach ($ids as $i => $id) {
+            $numbers[$id] = $i + 1;
+        }
+        return $numbers;
     }
 
     public static function color(string $creature): string
@@ -78,6 +110,10 @@ class ilUdfCreatures
             self::KODAMA => '<path d="M12 4.5c3.3 0 5.8 2.4 5.8 5.4 0 2.6-1.9 4.7-4.4 5.2V19h-2.8v-3.9c-2.5-.5-4.4-2.6-4.4-5.2 0-3 2.5-5.4 5.8-5.4z" fill="#fff"/>'
                 . '<circle cx="10.2" cy="9.8" r=".9" fill="' . $color . '"/><circle cx="13.8" cy="9.8" r=".9" fill="' . $color . '"/>'
                 . '<path d="M10.6 12.3c.8.6 2 .6 2.8 0" stroke="' . $color . '" stroke-width="1" fill="none" stroke-linecap="round"/>',
+            // golden crown
+            self::CHEF => '<path d="M5.2 15.6 4.4 8.2l4.2 3.3L12 5.6l3.4 5.9 4.2-3.3-.8 7.4z" fill="#f2c94c"/>'
+                . '<rect x="5.2" y="16.6" width="13.6" height="2.2" rx=".6" fill="#f2c94c"/>'
+                . '<circle cx="12" cy="12.6" r="1" fill="' . $color . '"/>',
             default => '',
         };
 

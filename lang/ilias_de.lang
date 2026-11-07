@@ -142,6 +142,11 @@ creature_tanuki_hint#:#Wie der verwandlungsfreudige Marderhund machen Sie Abstra
 creature_kodama#:#Kodama
 creature_kodama_role#:#Die Verbinderin
 creature_kodama_hint#:#Wie der Baumgeist, der das Echo durch den Wald trägt, verbinden Sie: Knüpfen Sie Beiträge zusammen, fassen Sie zusammen, suchen Sie Gemeinsamkeiten und schlichten Sie. Zum Beispiel: „Wenn ich A und B zusammennehme …“, „Ihr meint eigentlich beide …“, „Zusammengefasst: …“.
+creature_chef#:#Chef
+creature_chef_numbered#:#Chef %s
+creature_chef_role#:#Leitet die Diskussion
+creature_chef_hint#:#Als Chef leiten Sie die Diskussion: Geben Sie Impulse und Fragen vor, achten Sie darauf, dass alle vier Rollen zu Wort kommen, und halten Sie am Schluss die Ergebnisse fest. Zum Beispiel: „Was meint ihr zu …?“, „Kitsune, was spricht dagegen?“, „Wir halten fest: …“.
+chef_info#:#Die Dozierenden (Administratoren des Kurses bzw. der Gruppe) haben automatisch die Rolle „Chef“, bei mehreren „Chef 1“, „Chef 2“ usw.
 reshuffle#:#Neu mischen
 confirm_reshuffle#:#Sollen die Rollen aller Mitglieder neu und zufällig verteilt werden? Die bisherige Zuteilung geht verloren.
 roles_saved#:#Die Rollen wurden gespeichert.

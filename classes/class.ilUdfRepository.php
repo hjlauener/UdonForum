@@ -300,6 +300,29 @@ class ilUdfRepository
         return $result;
     }
 
+    /**
+     * Replies between people: who replied to whose post, and how often
+     * (replies to one's own post do not count).
+     *
+     * @return array<int, array{0: int, 1: int, 2: int}> [replying user, author of the post, number]
+     */
+    public function getReplyInteractions(int $obj_id): array
+    {
+        $set = $this->db->query(
+            'SELECT c.user_id replier, p.user_id author, COUNT(*) cnt FROM ' . self::TABLE_COMMENT . ' c' .
+            ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+            ' WHERE p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' AND c.is_deleted = ' . $this->db->quote(0, 'integer') .
+            ' AND c.user_id <> p.user_id' .
+            ' GROUP BY c.user_id, p.user_id'
+        );
+        $list = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $list[] = [(int) $rec['replier'], (int) $rec['author'], (int) $rec['cnt']];
+        }
+        return $list;
+    }
+
     // ------------------------------------------------------------------
     // Votes
     // ------------------------------------------------------------------

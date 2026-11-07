@@ -29,6 +29,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const TAB_CATEGORIES = 'categories';
     private const TAB_STATISTICS = 'statistics';
     private const SUBTAB_STAT_STANDARD = 'stat_standard';
+    private const SUBTAB_STAT_NETWORK = 'stat_network';
 
     private const PARAM_POST = 'post_id';
     private const PARAM_REPLY = 'reply_id';
@@ -70,6 +71,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     /** Commands that need the permission "Statistik einsehen" */
     private const STATISTICS_COMMANDS = [
         'showStatistics',
+        'showNetwork',
     ];
 
     /** Commands that need read permission (further checks inside) */
@@ -98,7 +100,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private ilObjUser $udf_user;
     private ServerRequestInterface $udf_request;
     private ?ilUdfMarkdownRenderer $udf_markdown = null;
-    private ilTree $udf_tree;
 
     /** @var array<int, string> user id => escaped name */
     private array $udf_name_cache = [];
@@ -117,7 +118,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $this->udf_post = $DIC->http()->wrapper()->post();
         $this->udf_user = $DIC->user();
         $this->udf_request = $DIC->http()->request();
-        $this->udf_tree = $DIC->repositoryTree();
     }
 
     final public function getType(): string
@@ -1334,11 +1334,7 @@ JS);
         return $this->access->checkAccess(ilUdonForumPlugin::OP_STATISTICS, '', $this->object->getRefId());
     }
 
-    /**
-     * Tab "Statistik", sub tab "Standard": table of all participants of the
-     * course/group (and everybody who wrote in the forum), sortable by every column.
-     */
-    protected function showStatistics(): void
+    private function setStatisticsSubTabs(string $active): void
     {
         $this->tabs->activateTab(self::TAB_STATISTICS);
         $this->tabs->addSubTab(
@@ -1346,7 +1342,27 @@ JS);
             $this->txt('stat_standard'),
             $this->ctrl->getLinkTarget($this, 'showStatistics')
         );
-        $this->tabs->activateSubTab(self::SUBTAB_STAT_STANDARD);
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_NETWORK,
+            $this->txt('stat_network'),
+            $this->ctrl->getLinkTarget($this, 'showNetwork')
+        );
+        $this->tabs->activateSubTab($active);
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Standard": table of everybody who was active in
+     * the forum (opened a post or replied), sortable by every column header.
+     */
+    protected function showStatistics(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_STANDARD);
+
+        $records = $this->buildStatisticsRecords();
+        if ($records === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('stat_no_activity'));
+            return;
+        }
 
         $columns_factory = $this->ui_factory->table()->column();
         $columns = [
@@ -1359,13 +1375,61 @@ JS);
         ];
 
         $table = $this->ui_factory->table()->data(
-            new ilUdfStatisticsTable($this->buildStatisticsRecords()),
+            new ilUdfStatisticsTable($records),
             $this->txt('stat_participants'),
             $columns
         )->withId('udf_stat_' . $this->object->getId())
          ->withRequest($this->udf_request);
 
-        $this->tpl->setContent($this->ui_renderer->render($table));
+        // the sort button of the table is hidden; sorting via the column headers stays
+        $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $this->ui_renderer->render($table) . '</div>');
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Spinnennetz": who wrote how many posts (circle)
+     * and who replied to whom (lines).
+     */
+    protected function showNetwork(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_NETWORK);
+
+        $texts = $this->udf_repo->getTextsPerUser($this->object->getId());
+        if ($texts === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('stat_no_activity'));
+            return;
+        }
+
+        $nodes = [];
+        foreach ($texts as $user_id => $user_texts) {
+            $posts = count($user_texts['posts'] ?? []);
+            $replies = count($user_texts['replies'] ?? []);
+            $name = html_entity_decode($this->getUserName($user_id), ENT_QUOTES, 'UTF-8');
+            $nodes[$user_id] = [
+                'label' => $name,
+                'tooltip' => sprintf($this->txt('network_node_tooltip'), $name, $posts, $replies),
+                'posts' => $posts,
+            ];
+        }
+
+        $edges = [];
+        foreach (ilUdfNetworkGraph::mergeInteractions($this->udf_repo->getReplyInteractions($this->object->getId())) as [$a, $b, $weight]) {
+            if (!isset($nodes[$a], $nodes[$b])) {
+                continue;
+            }
+            $edges[] = [$a, $b, $weight, sprintf($this->txt('network_edge_tooltip'), $nodes[$a]['label'], $nodes[$b]['label'], $weight)];
+        }
+
+        $graph = new ilUdfNetworkGraph($nodes, $edges);
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf-stat">'
+            . '<p class="udf-network-legend">'
+            . '<span class="udf-legend-ring"></span> ' . $this->esc($this->txt('network_legend_ring'))
+            . '<span class="udf-legend-line"></span> ' . $this->esc($this->txt('network_legend_line'))
+            . '</p>'
+            . '<div class="udf-network-box">' . $graph->toSvg($this->txt('stat_network')) . '</div>'
+            . '</div>'
+        );
     }
 
     /**
@@ -1373,25 +1437,14 @@ JS);
      */
     private function buildStatisticsRecords(): array
     {
-        $user_ids = [];
-
-        // participants of the course or group the forum is in
-        $parent_ref_id = (int) $this->udf_tree->getParentId($this->object->getRefId());
-        if (in_array(ilObject::_lookupType($parent_ref_id, true), ['crs', 'grp'], true)) {
-            $user_ids = array_map('intval', ilParticipants::getInstance($parent_ref_id)->getParticipants());
-        }
-
-        // and everybody who wrote something (e.g. no longer a member)
+        // only people who were active in the forum: opened a post or replied
         $texts = $this->udf_repo->getTextsPerUser($this->object->getId());
-        $user_ids = array_unique(array_merge($user_ids, array_keys($texts)));
+        $user_ids = array_keys($texts);
 
         $renderer = $this->getMarkdownRenderer();
         $records = [];
         foreach ($user_ids as $user_id) {
             $name = ilObjUser::_lookupName($user_id);
-            if (($name['login'] ?? '') === '' && !isset($texts[$user_id])) {
-                continue; // deleted user without contributions
-            }
 
             $words = 0;
             foreach (array_merge($texts[$user_id]['posts'] ?? [], $texts[$user_id]['replies'] ?? []) as [$body, $format]) {
@@ -1948,6 +2001,14 @@ JS);
 .udf-reply-actions { font-size: 0.85rem; }
 .udf-reply-actions a, .udf-reply-actions button { font-weight: 600; }
 .udf-reply-form { margin-top: 1rem; }
+/* statistics: no sort button above the table (sorting via column headers) */
+.udf-stat .il-viewcontrol-sortation { display: none !important; }
+.udf-network-box { border: 1px solid #f0b27a; border-radius: 8px; background: #fff; padding: 0.5rem; }
+.udf-network { width: 100%; height: auto; display: block; }
+.udf-network-node:hover circle { stroke-width: 3; }
+.udf-network-legend { font-size: 0.85rem; color: #555; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c95100; background: radial-gradient(circle, #000 0 3px, rgba(247,166,74,0.35) 3.5px); }
+.udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(169,66,8,0.45); margin-left: 1rem; }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea,
 .udf-reply-form [data-il-ui-component="textarea-field-input"] .c-input__field textarea { height: 10rem !important; min-height: 6rem; }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 10rem; }

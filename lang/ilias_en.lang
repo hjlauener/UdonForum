@@ -78,6 +78,12 @@ udf_statistics#:#View statistics
 xudf_udf_statistics#:#View the statistics of the Udon Forum (tab “Statistics”)
 statistics#:#Statistics
 stat_standard#:#Standard
+stat_network#:#Spider web
+stat_no_activity#:#Nobody has been active in the forum yet.
+network_node_tooltip#:#%s: %s posts opened, %s replies
+network_edge_tooltip#:#%s and %s: %s replies to each other
+network_legend_ring#:#Circle: grows with every post opened
+network_legend_line#:#Line: replies between two people – the more, the thicker
 stat_participants#:#Participants
 stat_lastname#:#Last name
 stat_firstname#:#First name

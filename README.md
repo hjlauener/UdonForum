@@ -93,11 +93,15 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   Textfeld je nach Einstellung, Text Pflicht); Antworten älteste zuerst,
   bearbeiten (Autor), löschen (Autor oder Kursleitung) mit Rückfrage
 - **Statistik** (eigenes Recht „Statistik einsehen“): Reiter *Statistik*,
-  Unterreiter *Standard* mit allen Teilnehmenden des Kurses/der Gruppe (und
-  allen, die im Forum geschrieben haben): Name, Vorname, E-Mail,
-  „Forumsbeitrag eröffnet“, „Forumsantwort“, „Anzahl Wörter“ (Text der
-  Beiträge und Antworten) – nach jeder Spalte sortierbar. Beim Einführen des
-  Rechts erhalten es alle Rollen, die das Forum bearbeiten dürfen.
+  - Unterreiter *Standard*: alle, die im Forum aktiv waren (Beitrag eröffnet
+    oder geantwortet): Name, Vorname, E-Mail, „Forumsbeitrag eröffnet“,
+    „Forumsantwort“, „Anzahl Wörter“ (Text der Beiträge und Antworten) –
+    sortierbar über die Spaltenköpfe
+  - Unterreiter *Spinnennetz*: jede aktive Person als Punkt mit Namen; der
+    Kreis darum wächst mit jedem eröffneten Beitrag; Linien zwischen Personen,
+    die einander geantwortet haben – je mehr Antworten, desto dicker
+  - Beim Einführen des Rechts erhalten es alle Rollen, die das Forum
+    bearbeiten dürfen.
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
 
 Rechte: *Lesen* = lesen, Beiträge und Antworten schreiben, bewerten;
@@ -120,6 +124,7 @@ classes/
   class.ilUdfMarkdownRenderer.php  Markdown: Vorschau im Editor, Anzeige der Beiträge
   class.ilUdfReply.php             Antwort auf einen Beitrag
   class.ilUdfStatisticsTable.php   Daten und Sortierung der Statistik-Tabelle
+  class.ilUdfNetworkGraph.php      Spinnennetz (Layout und SVG)
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon

@@ -74,7 +74,10 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   Neuladen der Seite; eigene Beiträge können nicht bewertet werden
 - **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Kursleitung)
   – im Menü der Beitragskarte oder in der Beitragsansicht, mit Rückfrage.
-  Ist im Feed eine Kategorie gewählt, ist sie beim neuen Beitrag vorausgewählt.
+  Ist im Feed eine Kategorie gewählt (oder gibt es nur eine), ist sie beim neuen
+  Beitrag vorausgewählt. Im Formular „Abbrechen“ links von „Veröffentlichen“
+  bzw. „Speichern“. Tastatur: Der Cursor steht im Titel (bzw. in der Kategorie,
+  falls noch keine gewählt ist); Tab im Titel springt direkt ins Textfeld.
 - **Markdown-Editor** von ILIAS (UI-Formular): Knöpfe für fett, kursiv, Listen,
   Links, Überschriften und eine Vorschau. Angezeigt wird der Text mit der
   Markdown-Umwandlung von ILIAS (HTML im Text wird nicht ausgeführt).

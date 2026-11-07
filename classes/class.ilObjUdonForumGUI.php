@@ -81,6 +81,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editPost',
         'updatePost',
         'deletePost',
+        'cancelPost',
         'saveReply',
         'editReply',
         'updateReply',
@@ -939,7 +940,7 @@ JS);
         $this->tabs->activateTab(self::TAB_CONTENT);
 
         $form ??= $this->buildPostForm($post, $post->getCatId());
-        $this->showPostForm($form, $this->txt('edit_post'), $post);
+        $this->showPostForm($form, $this->txt('edit_post'));
     }
 
     protected function updatePost(): void
@@ -975,6 +976,21 @@ JS);
     }
 
     /**
+     * "Abbrechen" in the post and reply forms: back to the post (when editing)
+     * or to the forum (new post), nothing is saved.
+     */
+    protected function cancelPost(): void
+    {
+        $id = $this->getRequestedInt($this->udf_query, self::PARAM_POST);
+        $post = $id > 0 ? $this->udf_repo->getPost($id) : null;
+        if ($post !== null && $post->getObjId() === $this->object->getId()) {
+            $reply_id = $this->getRequestedInt($this->udf_query, self::PARAM_REPLY);
+            $this->redirectToPost($post, $reply_id > 0 ? 'udf-r' . $reply_id : '');
+        }
+        $this->ctrl->redirect($this, 'showContent');
+    }
+
+    /**
      * Async endpoint for the preview tab of the Markdown field.
      */
     protected function renderMarkdownPreview(): void
@@ -998,6 +1014,10 @@ JS);
                 $options[(string) $cat->getId()] = $cat->getTitle();
             }
             $select = $field->select($this->txt('category'), $options)->withRequired(true);
+            if (count($options) === 1) {
+                // only one category: nothing to choose
+                $cat_id = (int) array_key_first($options);
+            }
             if (isset($options[(string) $cat_id])) {
                 $select = $select->withValue((string) $cat_id);
             }
@@ -1024,8 +1044,12 @@ JS);
         $action = $post === null
             ? $this->ctrl->getFormAction($this, 'savePost')
             : $this->linkToPost('updatePost', $post, true);
+        $cancel = $post === null
+            ? $this->ctrl->getFormAction($this, 'cancelPost')
+            : $this->linkToPost('cancelPost', $post, true);
 
         return $this->ui_factory->input()->container()->form()->standard($action, $inputs)
+            ->withAdditionalFormAction($cancel, $this->lng->txt('cancel'))
             ->withSubmitLabel($post === null ? $this->txt('publish') : $this->lng->txt('save'));
     }
 
@@ -1041,19 +1065,57 @@ JS);
         $post->setBodyFormat($this->getForum()->usesMarkdown() ? ilUdfPost::FORMAT_MARKDOWN : ilUdfPost::FORMAT_TEXT);
     }
 
-    private function showPostForm(StandardForm $form, string $title, ?ilUdfPost $post = null): void
+    private function showPostForm(StandardForm $form, string $title): void
     {
-        $back = $post !== null ? $this->linkToPost('showPost', $post) : $this->ctrl->getLinkTarget($this, 'showContent');
+        $this->addFormKeyboardScript();
         $this->tpl->setContent(
             $this->getStyles()
             . '<div class="udf udf-post-form">'
-            . '<p class="udf-back">' . $this->ui_renderer->render(
-                $this->ui_factory->link()->standard('← ' . $this->txt($post !== null ? 'back_to_post' : 'back_to_forum'), $back)
-            ) . '</p>'
             . '<h2 class="udf-heading">' . $this->esc($title) . '</h2>'
             . $this->ui_renderer->render($form)
             . '</div>'
         );
+    }
+
+    /**
+     * Keyboard in the post form:
+     * - Tab in the title jumps directly into the text field (not to the
+     *   formatting buttons in between)
+     * - choosing a category moves the cursor to the title
+     * - on opening, the cursor is in the title if there is nothing to choose
+     *   (no category, only one, or already preselected), otherwise in the category
+     */
+    private function addFormKeyboardScript(): void
+    {
+        $this->tpl->addOnLoadCode(<<<'JS'
+(function () {
+    var form = document.querySelector('.udf-post-form form.c-form');
+    if (!form) { return; }
+    var title = form.querySelector('[data-il-ui-component="text-field-input"] input');
+    var text = form.querySelector('[data-il-ui-component="markdown-field-input"] textarea, [data-il-ui-component="textarea-field-input"] textarea');
+    var select = form.querySelector('[data-il-ui-component="select-field-input"] select');
+    if (title && text) {
+        title.addEventListener('keydown', function (e) {
+            if (e.key === 'Tab' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                text.focus();
+            }
+        });
+    }
+    if (select && title) {
+        select.addEventListener('change', function () {
+            if (select.value !== '') { title.focus(); }
+        });
+    }
+    if (form.querySelector('.c-input__error-msg')) { return; }
+    if (title && (!select || select.value !== '')) {
+        title.focus();
+        title.setSelectionRange(title.value.length, title.value.length);
+    } else if (select) {
+        select.focus();
+    }
+})();
+JS);
     }
 
     /**
@@ -1142,12 +1204,15 @@ JS);
                 $this->txt('body_required')
             ));
 
-        $action = $reply === null
-            ? $this->linkToPost('saveReply', $post, true)
-            : $this->linkToReply('updateReply', $post, $reply, true);
-
-        return $this->ui_factory->input()->container()->form()->standard($action, ['body' => $body])
-            ->withSubmitLabel($reply === null ? $this->txt('send_reply') : $this->lng->txt('save'));
+        if ($reply === null) {
+            return $this->ui_factory->input()->container()->form()
+                ->standard($this->linkToPost('saveReply', $post, true), ['body' => $body])
+                ->withSubmitLabel($this->txt('send_reply'));
+        }
+        return $this->ui_factory->input()->container()->form()
+            ->standard($this->linkToReply('updateReply', $post, $reply, true), ['body' => $body])
+            ->withAdditionalFormAction($this->linkToReply('cancelPost', $post, $reply, true), $this->lng->txt('cancel'))
+            ->withSubmitLabel($this->lng->txt('save'));
     }
 
     protected function saveReply(): void
@@ -1187,9 +1252,6 @@ JS);
         $this->tpl->setContent(
             $this->getStyles()
             . '<div class="udf udf-post-form">'
-            . '<p class="udf-back">' . $this->ui_renderer->render(
-                $this->ui_factory->link()->standard('← ' . $this->txt('back_to_post'), $this->linkToPost('showPost', $post))
-            ) . '</p>'
             . '<h2 class="udf-heading">' . $this->esc($this->txt('edit_reply')) . '</h2>'
             . $this->ui_renderer->render($form)
             . '</div>'
@@ -1859,15 +1921,15 @@ JS);
 .udf-post-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 26rem; }
 .udf-heading { font-size: 1.1rem; margin: 0.5rem 0 0.75rem; }
 .udf-card { border: 1px solid #d6d6d6; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; background: #fff; }
-.udf-card:hover { border-color: #9a9a9a; }
+.udf-card:hover { border-color: #f0b27a; }
 .udf-card-full:hover { border-color: #d6d6d6; }
 .udf-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 0.25rem; }
 .udf-card-full .udf-title { font-size: 1.4rem; }
 .udf-title a { color: inherit; text-decoration: none; }
-.udf-title a:hover { text-decoration: underline; }
+.udf-title a:hover { text-decoration: underline; color: #a94208; }
 .udf-meta { font-size: 0.85rem; color: #6f6f6f; }
 .udf-author { font-weight: 600; color: #333; }
-.udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: #e3ecf7; color: #2b5797; }
+.udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: #fff0e0; color: #a94208; }
 .udf-edited { font-style: italic; }
 .udf-preview, .udf-body { margin: 0.5rem 0; line-height: 1.5; overflow-wrap: anywhere; }
 .udf-md > :first-child { margin-top: 0; }
@@ -1899,6 +1961,21 @@ JS);
 .udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #f0b27a; border-radius: 999px; font-size: 0.85rem; color: #a94208; text-decoration: none; background: #fff; }
 .udf-chip:hover, .udf-chip:focus { border-color: #c95100; background: #fff4e6; color: #a94208; text-decoration: none; }
 .udf-chip-active, .udf-chip-active:hover, .udf-chip-active:focus { background: #c95100; border-color: #c95100; color: #fff; }
+/* orange inside the forum: links in posts and replies, buttons in the forms */
+.udf .udf-body a, .udf .udf-reply-actions a, .udf .udf-reply-actions button.btn-link { color: #a94208; }
+.udf .udf-body a:hover, .udf .udf-reply-actions a:hover { color: #7f3105; }
+.udf .c-form__actions .btn:not([formaction]) { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
+.udf .c-form__actions .btn:not([formaction]):hover, .udf .c-form__actions .btn:not([formaction]):focus { background-color: #a94208 !important; border-color: #a94208 !important; }
+.udf .c-form__actions .btn[formaction] { background-color: #fff !important; border-color: #c95100 !important; color: #a94208 !important; }
+.udf .c-form__actions .btn[formaction]:hover, .udf .c-form__actions .btn[formaction]:focus { background-color: #fff4e6 !important; }
+.udf .c-field-markdown__actions .btn { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
+.udf .c-field-markdown__actions .btn:hover, .udf .c-field-markdown__actions .btn:focus { background-color: #a94208 !important; border-color: #a94208 !important; }
+.udf .c-field-markdown__actions .btn .glyph, .udf .c-field-markdown__actions .btn span { color: #fff !important; }
+.udf .il-viewcontrol-mode .btn.engaged { border-color: #c95100 !important; color: #a94208 !important; }
+.udf .il-viewcontrol-mode .btn:not(.engaged) { color: #a94208 !important; }
+/* toolbar of the forum pages: other buttons with orange outline */
+.c-toolbar .btn.btn-default:not(.btn-primary) { background-color: #fff !important; border-color: #c95100 !important; color: #a94208 !important; }
+.c-toolbar .btn.btn-default:not(.btn-primary):hover, .c-toolbar .btn.btn-default:not(.btn-primary):focus { background-color: #fff4e6 !important; }
 /* "Neuer Beitrag" (primary button in the toolbar of the forum) in orange */
 .c-toolbar .btn.btn-primary { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
 .c-toolbar .btn.btn-primary:hover, .c-toolbar .btn.btn-primary:focus { background-color: #a94208 !important; border-color: #a94208 !important; color: #fff !important; }

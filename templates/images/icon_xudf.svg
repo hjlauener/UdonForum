@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" fill="#4c6586"/>
-  <path d="M24 11h4a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2v4l-5-4h-8a2 2 0 0 1-2-2v-2h9a4 4 0 0 0 4-4z" fill="#8aa1bf"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Udon Forum: two speech bubbles in orange -->
+  <path d="M26 6h28a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8h-1v7.5a1 1 0 0 1-1.7.7L43 38H26a8 8 0 0 1-8-8V14a8 8 0 0 1 8-8z" fill="#f7a64a"/>
+  <path d="M10 20h30a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H23l-9.3 8.3A1 1 0 0 1 12 61.5V54h-2a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z" fill="#c95100"/>
+  <path d="M10 20h30a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H23l-9.3 8.3A1 1 0 0 1 12 61.5V54h-2a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z" fill="none" stroke="#fff" stroke-width="2" stroke-opacity="0.9"/>
+  <circle cx="15" cy="37" r="3.6" fill="#fff"/>
+  <circle cx="25" cy="37" r="3.6" fill="#fff"/>
+  <circle cx="35" cy="37" r="3.6" fill="#fff"/>
 </svg>

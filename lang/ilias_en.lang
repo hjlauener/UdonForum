@@ -7,12 +7,12 @@ edit#:#Edit
 content#:#Content
 properties#:#Settings
 status#:#Status
-online#:#Visible
-online_info#:#Course members can only see the forum if it is visible.
+online#:#Online
+online_info#:#Course members can only see the forum if it is online.
 use_markdown#:#Markdown editor
 use_markdown_info#:#Posts are written with the Markdown editor: buttons for bold, italic, lists and links as well as a preview. Without the Markdown editor there is a simple text field. Existing posts are still shown as they were written.
-offline#:#Not visible
-object_offline_info#:#This forum is not visible for course members. You can make it visible under “Settings”.
+offline#:#Offline
+object_offline_info#:#This forum is offline and not visible for course members. You can switch it online under “Settings”.
 confirm#:#Confirm
 no_permission#:#You do not have permission to do this.
 no_posts#:#There are no posts in this forum yet. Create the first post!

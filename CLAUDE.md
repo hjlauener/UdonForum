@@ -10,7 +10,8 @@ ILIAS 11 in Docker). Aufbau und Arbeitsweise wie beim Gruppenmanagement-Plugin
 - **Jeder neue oder geänderte Text kommt immer in beide Dateien:**
   `lang/ilias_de.lang` und `lang/ilias_en.lang`. Die Schlüssel beider Dateien
   müssen identisch sein (gleiche Reihenfolge).
-- Deutsch ohne englische Begriffe (z.B. „Sichtbar“ statt „Online“).
+- Deutsch ohne englische Begriffe. Ausnahme auf Wunsch des Auftraggebers:
+  „Online“ / „Offline“ für die Sichtbarkeit des Forums.
   Schweizer Schreibweise (ss statt ß).
 - Kein Text fest im PHP-Code; Plugin-Texte über `$this->txt("key")`.
 

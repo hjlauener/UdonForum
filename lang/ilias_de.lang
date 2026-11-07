@@ -7,12 +7,12 @@ edit#:#Bearbeiten
 content#:#Inhalt
 properties#:#Einstellungen
 status#:#Status
-online#:#Sichtbar
-online_info#:#Nur wenn das Forum sichtbar geschaltet ist, können Kursmitglieder es sehen.
+online#:#Online
+online_info#:#Nur wenn das Forum online ist, können Kursmitglieder es sehen.
 use_markdown#:#Markdown-Editor
 use_markdown_info#:#Beiträge werden mit dem Markdown-Editor geschrieben: Knöpfe für fett, kursiv, Listen und Links sowie eine Vorschau. Ohne Markdown-Editor gibt es ein einfaches Textfeld. Bestehende Beiträge werden weiterhin so angezeigt, wie sie geschrieben wurden.
-offline#:#Nicht sichtbar
-object_offline_info#:#Dieses Forum ist für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ sichtbar schalten.
+offline#:#Offline
+object_offline_info#:#Dieses Forum ist offline und für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ online schalten.
 confirm#:#Bestätigen
 no_permission#:#Dafür fehlt Ihnen die Berechtigung.
 no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den ersten Beitrag!

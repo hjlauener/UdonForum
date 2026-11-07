@@ -17,6 +17,8 @@ no_posts#:#There are no posts in this forum yet. Create the first post!
 back_to_forum#:#Back to the forum
 new_post#:#New post
 edit_post#:#Edit post
+delete_post#:#Delete post
+actions#:#Actions
 post_title#:#Title
 post_body#:#Text
 publish#:#Publish

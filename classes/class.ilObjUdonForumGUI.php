@@ -311,28 +311,38 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $my_votes = $this->udf_repo->getUserVotes(ilUdfRepository::ITEM_POST, $post_ids, $this->udf_user->getId());
         $unread = $this->getUnreadInfo($posts);
 
+        /** @var Interruptive[] $modals */
+        $modals = [];
         foreach ($posts as $post) {
             $html .= $this->renderPostCard(
                 $post,
                 $counts[$post->getId()] ?? 0,
                 $my_votes[$post->getId()] ?? 0,
                 $unread[$post->getId()] ?? null,
-                $state
+                $state,
+                $modals
             );
         }
         $html .= $this->renderPager($state, $has_more);
         $html .= '</div>';
 
         $this->addVoteScript();
-        $this->tpl->setContent($html);
+        $this->tpl->setContent($html . $this->ui_renderer->render($modals));
     }
 
     /**
      * @param int|null                $unread null = read, -1 = new post, n > 0 = number of new comments
      * @param array<string, int|string> $state  feed state (for the way back after voting)
+     * @param Interruptive[]            $modals collects the delete overlays
      */
-    private function renderPostCard(ilUdfPost $post, int $num_comments, int $my_vote, ?int $unread, array $state): string
-    {
+    private function renderPostCard(
+        ilUdfPost $post,
+        int $num_comments,
+        int $my_vote,
+        ?int $unread,
+        array $state,
+        array &$modals
+    ): string {
         $link = $this->linkToPost('showPost', $post);
 
         $preview = $post->getBody();
@@ -357,12 +367,53 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 ['ret' => 'feed'] + $this->getFeedParams($state)
             )
             . '<div class="udf-card-main">'
+            . $this->renderPostMenu($post, $modals)
             . $this->renderPostLabels($post, $unread === -1)
             . '<h3 class="udf-title"><a href="' . $this->esc($link) . '">' . $this->esc($post->getTitle()) . '</a></h3>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
             . ($preview !== '' ? '<div class="udf-preview">' . $this->esc($preview) . '</div>' : '')
             . '<div class="udf-actions"><a href="' . $this->esc($link) . '#udf-comments">' . $comments_label . '</a></div>'
             . '</div></article>';
+    }
+
+    /**
+     * Menu of a post card (edit, delete) for the author and lecturers.
+     *
+     * @param Interruptive[] $modals collects the delete overlays
+     */
+    private function renderPostMenu(ilUdfPost $post, array &$modals): string
+    {
+        $items = [];
+        if ($this->isAuthor($post->getUserId())) {
+            $items[] = $this->ui_factory->button()->shy($this->txt('edit_post'), $this->linkToPost('editPost', $post));
+        }
+        if ($this->canDeletePost($post)) {
+            $modal = $this->buildDeletePostModal($post);
+            $modals[] = $modal;
+            $items[] = $this->ui_factory->button()->shy($this->txt('delete_post'), '')->withOnClick($modal->getShowSignal());
+        }
+        if ($items === []) {
+            return '';
+        }
+        return '<div class="udf-card-menu">' . $this->ui_renderer->render(
+            $this->ui_factory->dropdown()->standard($items)->withAriaLabel($this->txt('actions'))
+        ) . '</div>';
+    }
+
+    private function canDeletePost(ilUdfPost $post): bool
+    {
+        return $this->isAuthor($post->getUserId()) || $this->isModerator();
+    }
+
+    private function buildDeletePostModal(ilUdfPost $post): Interruptive
+    {
+        return $this->buildConfirmModal(
+            $this->txt('confirm_delete_post'),
+            $this->linkToPost('deletePost', $post, true),
+            $post->getId(),
+            $post->getTitle(),
+            $this->lng->txt('delete')
+        );
     }
 
     /**
@@ -789,22 +840,18 @@ JS);
             $this->ui_factory->link()->standard('← ' . $this->txt('back_to_forum'), $this->ctrl->getLinkTarget($this, 'showContent'))
         ) . '</p>';
 
-        // the post itself
-        $actions = [];
+        // the post itself: edit and delete as buttons in the toolbar
         if ($this->isAuthor($post->getUserId())) {
-            $actions[] = $this->renderLink($this->txt('edit'), $this->linkToPost('editPost', $post));
+            $this->toolbar->addComponent($this->ui_factory->button()->standard(
+                $this->txt('edit_post'),
+                $this->linkToPost('editPost', $post)
+            ));
         }
-        if ($this->isAuthor($post->getUserId()) || $this->isModerator()) {
-            $modal = $this->buildConfirmModal(
-                $this->txt('confirm_delete_post'),
-                $this->linkToPost('deletePost', $post, true),
-                $post->getId(),
-                $post->getTitle(),
-                $this->lng->txt('delete')
-            );
+        if ($this->canDeletePost($post)) {
+            $modal = $this->buildDeletePostModal($post);
             $modals[] = $modal;
-            $actions[] = $this->ui_renderer->render(
-                $this->ui_factory->button()->shy($this->lng->txt('delete'), '')->withOnClick($modal->getShowSignal())
+            $this->toolbar->addComponent(
+                $this->ui_factory->button()->standard($this->txt('delete_post'), '')->withOnClick($modal->getShowSignal())
             );
         }
 
@@ -824,7 +871,6 @@ JS);
             . '<h2 class="udf-title">' . $this->esc($post->getTitle()) . '</h2>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
             . '<div class="udf-body">' . $this->formatText($post->getBody()) . '</div>'
-            . ($actions !== [] ? '<div class="udf-actions">' . implode(' · ', $actions) . '</div>' : '')
             . '</div></article>';
 
         // comments: everything from others after the last visit of this post counts as new
@@ -1121,7 +1167,7 @@ JS);
     protected function deletePost(): void
     {
         $post = $this->requirePost();
-        if (!$this->isAuthor($post->getUserId()) && !$this->isModerator()) {
+        if (!$this->canDeletePost($post)) {
             $this->denyAndReturn($post);
         }
 
@@ -1905,7 +1951,8 @@ JS);
 .udf-accepted-label { font-weight: 700; color: #1e7b34; margin-bottom: 0.2rem; }
 .udf-comment.udf-accepted { border-left-color: #3d9b55; border-left-width: 3px; }
 .udf-card-voted { display: flex; gap: 0.75rem; align-items: flex-start; }
-.udf-card-main { flex: 1; min-width: 0; }
+.udf-card-main { flex: 1; min-width: 0; position: relative; }
+.udf-card-menu { float: right; margin-left: 0.5rem; }
 .udf-vote { display: flex; flex-direction: column; align-items: center; min-width: 2.2rem; margin: 0; }
 .udf-vote-inline { display: inline-flex; flex-direction: row; gap: 0.2rem; min-width: 0; margin-right: 0.75rem; vertical-align: middle; }
 .udf-arrow { background: none; border: 0; padding: 0 0.2rem; font-size: 1rem; line-height: 1.2; color: #8a8a8a; cursor: pointer; border-radius: 4px; }

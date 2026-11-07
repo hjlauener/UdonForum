@@ -17,6 +17,8 @@ no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den erste
 back_to_forum#:#Zurück zum Forum
 new_post#:#Neuer Beitrag
 edit_post#:#Beitrag bearbeiten
+delete_post#:#Beitrag löschen
+actions#:#Aktionen
 post_title#:#Titel
 post_body#:#Text
 publish#:#Veröffentlichen

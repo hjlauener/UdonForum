@@ -19,6 +19,11 @@ use Psr\Http\Message\ServerRequestInterface;
  * - write: settings, visibility, categories, delete posts/replies of others
  * - udf_statistics ("Statistik einsehen"): tab "Statistik"
  *
+ * Tab "Mitglieder": participants of the course/group with their role; with
+ * the setting "1000 ways Forum" every member (not the lecturers) also gets one
+ * of four discussion roles (creatures, see ilUdfCreatures), shown as label
+ * next to the name and as hint when writing.
+ *
  * @ilCtrl_isCalledBy ilObjUdonForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjUdonForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
  */
@@ -28,6 +33,12 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const TAB_PROPERTIES = 'properties';
     private const TAB_CATEGORIES = 'categories';
     private const TAB_STATISTICS = 'statistics';
+    private const TAB_MEMBERS = 'members';
+    private const SUBTAB_MEMBERS_VIEW = 'members_view';
+    private const SUBTAB_MEMBERS_ROLES = 'members_roles';
+    private const ROLE_ADMIN = 'admin';
+    private const ROLE_TUTOR = 'tutor';
+    private const ROLE_MEMBER = 'member';
     private const SUBTAB_STAT_STANDARD = 'stat_standard';
     private const SUBTAB_STAT_NETWORK = 'stat_network';
     private const SUBTAB_STAT_BUBBLES = 'stat_bubbles';
@@ -72,6 +83,9 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'deleteCategory',
         'moveCategoryUp',
         'moveCategoryDown',
+        'editCreatures',
+        'saveCreatures',
+        'reshuffleCreatures',
     ];
 
     /** Commands that need the permission "Statistik einsehen" */
@@ -85,6 +99,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const READ_COMMANDS = [
         'showContent',
         'showPost',
+        'showMembers',
         'createPost',
         'savePost',
         'editPost',
@@ -114,6 +129,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private array $udf_lecturer_cache = [];
     /** @var ilUdfCategory[]|null */
     private ?array $udf_categories = null;
+    /** @var array<int, string>|null user id => ROLE_* (participants of the course/group) */
+    private ?array $udf_members = null;
+    /** @var array<int, string>|null user id => creature (1000 ways Forum) */
+    private ?array $udf_creatures = null;
 
     protected function afterConstructor(): void
     {
@@ -157,9 +176,15 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         }
 
         $fields[self::CREATE_FIELD_ONLINE] = $field->checkbox($this->txt('online'), $this->txt('online_info'))
-            ->withValue(false);
+            ->withValue(true);
         $fields[self::CREATE_FIELD_MARKDOWN] = $field->checkbox($this->txt('use_markdown'), $this->txt('use_markdown_info'))
             ->withValue(true);
+
+        // cursor directly in the first field (title)
+        $this->tpl->addOnLoadCode(
+            "(function () { var f = document.querySelector('form.c-form input[type=\"text\"], form.c-form textarea');"
+            . " if (f) { f.focus(); } })();"
+        );
 
         return $this->ui_factory->input()->container()->form()->standard(
             $this->ctrl->getFormAction($this, 'save'),
@@ -175,7 +200,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         if ($new_object instanceof ilObjUdonForum) {
             $data = $this->initCreateForm(ilUdonForumPlugin::ID)->withRequest($this->udf_request)->getData();
             if (is_array($data)) {
-                $new_object->setOnline((bool) ($data[self::CREATE_FIELD_ONLINE] ?? false));
+                $new_object->setOnline((bool) ($data[self::CREATE_FIELD_ONLINE] ?? true));
                 $new_object->setUseMarkdown((bool) ($data[self::CREATE_FIELD_MARKDOWN] ?? true));
                 $new_object->update();
             }
@@ -222,6 +247,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 $this->txt('content'),
                 $this->ctrl->getLinkTarget($this, 'showContent')
             );
+            $this->tabs->addTab(
+                self::TAB_MEMBERS,
+                $this->txt('members'),
+                $this->ctrl->getLinkTarget($this, 'showMembers')
+            );
         }
 
         $this->addInfoTab();
@@ -265,6 +295,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 'desc' => $this->object->getLongDescription(),
                 'online' => $this->getForum()->isOnline(),
                 'use_markdown' => $this->getForum()->usesMarkdown(),
+                'thousand_ways' => $this->getForum()->isThousandWays(),
             ]);
         }
 
@@ -285,7 +316,9 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $forum->setDescription((string) $form->getInput('desc'));
         $forum->setOnline((bool) $form->getInput('online'));
         $forum->setUseMarkdown((bool) $form->getInput('use_markdown'));
+        $forum->setThousandWays((bool) $form->getInput('thousand_ways'));
         $forum->update();
+        $this->ensureCreatures();
 
         $this->tpl->setOnScreenMessage('success', $this->lng->txt('msg_obj_modified'), true);
         $this->ctrl->redirect($this, 'editProperties');
@@ -313,6 +346,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $markdown = new ilCheckboxInputGUI($this->txt('use_markdown'), 'use_markdown');
         $markdown->setInfo($this->txt('use_markdown_info'));
         $form->addItem($markdown);
+
+        $thousand_ways = new ilCheckboxInputGUI($this->txt('thousand_ways'), 'thousand_ways');
+        $thousand_ways->setInfo($this->txt('thousand_ways_info'));
+        $form->addItem($thousand_ways);
 
         $form->addCommandButton('updateProperties', $this->lng->txt('save'));
 
@@ -1121,10 +1158,12 @@ JS);
     private function showPostForm(StandardForm $form, string $title): void
     {
         $this->addFormKeyboardScript();
+        $this->ensureCreatures();
         $this->tpl->setContent(
             $this->getStyles()
             . '<div class="udf udf-post-form">'
             . '<h2 class="udf-heading">' . $this->esc($title) . '</h2>'
+            . $this->renderCreatureHint()
             . $this->ui_renderer->render($form)
             . '</div>'
         );
@@ -1232,8 +1271,10 @@ JS);
         }
 
         if ($this->canParticipate()) {
+            $this->ensureCreatures();
             $reply_form ??= $this->buildReplyForm($post, null);
-            $html .= '<div class="udf-reply-form udf-post-form">' . $this->ui_renderer->render($reply_form) . '</div>';
+            $html .= '<div class="udf-reply-form udf-post-form">' . $this->renderCreatureHint()
+                . $this->ui_renderer->render($reply_form) . '</div>';
         }
 
         return $html . '</section>';
@@ -1306,6 +1347,7 @@ JS);
             $this->getStyles()
             . '<div class="udf udf-post-form">'
             . '<h2 class="udf-heading">' . $this->esc($this->txt('edit_reply')) . '</h2>'
+            . $this->renderCreatureHint()
             . $this->ui_renderer->render($form)
             . '</div>'
         );
@@ -1376,6 +1418,269 @@ JS);
     private function shorten(string $text, int $length): string
     {
         return mb_strlen($text) > $length ? rtrim(mb_substr($text, 0, $length)) . ' …' : $text;
+    }
+
+    // ------------------------------------------------------------------
+    // Members and "1000 ways Forum"
+    // ------------------------------------------------------------------
+
+    /**
+     * Participants of the course or group the forum is in, with their role.
+     *
+     * @return array<int, string> user id => ROLE_*
+     */
+    private function getMembers(): array
+    {
+        if ($this->udf_members !== null) {
+            return $this->udf_members;
+        }
+        global $DIC;
+        $this->udf_members = [];
+        $parent_ref_id = (int) $DIC->repositoryTree()->getParentId($this->object->getRefId());
+        if (!in_array(ilObject::_lookupType($parent_ref_id, true), ['crs', 'grp'], true)) {
+            return $this->udf_members;
+        }
+        $participants = ilParticipants::getInstance($parent_ref_id);
+        foreach ($participants->getMembers() as $id) {
+            $this->udf_members[(int) $id] = self::ROLE_MEMBER;
+        }
+        foreach ($participants->getTutors() as $id) {
+            $this->udf_members[(int) $id] = self::ROLE_TUTOR;
+        }
+        foreach ($participants->getAdmins() as $id) {
+            $this->udf_members[(int) $id] = self::ROLE_ADMIN;
+        }
+        return $this->udf_members;
+    }
+
+    /**
+     * Members who take part in "1000 ways Forum" (everybody except the lecturers).
+     *
+     * @return int[]
+     */
+    private function getCreatureMembers(): array
+    {
+        return array_keys(array_filter($this->getMembers(), static fn(string $role): bool => $role !== self::ROLE_ADMIN));
+    }
+
+    /**
+     * With "1000 ways Forum": members without role get one (evenly distributed).
+     */
+    private function ensureCreatures(): void
+    {
+        if (!$this->getForum()->isThousandWays()) {
+            return;
+        }
+        $current = $this->udf_repo->getCreatures($this->object->getId());
+        foreach (ilUdfCreatures::assignMissing($this->getCreatureMembers(), $current) as $user_id => $creature) {
+            $this->udf_repo->setCreature($this->object->getId(), $user_id, $creature);
+            $current[$user_id] = $creature;
+        }
+        $this->udf_creatures = $current;
+    }
+
+    /**
+     * Role (creature) of a person; null if "1000 ways Forum" is off or the person has none.
+     */
+    private function getCreatureOf(int $user_id): ?string
+    {
+        if (!$this->getForum()->isThousandWays()) {
+            return null;
+        }
+        $this->udf_creatures ??= $this->udf_repo->getCreatures($this->object->getId());
+        return $this->udf_creatures[$user_id] ?? null;
+    }
+
+    private function renderCreatureLabel(string $creature): string
+    {
+        return '<span class="udf-creature" style="--udf-creature:' . ilUdfCreatures::color($creature) . '"'
+            . ' title="' . $this->esc($this->txt('creature_' . $creature . '_role')) . '">'
+            . ilUdfCreatures::icon($creature, 16) . $this->esc($this->txt('creature_' . $creature)) . '</span>';
+    }
+
+    /**
+     * Hint above the post and reply field: the own role and how to take part.
+     */
+    private function renderCreatureHint(): string
+    {
+        $creature = $this->getCreatureOf($this->udf_user->getId());
+        if ($creature === null) {
+            return '';
+        }
+        return '<div class="udf-creature-hint" style="--udf-creature:' . ilUdfCreatures::color($creature) . '">'
+            . ilUdfCreatures::icon($creature, 40)
+            . '<div><div class="udf-creature-hint-title">'
+            . $this->esc(sprintf(
+                $this->txt('creature_your_role'),
+                $this->txt('creature_' . $creature),
+                ilUdfCreatures::kanji($creature),
+                $this->txt('creature_' . $creature . '_role')
+            ))
+            . '</div><div>' . $this->esc($this->txt('creature_' . $creature . '_hint')) . '</div></div></div>';
+    }
+
+    private function setMembersSubTabs(string $active): void
+    {
+        $this->tabs->activateTab(self::TAB_MEMBERS);
+        $this->tabs->addSubTab(self::SUBTAB_MEMBERS_VIEW, $this->txt('members_view'), $this->ctrl->getLinkTarget($this, 'showMembers'));
+        if ($this->isModerator() && $this->getForum()->isThousandWays()) {
+            $this->tabs->addSubTab(self::SUBTAB_MEMBERS_ROLES, $this->txt('members_roles'), $this->ctrl->getLinkTarget($this, 'editCreatures'));
+        }
+        $this->tabs->activateSubTab($active);
+    }
+
+    /**
+     * Tab "Mitglieder", sub tab "Ansicht": everybody sees the participants with
+     * name, first name, e-mail, role and (with "1000 ways Forum") the discussion role.
+     */
+    protected function showMembers(): void
+    {
+        $this->setMembersSubTabs(self::SUBTAB_MEMBERS_VIEW);
+        $this->ensureCreatures();
+
+        $members = $this->getMembers();
+        if ($members === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('no_members'));
+            return;
+        }
+
+        $thousand_ways = $this->getForum()->isThousandWays();
+        $records = [];
+        foreach ($members as $user_id => $role) {
+            $name = ilObjUser::_lookupName($user_id);
+            $creature = $this->getCreatureOf($user_id);
+            $records[$user_id] = [
+                'lastname' => (string) $name['lastname'],
+                'firstname' => (string) $name['firstname'],
+                'email' => ilObjUser::_lookupEmail($user_id),
+                'role' => $this->txt('role_' . $role),
+            ];
+            if ($thousand_ways) {
+                $records[$user_id]['creature'] = $creature !== null
+                    ? $this->txt('creature_' . $creature) . ' – ' . $this->txt('creature_' . $creature . '_role')
+                    : '–';
+            }
+        }
+
+        $col = $this->ui_factory->table()->column();
+        $columns = [
+            'lastname' => $col->text($this->txt('stat_lastname')),
+            'firstname' => $col->text($this->txt('stat_firstname')),
+            'email' => $col->eMail($this->txt('stat_email')),
+            'role' => $col->text($this->txt('member_role')),
+        ];
+        if ($thousand_ways) {
+            $columns['creature'] = $col->text($this->txt('thousand_ways_role'));
+        }
+
+        $table = $this->ui_factory->table()->data(
+            new ilUdfMembersTable($records),
+            $this->txt('members'),
+            $columns
+        )->withId('udf_members_' . $this->object->getId())
+         ->withRequest($this->udf_request);
+
+        $legend = '';
+        if ($thousand_ways) {
+            $legend = '<div class="udf-creature-legend">';
+            foreach (ilUdfCreatures::ALL as $creature) {
+                $legend .= '<div class="udf-creature-card" style="--udf-creature:' . ilUdfCreatures::color($creature) . '">'
+                    . ilUdfCreatures::icon($creature, 36)
+                    . '<div><strong>' . $this->esc($this->txt('creature_' . $creature)) . '</strong> '
+                    . '<span class="udf-kanji">' . ilUdfCreatures::kanji($creature) . '</span><br>'
+                    . $this->esc($this->txt('creature_' . $creature . '_role')) . '</div></div>';
+            }
+            $legend .= '</div>';
+        }
+
+        $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $legend . $this->ui_renderer->render($table) . '</div>');
+    }
+
+    /**
+     * Sub tab "Rollen zuteilen" (lecturers): change the role of every member,
+     * or distribute all roles anew.
+     */
+    protected function editCreatures(?ilPropertyFormGUI $form = null): void
+    {
+        if (!$this->getForum()->isThousandWays()) {
+            $this->ctrl->redirect($this, 'showMembers');
+        }
+        $this->setMembersSubTabs(self::SUBTAB_MEMBERS_ROLES);
+        $this->ensureCreatures();
+
+        $modal = $this->ui_factory->modal()->interruptive(
+            $this->txt('confirm'),
+            $this->txt('confirm_reshuffle'),
+            $this->ctrl->getFormAction($this, 'reshuffleCreatures')
+        )->withActionButtonLabel($this->txt('reshuffle'));
+        $this->toolbar->addComponent(
+            $this->ui_factory->button()->standard($this->txt('reshuffle'), '')->withOnClick($modal->getShowSignal())
+        );
+
+        $form ??= $this->initCreaturesForm();
+        $this->tpl->setContent($form->getHTML() . $this->ui_renderer->render($modal));
+    }
+
+    private function initCreaturesForm(): ilPropertyFormGUI
+    {
+        $form = new ilPropertyFormGUI();
+        $form->setTitle($this->txt('members_roles'));
+        $form->setFormAction($this->ctrl->getFormAction($this, 'saveCreatures'));
+
+        $options = [];
+        foreach (ilUdfCreatures::ALL as $creature) {
+            $options[$creature] = $this->txt('creature_' . $creature) . ' – ' . $this->txt('creature_' . $creature . '_role');
+        }
+
+        $this->udf_creatures ??= $this->udf_repo->getCreatures($this->object->getId());
+        $names = [];
+        foreach ($this->getCreatureMembers() as $user_id) {
+            $name = ilObjUser::_lookupName($user_id);
+            $names[$user_id] = trim($name['lastname'] . ', ' . $name['firstname'], ', ');
+        }
+        asort($names, SORT_NATURAL | SORT_FLAG_CASE);
+
+        foreach ($names as $user_id => $name) {
+            $select = new ilSelectInputGUI($name, 'creature_' . $user_id);
+            $select->setOptions($options);
+            $select->setValue($this->udf_creatures[$user_id] ?? ilUdfCreatures::KITSUNE);
+            $form->addItem($select);
+        }
+
+        $form->addCommandButton('saveCreatures', $this->lng->txt('save'));
+        return $form;
+    }
+
+    protected function saveCreatures(): void
+    {
+        if (!$this->getForum()->isThousandWays()) {
+            $this->ctrl->redirect($this, 'showMembers');
+        }
+        $form = $this->initCreaturesForm();
+        if (!$form->checkInput()) {
+            $form->setValuesByPost();
+            $this->editCreatures($form);
+            return;
+        }
+        foreach ($this->getCreatureMembers() as $user_id) {
+            $creature = (string) $form->getInput('creature_' . $user_id);
+            if (ilUdfCreatures::isValid($creature)) {
+                $this->udf_repo->setCreature($this->object->getId(), $user_id, $creature);
+            }
+        }
+        $this->tpl->setOnScreenMessage('success', $this->txt('roles_saved'), true);
+        $this->ctrl->redirect($this, 'editCreatures');
+    }
+
+    protected function reshuffleCreatures(): void
+    {
+        if ($this->getForum()->isThousandWays()) {
+            foreach (ilUdfCreatures::reshuffle($this->getCreatureMembers()) as $user_id => $creature) {
+                $this->udf_repo->setCreature($this->object->getId(), $user_id, $creature);
+            }
+            $this->tpl->setOnScreenMessage('success', $this->txt('roles_reshuffled'), true);
+        }
+        $this->ctrl->redirect($this, 'editCreatures');
     }
 
     // ------------------------------------------------------------------
@@ -2019,8 +2324,10 @@ JS);
      */
     private function renderMeta(int $user_id, int $created, bool $edited): string
     {
+        $creature = $this->getCreatureOf($user_id);
         $parts = ['<span class="udf-author">' . $this->getUserName($user_id) . '</span>'
-            . ($this->isLecturer($user_id) ? ' <span class="udf-badge">' . $this->txt('lecturer') . '</span>' : '')];
+            . ($this->isLecturer($user_id) ? ' <span class="udf-badge">' . $this->txt('lecturer') . '</span>' : '')
+            . ($creature !== null ? ' ' . $this->renderCreatureLabel($creature) : '')];
         $parts[] = '<span title="' . $this->esc($this->formatDate($created)) . '">' . $this->esc($this->formatRelativeTime($created)) . '</span>';
         if ($edited) {
             $parts[] = '<span class="udf-edited">' . $this->txt('edited') . '</span>';
@@ -2135,6 +2442,14 @@ JS);
 .udf-reply-actions { font-size: 0.85rem; }
 .udf-reply-actions a, .udf-reply-actions button { font-weight: 600; }
 .udf-reply-form { margin-top: 1rem; }
+/* 1000 ways Forum */
+.udf-creature { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem 0.05rem 0.1rem; border-radius: 999px; color: var(--udf-creature); background: #fff; border: 1px solid var(--udf-creature); vertical-align: middle; }
+.udf-creature-icon { flex: none; vertical-align: middle; }
+.udf-creature-hint { display: flex; gap: 0.75rem; align-items: center; border: 2px solid var(--udf-creature); border-radius: 10px; padding: 0.6rem 0.9rem; margin: 0.5rem 0 1rem; background: #fff; }
+.udf-creature-hint-title { font-weight: 700; color: var(--udf-creature); margin-bottom: 0.15rem; }
+.udf-creature-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1rem; }
+.udf-creature-card { display: flex; gap: 0.5rem; align-items: center; border: 1px solid var(--udf-creature); border-left-width: 4px; border-radius: 8px; padding: 0.4rem 0.7rem; font-size: 0.85rem; background: #fff; }
+.udf-kanji { color: #777; font-weight: 400; }
 /* statistics: no sort button above the table (sorting via column headers) */
 .udf-stat .il-viewcontrol-sortation { display: none !important; }
 .udf-network-box { border: 1px solid #f0b27a; border-radius: 8px; background: #fff; padding: 0.5rem; }

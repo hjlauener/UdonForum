@@ -110,3 +110,31 @@ reply_updated#:#The reply has been saved.
 reply_deleted#:#The reply has been deleted.
 reply_not_found#:#The reply was not found.
 confirm_delete_reply#:#Do you really want to delete this reply?
+members#:#Members
+members_view#:#View
+members_roles#:#Assign roles
+member_role#:#Role
+no_members#:#This forum is not located in a course or group; therefore there are no members.
+role_admin#:#Lecturer
+role_tutor#:#Tutor
+role_member#:#Member
+thousand_ways#:#1000 ways Forum
+thousand_ways_info#:#Every member (except the lecturers) randomly gets one of four roles for how to discuss in the forum: Hakutaku (facts), Kitsune (questioning), Tanuki (examples) or Kodama (connecting and mediating). The roles are distributed evenly; lecturers can change or reshuffle them in the tab “Members”.
+thousand_ways_role#:#1000-ways role
+creature_your_role#:#Your role: %s (%s) – %s
+creature_hakutaku#:#Hakutaku
+creature_hakutaku_role#:#The fact finder
+creature_hakutaku_hint#:#Like the all-knowing white beast, you bring facts into the discussion: definitions, figures and sources. For example: “According to the script …”, “The definition is …”, “Source: …”.
+creature_kitsune#:#Kitsune
+creature_kitsune_role#:#The questioner
+creature_kitsune_hint#:#Like the clever fox, you look behind things: ask for reasons, point out contradictions and gaps. For example: “How do we know that?”, “Does this also hold if …?”, “What speaks against it?”.
+creature_tanuki#:#Tanuki
+creature_tanuki_role#:#The example giver
+creature_tanuki_hint#:#Like the shape-shifting raccoon dog, you make abstract things tangible: with examples, comparisons and everyday situations. For example: “Imagine …”, “An everyday example: …”, “In concrete terms …”.
+creature_kodama#:#Kodama
+creature_kodama_role#:#The connector
+creature_kodama_hint#:#Like the tree spirit carrying the echo through the forest, you connect: link posts, summarise, look for common ground and mediate. For example: “If I combine A and B …”, “You both actually mean …”, “In summary: …”.
+reshuffle#:#Reshuffle
+confirm_reshuffle#:#Do you want to distribute the roles of all members anew at random? The current assignment will be lost.
+roles_saved#:#The roles have been saved.
+roles_reshuffled#:#The roles have been reshuffled.

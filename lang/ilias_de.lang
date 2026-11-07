@@ -110,3 +110,31 @@ reply_updated#:#Die Antwort wurde gespeichert.
 reply_deleted#:#Die Antwort wurde gelöscht.
 reply_not_found#:#Die Antwort wurde nicht gefunden.
 confirm_delete_reply#:#Soll diese Antwort gelöscht werden?
+members#:#Mitglieder
+members_view#:#Ansicht
+members_roles#:#Rollen zuteilen
+member_role#:#Rolle
+no_members#:#Dieses Forum liegt in keinem Kurs und keiner Gruppe; es gibt deshalb keine Mitglieder.
+role_admin#:#Dozierende
+role_tutor#:#Tutor/in
+role_member#:#Mitglied
+thousand_ways#:#1000 ways Forum
+thousand_ways_info#:#Jedes Mitglied (ausser den Dozierenden) erhält zufällig eine von vier Rollen, wie es im Forum diskutiert: Hakutaku (Fakten), Kitsune (Hinterfragen), Tanuki (Beispiele) oder Kodama (Verbinden und Schlichten). Die Rollen sind gleichmässig verteilt; die Dozierenden können sie im Reiter „Mitglieder“ ändern oder neu mischen.
+thousand_ways_role#:#1000-ways-Rolle
+creature_your_role#:#Ihre Rolle: %s (%s) – %s
+creature_hakutaku#:#Hakutaku
+creature_hakutaku_role#:#Der Faktenkenner
+creature_hakutaku_hint#:#Wie das allwissende weisse Fabelwesen bringen Sie Fakten ins Gespräch: Definitionen, Zahlen und Quellen. Zum Beispiel: „Laut Skript gilt …“, „Die Definition lautet …“, „Quelle: …“.
+creature_kitsune#:#Kitsune
+creature_kitsune_role#:#Die Hinterfragerin
+creature_kitsune_hint#:#Wie der kluge Fuchs schauen Sie hinter die Dinge: Fragen Sie nach Begründungen, zeigen Sie Widersprüche und Lücken. Zum Beispiel: „Woher wissen wir das?“, „Gilt das auch, wenn …?“, „Was spricht dagegen?“.
+creature_tanuki#:#Tanuki
+creature_tanuki_role#:#Der Beispielbringer
+creature_tanuki_hint#:#Wie der verwandlungsfreudige Marderhund machen Sie Abstraktes greifbar: mit Beispielen, Vergleichen und Situationen aus dem Alltag. Zum Beispiel: „Stell dir vor …“, „Ein Beispiel aus dem Alltag: …“, „Konkret heisst das …“.
+creature_kodama#:#Kodama
+creature_kodama_role#:#Die Verbinderin
+creature_kodama_hint#:#Wie der Baumgeist, der das Echo durch den Wald trägt, verbinden Sie: Knüpfen Sie Beiträge zusammen, fassen Sie zusammen, suchen Sie Gemeinsamkeiten und schlichten Sie. Zum Beispiel: „Wenn ich A und B zusammennehme …“, „Ihr meint eigentlich beide …“, „Zusammengefasst: …“.
+reshuffle#:#Neu mischen
+confirm_reshuffle#:#Sollen die Rollen aller Mitglieder neu und zufällig verteilt werden? Die bisherige Zuteilung geht verloren.
+roles_saved#:#Die Rollen wurden gespeichert.
+roles_reshuffled#:#Die Rollen wurden neu gemischt.

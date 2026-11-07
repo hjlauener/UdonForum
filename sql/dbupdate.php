@@ -139,3 +139,20 @@ if (!$ilDB->tableColumnExists('rep_robj_xudf_cmt', 'body_format')) {
     $ilDB->addTableColumn('rep_robj_xudf_cmt', 'body_format', ['type' => 'text', 'length' => 8, 'notnull' => true, 'default' => 'md']);
 }
 ?>
+<#11>
+<?php
+/** @var ilDBInterface $ilDB */
+// setting "1000 ways Forum"
+if (!$ilDB->tableColumnExists('rep_robj_xudf_data', 'thousand_ways')) {
+    $ilDB->addTableColumn('rep_robj_xudf_data', 'thousand_ways', ['type' => 'integer', 'length' => 1, 'notnull' => true, 'default' => 0]);
+}
+// 1000-ways role (creature) of each member
+if (!$ilDB->tableExists('rep_robj_xudf_mrole')) {
+    $ilDB->createTable('rep_robj_xudf_mrole', [
+        'obj_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'user_id' => ['type' => 'integer', 'length' => 4, 'notnull' => true],
+        'creature' => ['type' => 'text', 'length' => 16, 'notnull' => true, 'default' => 'kitsune'],
+    ]);
+    $ilDB->addPrimaryKey('rep_robj_xudf_mrole', ['obj_id', 'user_id']);
+}
+?>

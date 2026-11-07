@@ -14,6 +14,7 @@ class ilObjUdonForum extends ilObjectPlugin
     protected bool $online = false;
     protected bool $categories_initialized = false;
     protected bool $use_markdown = true;
+    protected bool $thousand_ways = false;
 
     public function __construct(int $a_ref_id = 0)
     {
@@ -42,6 +43,7 @@ class ilObjUdonForum extends ilObjectPlugin
             $this->online = (bool) $rec['is_online'];
             $this->categories_initialized = (bool) $rec['cats_init'];
             $this->use_markdown = (bool) ($rec['use_markdown'] ?? 1);
+            $this->thousand_ways = (bool) ($rec['thousand_ways'] ?? 0);
         }
     }
 
@@ -63,6 +65,7 @@ class ilObjUdonForum extends ilObjectPlugin
             'is_online' => ['integer', (int) $this->online],
             'cats_init' => ['integer', (int) $this->categories_initialized],
             'use_markdown' => ['integer', (int) $this->use_markdown],
+            'thousand_ways' => ['integer', (int) $this->thousand_ways],
         ];
     }
 
@@ -109,5 +112,19 @@ class ilObjUdonForum extends ilObjectPlugin
     public function setUseMarkdown(bool $use_markdown): void
     {
         $this->use_markdown = $use_markdown;
+    }
+
+    /**
+     * Setting "1000 ways Forum": every member gets one of four roles
+     * (creatures), see ilUdfCreatures.
+     */
+    public function isThousandWays(): bool
+    {
+        return $this->thousand_ways;
+    }
+
+    public function setThousandWays(bool $thousand_ways): void
+    {
+        $this->thousand_ways = $thousand_ways;
     }
 }

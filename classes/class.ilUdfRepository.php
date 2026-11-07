@@ -17,6 +17,7 @@ class ilUdfRepository
     public const TABLE_CATEGORY = 'rep_robj_xudf_cat';
     public const TABLE_VOTE = 'rep_robj_xudf_vote';
     public const TABLE_READ = 'rep_robj_xudf_read';
+    public const TABLE_MEMBER_ROLE = 'rep_robj_xudf_mrole';
 
     public const TABLES = [
         self::TABLE_DATA,
@@ -25,6 +26,7 @@ class ilUdfRepository
         self::TABLE_CATEGORY,
         self::TABLE_VOTE,
         self::TABLE_READ,
+        self::TABLE_MEMBER_ROLE,
     ];
 
     public const ITEM_POST = 'p';
@@ -176,6 +178,9 @@ class ilUdfRepository
         );
         $this->db->manipulate(
             'DELETE FROM ' . self::TABLE_READ . ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
+        );
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_MEMBER_ROLE . ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
         );
         $this->db->manipulate(
             'DELETE FROM ' . self::TABLE_COMMENT . ' WHERE post_id IN (' .
@@ -365,6 +370,41 @@ class ilUdfRepository
             ];
         }
         return $result;
+    }
+
+    // ------------------------------------------------------------------
+    // 1000 ways Forum: roles (creatures) of the members
+    // ------------------------------------------------------------------
+
+    /**
+     * @return array<int, string> user id => creature
+     */
+    public function getCreatures(int $obj_id): array
+    {
+        $set = $this->db->query(
+            'SELECT user_id, creature FROM ' . self::TABLE_MEMBER_ROLE .
+            ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
+        );
+        $list = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            if (ilUdfCreatures::isValid((string) $rec['creature'])) {
+                $list[(int) $rec['user_id']] = (string) $rec['creature'];
+            }
+        }
+        return $list;
+    }
+
+    public function setCreature(int $obj_id, int $user_id, string $creature): void
+    {
+        if (!ilUdfCreatures::isValid($creature)) {
+            return;
+        }
+        $this->db->replace(self::TABLE_MEMBER_ROLE, [
+            'obj_id' => ['integer', $obj_id],
+            'user_id' => ['integer', $user_id],
+        ], [
+            'creature' => ['text', $creature],
+        ]);
     }
 
     // ------------------------------------------------------------------

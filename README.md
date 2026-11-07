@@ -59,34 +59,29 @@ udf
 
 ## Aktueller Stand
 
+Forum im Stil von Reddit, **ohne Kommentare**: Es gibt nur Beiträge, die
+bewertet, sortiert und nach Kategorien gefiltert werden.
+
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
 - **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
-- **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau,
-  Anzahl Kommentare), 25 pro Seite
-- **Sortierung** im Feed: *Beliebt* (Punkte und Alter, wie Reddit), *Neu*,
+- **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau),
+  25 pro Seite; Klick auf den Titel öffnet den ganzen Beitrag
+- **Filter** links: Alle / pro Kategorie
+- **Sortierung** rechts: *Beliebt* (Punkte und Alter, wie Reddit), *Neu*,
   *Bestbewertet* (diese Woche / dieser Monat / gesamt)
-- **Filter** im Feed: Alle / pro Kategorie, zusätzlich „Unbeantwortet“
-- **Bewerten wie Reddit**: ▲/▼ bei Beiträgen und Kommentaren, erneuter Klick
-  nimmt die Stimme zurück, ohne Neuladen der Seite; eigene Inhalte können nicht
-  bewertet werden
-- **Ungelesen**: Etikett „Neu“ für neue Beiträge, „3 neue“ bei neuen Kommentaren,
-  neue Kommentare in der Diskussion markiert; „Alle als gelesen markieren“.
-  Beim ersten Besuch gilt alles Bestehende als gelesen.
-- **Kommentare sortieren**: Beste / Neueste / Älteste
-- **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Dozierende)
-- **Kommentare** mit Antworten bis zur **4. Ebene**, einklappbar;
-  gelöschte Kommentare mit Antworten bleiben als „[gelöscht]“ stehen
+- **Bewerten wie Reddit**: ▲/▼, erneuter Klick nimmt die Stimme zurück, ohne
+  Neuladen der Seite; eigene Beiträge können nicht bewertet werden
+- **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Kursleitung)
+  – im Menü der Beitragskarte oder in der Beitragsansicht, mit Rückfrage
 - **Kategorien** (Reiter *Kategorien*): Dozierende legen sie an, benennen um,
   sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
   und *Prüfung*.
-- **Akzeptierte Antwort**: eine Antwort pro Beitrag, zuoberst grün angezeigt,
-  Beitrag erhält „✔ Beantwortet“. In den *Einstellungen* wählbar, wer
-  akzeptieren darf: Ersteller/in des Beitrags oder Kursleitung.
+- **Ungelesen**: Etikett „Neu“ für neue Beiträge anderer; „Alle als gelesen
+  markieren“. Beim ersten Besuch gilt alles Bestehende als gelesen.
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
-- Web-Adressen im Text werden zu Links, Rückfragen als Overlay
 
-Rechte: *Lesen* = lesen und mitschreiben; *Bearbeiten* = Einstellungen und
-Beiträge/Kommentare anderer löschen.
+Rechte: *Lesen* = lesen, Beiträge schreiben und bewerten; *Bearbeiten* =
+Einstellungen, Kategorien und Beiträge anderer löschen.
 
 ## Struktur
 
@@ -98,9 +93,8 @@ classes/
   class.ilObjUdonForumGUI.php      Oberfläche des Objekts
   class.ilObjUdonForumListGUI.php  Darstellung in Listen des Magazins
   class.ilObjUdonForumAccess.php   Zugriffsprüfung
-  class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kommentare)
+  class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kategorien, Stimmen)
   class.ilUdfPost.php              Beitrag
-  class.ilUdfComment.php           Kommentar (max. 4 Ebenen)
   class.ilUdfCategory.php          Kategorie
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
@@ -110,5 +104,5 @@ dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILI
 
 ## Nächste Schritte
 
-- Etappe 3 (Rest): Anheften/Schliessen von Beiträgen, Beiträge verschieben
-- Etappe 4: Benachrichtigungen, @Erwähnungen, Merken, Bilder/Dateien, Suche
+- Beiträge anheften, in eine andere Kategorie verschieben
+- Benachrichtigungen, Merken, Bilder/Dateien, Suche

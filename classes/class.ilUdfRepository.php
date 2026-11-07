@@ -3,7 +3,11 @@
 declare(strict_types=1);
 
 /**
- * Database access for the Udon Forum: object settings, posts and comments.
+ * Database access for the Udon Forum: object settings, posts, categories,
+ * votes and read status.
+ *
+ * The comment table (TABLE_COMMENT) is no longer used; it is only kept so that
+ * old data is removed together with posts and forums, and on uninstall.
  */
 class ilUdfRepository
 {
@@ -48,7 +52,6 @@ class ilUdfRepository
      * Posts of a forum, newest first.
      *
      * @param int    $cat_id          only posts of this category (0 = all)
-     * @param bool   $only_unanswered only posts without accepted answer
      * @param string $sort            one of the SORT_* constants
      * @param int    $since           only posts created after this time (0 = all)
      * @return ilUdfPost[]
@@ -58,16 +61,12 @@ class ilUdfRepository
         int $limit,
         int $offset,
         int $cat_id = 0,
-        bool $only_unanswered = false,
         string $sort = self::SORT_NEW,
         int $since = 0
     ): array {
         $where = ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer');
         if ($cat_id > 0) {
             $where .= ' AND cat_id = ' . $this->db->quote($cat_id, 'integer');
-        }
-        if ($only_unanswered) {
-            $where .= ' AND accepted_id = ' . $this->db->quote(0, 'integer');
         }
         if ($since > 0) {
             $where .= ' AND created > ' . $this->db->quote($since, 'integer');
@@ -113,7 +112,6 @@ class ilUdfRepository
             'created' => ['integer', $post->getCreated()],
             'updated' => ['integer', $post->getUpdated()],
             'cat_id' => ['integer', $post->getCatId()],
-            'accepted_id' => ['integer', $post->getAcceptedId()],
         ];
 
         if ($post->getId() === 0) {
@@ -130,7 +128,7 @@ class ilUdfRepository
     }
 
     /**
-     * Deletes a post including all of its comments.
+     * Deletes a post including its votes, read status and (old) comments.
      */
     public function deletePost(ilUdfPost $post): void
     {
@@ -160,7 +158,7 @@ class ilUdfRepository
     }
 
     /**
-     * Deletes all posts, comments and settings of a forum object.
+     * Deletes all posts, categories, votes and settings of a forum object.
      */
     public function deleteAllForObject(int $obj_id): void
     {
@@ -193,133 +191,11 @@ class ilUdfRepository
         );
     }
 
-    // ------------------------------------------------------------------
-    // Comments
-    // ------------------------------------------------------------------
 
-    /**
-     * All comments of a post, oldest first.
-     *
-     * @return ilUdfComment[]
-     */
-    public function getCommentsForPost(int $post_id): array
-    {
-        $set = $this->db->query(
-            'SELECT * FROM ' . self::TABLE_COMMENT .
-            ' WHERE post_id = ' . $this->db->quote($post_id, 'integer') .
-            ' ORDER BY created, id'
-        );
-        $list = [];
-        while ($rec = $this->db->fetchAssoc($set)) {
-            $list[] = $this->buildComment($rec);
-        }
-        return $list;
-    }
 
-    public function getComment(int $id): ?ilUdfComment
-    {
-        $set = $this->db->query(
-            'SELECT * FROM ' . self::TABLE_COMMENT .
-            ' WHERE id = ' . $this->db->quote($id, 'integer')
-        );
-        $rec = $this->db->fetchAssoc($set);
-        return $rec ? $this->buildComment($rec) : null;
-    }
 
-    /**
-     * Number of visible (not deleted) comments per post.
-     *
-     * @param int[] $post_ids
-     * @return array<int, int> post id => number of comments
-     */
-    public function countCommentsForPosts(array $post_ids): array
-    {
-        if ($post_ids === []) {
-            return [];
-        }
-        $set = $this->db->query(
-            'SELECT post_id, COUNT(*) cnt FROM ' . self::TABLE_COMMENT .
-            ' WHERE ' . $this->db->in('post_id', $post_ids, false, 'integer') .
-            ' AND is_deleted = ' . $this->db->quote(0, 'integer') .
-            ' GROUP BY post_id'
-        );
-        $counts = [];
-        while ($rec = $this->db->fetchAssoc($set)) {
-            $counts[(int) $rec['post_id']] = (int) $rec['cnt'];
-        }
-        return $counts;
-    }
 
-    public function saveComment(ilUdfComment $comment): void
-    {
-        $fields = [
-            'post_id' => ['integer', $comment->getPostId()],
-            'parent_id' => ['integer', $comment->getParentId()],
-            'depth' => ['integer', $comment->getDepth()],
-            'user_id' => ['integer', $comment->getUserId()],
-            'body' => ['clob', $comment->getBody()],
-            'is_deleted' => ['integer', (int) $comment->isDeleted()],
-            'created' => ['integer', $comment->getCreated()],
-            'updated' => ['integer', $comment->getUpdated()],
-        ];
 
-        if ($comment->getId() === 0) {
-            $comment->setId($this->db->nextId(self::TABLE_COMMENT));
-            $fields['id'] = ['integer', $comment->getId()];
-            $fields['score'] = ['integer', 0];
-            $this->db->insert(self::TABLE_COMMENT, $fields);
-            return;
-        }
-
-        $this->db->update(self::TABLE_COMMENT, $fields, ['id' => ['integer', $comment->getId()]]);
-    }
-
-    /**
-     * Deletes a comment. If it still has replies, it is only marked as
-     * deleted (its text is removed) so that the replies keep their context.
-     * Placeholders above it that no longer have any replies are removed too.
-     */
-    public function deleteComment(ilUdfComment $comment): void
-    {
-        // a deleted comment can no longer be the accepted answer
-        $this->db->manipulate(
-            'UPDATE ' . self::TABLE_POST . ' SET accepted_id = ' . $this->db->quote(0, 'integer') .
-            ' WHERE id = ' . $this->db->quote($comment->getPostId(), 'integer') .
-            ' AND accepted_id = ' . $this->db->quote($comment->getId(), 'integer')
-        );
-
-        if ($this->hasReplies($comment->getId())) {
-            $comment->setDeleted(true);
-            $comment->setBody('');
-            $this->saveComment($comment);
-            return;
-        }
-
-        $this->db->manipulate(
-            'DELETE FROM ' . self::TABLE_COMMENT .
-            ' WHERE id = ' . $this->db->quote($comment->getId(), 'integer')
-        );
-        $this->db->manipulate(
-            'DELETE FROM ' . self::TABLE_VOTE .
-            ' WHERE item_type = ' . $this->db->quote(self::ITEM_COMMENT, 'text') .
-            ' AND item_id = ' . $this->db->quote($comment->getId(), 'integer')
-        );
-
-        $parent = $comment->getParentId() > 0 ? $this->getComment($comment->getParentId()) : null;
-        if ($parent !== null && $parent->isDeleted() && !$this->hasReplies($parent->getId())) {
-            $this->deleteComment($parent);
-        }
-    }
-
-    private function hasReplies(int $comment_id): bool
-    {
-        $set = $this->db->query(
-            'SELECT COUNT(*) cnt FROM ' . self::TABLE_COMMENT .
-            ' WHERE parent_id = ' . $this->db->quote($comment_id, 'integer')
-        );
-        $rec = $this->db->fetchAssoc($set);
-        return (int) ($rec['cnt'] ?? 0) > 0;
-    }
 
     // ------------------------------------------------------------------
     // Votes
@@ -411,7 +287,7 @@ class ilUdfRepository
     // ------------------------------------------------------------------
 
     /**
-     * Time from which on posts and comments count as new for the user
+     * Time from which on posts count as new for the user
      * (first visit or "mark all as read"); null if never visited.
      */
     public function getForumReadTime(int $user_id, int $obj_id): ?int
@@ -456,30 +332,6 @@ class ilUdfRepository
         ]);
     }
 
-    /**
-     * Creation times of other users' comments since a given time.
-     *
-     * @param int[] $post_ids
-     * @return array<int, int[]> post id => creation times
-     */
-    public function getForeignCommentTimes(array $post_ids, int $user_id, int $since): array
-    {
-        if ($post_ids === []) {
-            return [];
-        }
-        $set = $this->db->query(
-            'SELECT post_id, created FROM ' . self::TABLE_COMMENT .
-            ' WHERE ' . $this->db->in('post_id', $post_ids, false, 'integer') .
-            ' AND user_id <> ' . $this->db->quote($user_id, 'integer') .
-            ' AND is_deleted = ' . $this->db->quote(0, 'integer') .
-            ' AND created > ' . $this->db->quote($since, 'integer')
-        );
-        $times = [];
-        while ($rec = $this->db->fetchAssoc($set)) {
-            $times[(int) $rec['post_id']][] = (int) $rec['created'];
-        }
-        return $times;
-    }
 
     // ------------------------------------------------------------------
     // Categories
@@ -622,29 +474,10 @@ class ilUdfRepository
         $post->setCreated((int) $rec['created']);
         $post->setUpdated((int) $rec['updated']);
         $post->setCatId((int) ($rec['cat_id'] ?? 0));
-        $post->setAcceptedId((int) ($rec['accepted_id'] ?? 0));
         $post->setScore((int) ($rec['score'] ?? 0));
         return $post;
     }
 
-    /**
-     * @param array<string, mixed> $rec
-     */
-    private function buildComment(array $rec): ilUdfComment
-    {
-        $comment = new ilUdfComment();
-        $comment->setId((int) $rec['id']);
-        $comment->setPostId((int) $rec['post_id']);
-        $comment->setParentId((int) $rec['parent_id']);
-        $comment->setDepth((int) $rec['depth']);
-        $comment->setUserId((int) $rec['user_id']);
-        $comment->setBody((string) ($rec['body'] ?? ''));
-        $comment->setDeleted((bool) $rec['is_deleted']);
-        $comment->setCreated((int) $rec['created']);
-        $comment->setUpdated((int) $rec['updated']);
-        $comment->setScore((int) ($rec['score'] ?? 0));
-        return $comment;
-    }
 
     /**
      * @param array<string, mixed> $rec

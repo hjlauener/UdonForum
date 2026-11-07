@@ -9,15 +9,12 @@ use ILIAS\UI\Component\Modal\Interruptive;
 /**
  * GUI class of the Udon Forum repository object.
  *
- * Reddit-like forum: a feed of posts (cards), a detail view per post with
- * nested comments (up to ilUdfComment::MAX_DEPTH levels).
+ * Reddit-like forum without comments: a feed of posts (cards) with votes,
+ * sorting and categories, and a detail view per post.
  *
  * Permissions:
- * - read:  read the forum, write posts and comments, edit/delete own ones
- * - write: settings, visibility, categories, delete posts and comments of others
- *
- * Accepted answers: depending on the setting, the author of a post or the
- * course/group admins (write permission) can mark one comment as accepted.
+ * - read:  read the forum, write posts, vote, edit/delete own posts
+ * - write: settings, visibility, categories, delete posts of others
  *
  * @ilCtrl_isCalledBy ilObjUdonForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjUdonForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
@@ -29,34 +26,22 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const TAB_CATEGORIES = 'categories';
 
     private const PARAM_POST = 'post_id';
-    private const PARAM_COMMENT = 'comment_id';
-    private const PARAM_PARENT = 'parent_id';
     private const PARAM_PAGE = 'page';
     private const PARAM_CATEGORY = 'cat_id';
     /** feed filter: category */
     private const PARAM_FILTER_CAT = 'fcat';
-    /** feed filter: only posts without accepted answer */
-    private const PARAM_FILTER_OPEN = 'fopen';
     /** feed sorting: see ilUdfRepository::SORT_* */
     private const PARAM_SORT = 'fsort';
     /** period for "best rated" */
     private const PARAM_PERIOD = 'fper';
-    /** comment sorting */
-    private const PARAM_COMMENT_SORT = 'csort';
-    private const PARAM_VOTE_TYPE = 'vtype';
     private const PARAM_VOTE_ID = 'vid';
     private const PARAM_RETURN = 'ret';
-    private const POST_FIELD_BODY = 'udf_body';
     private const POST_FIELD_DIRECTION = 'udf_dir';
     private const POST_FIELD_ASYNC = 'udf_async';
 
     private const PERIOD_WEEK = 'week';
     private const PERIOD_MONTH = 'month';
     private const PERIOD_ALL = 'all';
-
-    private const COMMENT_SORT_BEST = 'best';
-    private const COMMENT_SORT_NEW = 'new';
-    private const COMMENT_SORT_OLD = 'old';
 
     private const POSTS_PER_PAGE = 25;
     private const PREVIEW_LENGTH = 300;
@@ -85,12 +70,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editPost',
         'updatePost',
         'deletePost',
-        'saveComment',
-        'editComment',
-        'updateComment',
-        'deleteComment',
-        'acceptComment',
-        'unacceptComment',
         'vote',
         'markAllRead',
     ];
@@ -196,7 +175,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 'title' => $this->object->getTitle(),
                 'desc' => $this->object->getLongDescription(),
                 'online' => $this->getForum()->isOnline(),
-                'accept_mode' => $this->getForum()->getAcceptMode(),
             ]);
         }
 
@@ -216,7 +194,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $forum->setTitle((string) $form->getInput('title'));
         $forum->setDescription((string) $form->getInput('desc'));
         $forum->setOnline((bool) $form->getInput('online'));
-        $forum->setAcceptMode((string) $form->getInput('accept_mode'));
         $forum->update();
 
         $this->tpl->setOnScreenMessage('success', $this->lng->txt('msg_obj_modified'), true);
@@ -241,12 +218,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $online = new ilCheckboxInputGUI($this->txt('online'), 'online');
         $online->setInfo($this->txt('online_info'));
         $form->addItem($online);
-
-        $accept = new ilRadioGroupInputGUI($this->txt('accept_mode'), 'accept_mode');
-        $accept->setInfo($this->txt('accept_mode_info'));
-        $accept->addOption(new ilRadioOption($this->txt('accept_mode_author'), ilObjUdonForum::ACCEPT_AUTHOR));
-        $accept->addOption(new ilRadioOption($this->txt('accept_mode_admin'), ilObjUdonForum::ACCEPT_ADMIN));
-        $form->addItem($accept);
 
         $form->addCommandButton('updateProperties', $this->lng->txt('save'));
 
@@ -289,7 +260,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             self::POSTS_PER_PAGE + 1,
             $state[self::PARAM_PAGE] * self::POSTS_PER_PAGE,
             $state[self::PARAM_FILTER_CAT],
-            $state[self::PARAM_FILTER_OPEN] === 1,
             $state[self::PARAM_SORT],
             $since
         );
@@ -300,14 +270,13 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $html .= $this->renderFeedControls($state);
 
         if ($posts === []) {
-            $filtered = $state[self::PARAM_FILTER_CAT] > 0 || $state[self::PARAM_FILTER_OPEN] === 1 || $since > 0;
+            $filtered = $state[self::PARAM_FILTER_CAT] > 0 || $since > 0;
             $html .= '<p class="udf-empty">' . $this->esc($this->txt($filtered ? 'no_posts_filtered' : 'no_posts')) . '</p></div>';
             $this->tpl->setContent($html);
             return;
         }
 
         $post_ids = array_map(static fn(ilUdfPost $p): int => $p->getId(), $posts);
-        $counts = $this->udf_repo->countCommentsForPosts($post_ids);
         $my_votes = $this->udf_repo->getUserVotes(ilUdfRepository::ITEM_POST, $post_ids, $this->udf_user->getId());
         $unread = $this->getUnreadInfo($posts);
 
@@ -316,9 +285,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         foreach ($posts as $post) {
             $html .= $this->renderPostCard(
                 $post,
-                $counts[$post->getId()] ?? 0,
                 $my_votes[$post->getId()] ?? 0,
-                $unread[$post->getId()] ?? null,
+                isset($unread[$post->getId()]),
                 $state,
                 $modals
             );
@@ -331,15 +299,13 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     }
 
     /**
-     * @param int|null                $unread null = read, -1 = new post, n > 0 = number of new comments
      * @param array<string, int|string> $state  feed state (for the way back after voting)
      * @param Interruptive[]            $modals collects the delete overlays
      */
     private function renderPostCard(
         ilUdfPost $post,
-        int $num_comments,
         int $my_vote,
-        ?int $unread,
+        bool $is_new,
         array $state,
         array &$modals
     ): string {
@@ -350,16 +316,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $preview = rtrim(mb_substr($preview, 0, self::PREVIEW_LENGTH)) . ' …';
         }
 
-        $comments_label = $this->esc($this->formatCommentCount($num_comments));
-        if ($unread !== null && $unread > 0) {
-            $comments_label .= ' <span class="udf-new">' . $this->esc(
-                $unread === 1 ? $this->txt('new_comment_one') : sprintf($this->txt('new_comments'), $unread)
-            ) . '</span>';
-        }
-
-        return '<article class="udf-card udf-card-voted' . ($unread === -1 ? ' udf-unread' : '') . '" id="udf-p' . $post->getId() . '">'
+        return '<article class="udf-card udf-card-voted' . ($is_new ? ' udf-unread' : '') . '" id="udf-p' . $post->getId() . '">'
             . $this->renderVote(
-                ilUdfRepository::ITEM_POST,
                 $post->getId(),
                 $post->getScore(),
                 $my_vote,
@@ -368,11 +326,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             )
             . '<div class="udf-card-main">'
             . $this->renderPostMenu($post, $modals)
-            . $this->renderPostLabels($post, $unread === -1)
+            . $this->renderPostLabels($post, $is_new)
             . '<h3 class="udf-title"><a href="' . $this->esc($link) . '">' . $this->esc($post->getTitle()) . '</a></h3>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
             . ($preview !== '' ? '<div class="udf-preview">' . $this->esc($preview) . '</div>' : '')
-            . '<div class="udf-actions"><a href="' . $this->esc($link) . '#udf-comments">' . $comments_label . '</a></div>'
             . '</div></article>';
     }
 
@@ -417,7 +374,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     }
 
     /**
-     * Category badge, "new" badge and "answered" badge above the title.
+     * "New" badge and category badge above the title.
      */
     private function renderPostLabels(ilUdfPost $post, bool $is_new = false): string
     {
@@ -430,39 +387,46 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $labels[] = '<span class="udf-cat" style="background:' . $this->getCategoryColor($post->getCatId()) . '">'
                 . $this->esc($cat_title) . '</span>';
         }
-        if ($post->isAnswered()) {
-            $labels[] = '<span class="udf-answered">✔ ' . $this->txt('answered') . '</span>';
-        }
         return $labels !== [] ? '<div class="udf-labels">' . implode(' ', $labels) . '</div>' : '';
     }
 
     /**
-     * Sorting chips (popular / new / best rated + period) and filter chips
-     * (all / categories, unanswered).
+     * Filter chips (all / categories) on the left, sorting chips
+     * (popular / new / best rated + period) on the right.
      *
      * @param array<string, int|string> $state
      */
     private function renderFeedControls(array $state): string
     {
-        $sorts = [
+        $filters = [$this->renderChip(
+            $this->txt('all_posts'),
+            $this->linkToFeed($state, [self::PARAM_FILTER_CAT => 0, self::PARAM_PAGE => 0]),
+            $state[self::PARAM_FILTER_CAT] === 0
+        )];
+        foreach ($this->getCategories() as $cat) {
+            $filters[] = $this->renderChip(
+                $cat->getTitle(),
+                $this->linkToFeed($state, [self::PARAM_FILTER_CAT => $cat->getId(), self::PARAM_PAGE => 0]),
+                $state[self::PARAM_FILTER_CAT] === $cat->getId()
+            );
+        }
+
+        $sorts = [];
+        foreach ([
             ilUdfRepository::SORT_POPULAR => 'sort_popular',
             ilUdfRepository::SORT_NEW => 'sort_new',
             ilUdfRepository::SORT_TOP => 'sort_top',
-        ];
-        $chips = [];
-        foreach ($sorts as $sort => $label) {
-            $chips[] = $this->renderChip(
+        ] as $sort => $label) {
+            $sorts[] = $this->renderChip(
                 $this->txt($label),
                 $this->linkToFeed($state, [self::PARAM_SORT => $sort, self::PARAM_PAGE => 0]),
                 $state[self::PARAM_SORT] === $sort
             );
         }
-        $html = '<nav class="udf-filters" aria-label="' . $this->esc($this->txt('sorting')) . '">' . implode('', $chips);
-
+        $periods = [];
         if ($state[self::PARAM_SORT] === ilUdfRepository::SORT_TOP) {
-            $html .= '<span class="udf-filter-sep"></span>';
             foreach ([self::PERIOD_WEEK => 'period_week', self::PERIOD_MONTH => 'period_month', self::PERIOD_ALL => 'period_all'] as $period => $label) {
-                $html .= $this->renderChip(
+                $periods[] = $this->renderChip(
                     $this->txt($label),
                     $this->linkToFeed($state, [self::PARAM_PERIOD => $period, self::PARAM_PAGE => 0]),
                     $state[self::PARAM_PERIOD] === $period,
@@ -470,28 +434,13 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 );
             }
         }
-        $html .= '</nav>';
 
-        $chips = [$this->renderChip(
-            $this->txt('all_posts'),
-            $this->linkToFeed($state, [self::PARAM_FILTER_CAT => 0, self::PARAM_PAGE => 0]),
-            $state[self::PARAM_FILTER_CAT] === 0
-        )];
-        foreach ($this->getCategories() as $cat) {
-            $chips[] = $this->renderChip(
-                $cat->getTitle(),
-                $this->linkToFeed($state, [self::PARAM_FILTER_CAT => $cat->getId(), self::PARAM_PAGE => 0]),
-                $state[self::PARAM_FILTER_CAT] === $cat->getId()
-            );
-        }
-        $open = $state[self::PARAM_FILTER_OPEN] === 1;
-        $chips[] = '<span class="udf-filter-sep"></span>' . $this->renderChip(
-            $this->txt('unanswered'),
-            $this->linkToFeed($state, [self::PARAM_FILTER_OPEN => $open ? 0 : 1, self::PARAM_PAGE => 0]),
-            $open
-        );
-
-        return $html . '<nav class="udf-filters" aria-label="' . $this->esc($this->txt('filter')) . '">' . implode('', $chips) . '</nav>';
+        return '<div class="udf-controls">'
+            . '<nav class="udf-filters" aria-label="' . $this->esc($this->txt('filter')) . '">' . implode('', $filters) . '</nav>'
+            . '<nav class="udf-filters udf-sorting" aria-label="' . $this->esc($this->txt('sorting')) . '">'
+            . implode('', $sorts)
+            . ($periods !== [] ? '<span class="udf-sorting-periods">' . implode('', $periods) . '</span>' : '')
+            . '</nav></div>';
     }
 
     private function renderChip(string $label, string $url, bool $active, bool $small = false): string
@@ -551,7 +500,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             self::PARAM_SORT => $sort,
             self::PARAM_PERIOD => $period,
             self::PARAM_FILTER_CAT => $cat,
-            self::PARAM_FILTER_OPEN => $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_OPEN) === 1 ? 1 : 0,
             self::PARAM_PAGE => $this->getRequestedInt($this->udf_query, self::PARAM_PAGE),
         ];
     }
@@ -571,7 +519,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 $params[self::PARAM_PERIOD] = $state[self::PARAM_PERIOD];
             }
         }
-        foreach ([self::PARAM_FILTER_CAT, self::PARAM_FILTER_OPEN, self::PARAM_PAGE] as $key) {
+        foreach ([self::PARAM_FILTER_CAT, self::PARAM_PAGE] as $key) {
             if ((int) $state[$key] > 0) {
                 $params[$key] = (int) $state[$key];
             }
@@ -608,7 +556,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     // ------------------------------------------------------------------
 
     /**
-     * Time from which on posts and comments count as new for the current
+     * Time from which on posts count as new for the current
      * user. On the first visit everything existing counts as read.
      */
     private function getReadSince(): int
@@ -625,8 +573,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     }
 
     /**
+     * Posts of others that were created after the read time and not opened yet.
+     *
      * @param ilUdfPost[] $posts
-     * @return array<int, int> post id => -1 (new post) or number of new comments
+     * @return array<int, true> post id => true
      */
     private function getUnreadInfo(array $posts): array
     {
@@ -635,24 +585,19 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         }
         $user_id = $this->udf_user->getId();
         $since = $this->getReadSince();
-        $post_ids = array_map(static fn(ilUdfPost $p): int => $p->getId(), $posts);
-        $read = $this->udf_repo->getReadTimes($user_id, $this->object->getId(), $post_ids);
-        $comment_times = $this->udf_repo->getForeignCommentTimes($post_ids, $user_id, $since);
+        $read = $this->udf_repo->getReadTimes(
+            $user_id,
+            $this->object->getId(),
+            array_map(static fn(ilUdfPost $p): int => $p->getId(), $posts)
+        );
 
-        $info = [];
+        $new = [];
         foreach ($posts as $post) {
-            $id = $post->getId();
-            if (!isset($read[$id]) && $post->getCreated() > $since && $post->getUserId() !== $user_id) {
-                $info[$id] = -1;
-                continue;
-            }
-            $threshold = max($read[$id] ?? $since, $since);
-            $new = count(array_filter($comment_times[$id] ?? [], static fn(int $t): bool => $t > $threshold));
-            if ($new > 0) {
-                $info[$id] = $new;
+            if (!isset($read[$post->getId()]) && $post->getCreated() > $since && $post->getUserId() !== $user_id) {
+                $new[$post->getId()] = true;
             }
         }
-        return $info;
+        return $new;
     }
 
     protected function markAllRead(): void
@@ -675,15 +620,13 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
      * @param array<string, int|string> $return_params where to go back without JavaScript
      */
     private function renderVote(
-        string $item_type,
         int $item_id,
         int $score,
         int $my_vote,
         bool $can_vote,
-        array $return_params,
-        bool $inline = false
+        array $return_params
     ): string {
-        $classes = 'udf-vote' . ($inline ? ' udf-vote-inline' : '')
+        $classes = 'udf-vote'
             . ($my_vote > 0 ? ' udf-up-active' : '') . ($my_vote < 0 ? ' udf-down-active' : '');
         $score_html = '<span class="udf-score" title="' . $this->esc($this->txt('points')) . '">' . $score . '</span>';
 
@@ -695,7 +638,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
 
         $action = $this->linkWithParams(
             'vote',
-            [self::PARAM_VOTE_TYPE => $item_type, self::PARAM_VOTE_ID => $item_id] + $return_params,
+            [self::PARAM_VOTE_ID => $item_id] + $return_params,
             true
         );
 
@@ -714,27 +657,16 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     protected function vote(): void
     {
         $async = $this->udf_post->has(self::POST_FIELD_ASYNC);
-        $type = $this->getRequestedString($this->udf_query, self::PARAM_VOTE_TYPE);
+        $type = ilUdfRepository::ITEM_POST;
         $id = $this->getRequestedInt($this->udf_query, self::PARAM_VOTE_ID);
         $direction = $this->getRequestedSignedInt($this->udf_post, self::POST_FIELD_DIRECTION);
 
-        // find the item and check that it belongs to this forum
-        $post = null;
-        $author_id = 0;
-        if ($type === ilUdfRepository::ITEM_POST) {
-            $post = $this->udf_repo->getPost($id);
-            $author_id = $post !== null ? $post->getUserId() : 0;
-        } elseif ($type === ilUdfRepository::ITEM_COMMENT) {
-            $comment = $this->udf_repo->getComment($id);
-            if ($comment !== null && !$comment->isDeleted()) {
-                $post = $this->udf_repo->getPost($comment->getPostId());
-                $author_id = $comment->getUserId();
-            }
-        }
+        // the post must belong to this forum
+        $post = $id > 0 ? $this->udf_repo->getPost($id) : null;
         $valid = $post !== null
             && $post->getObjId() === $this->object->getId()
             && in_array($direction, [1, -1], true)
-            && $this->canVote($author_id);
+            && $this->canVote($post->getUserId());
 
         if (!$valid) {
             if ($async) {
@@ -759,15 +691,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             }
             $this->ctrl->redirect($this, 'showContent', 'udf-p' . $post->getId());
         }
-        $comment_sort = $this->getCommentSort();
-        if ($comment_sort !== self::COMMENT_SORT_BEST) {
-            $this->ctrl->setParameter($this, self::PARAM_COMMENT_SORT, $comment_sort);
-        }
-        $this->redirectToPost($post, $type === ilUdfRepository::ITEM_COMMENT ? 'udf-c' . $id : '');
+        $this->redirectToPost($post);
     }
 
     /**
-     * Logged-in participants can vote, but not for their own posts and comments.
+     * Logged-in participants can vote, but not for their own posts.
      */
     private function canVote(int $author_id): bool
     {
@@ -823,7 +751,7 @@ JS);
     }
 
     // ------------------------------------------------------------------
-    // Post detail view with comments
+    // Post detail view
     // ------------------------------------------------------------------
 
     protected function showPost(): void
@@ -859,7 +787,6 @@ JS);
         $post_vote = $this->udf_repo->getUserVotes(ilUdfRepository::ITEM_POST, [$post->getId()], $user_id)[$post->getId()] ?? 0;
         $html .= '<article class="udf-card udf-card-full udf-card-voted" id="udf-p' . $post->getId() . '">'
             . $this->renderVote(
-                ilUdfRepository::ITEM_POST,
                 $post->getId(),
                 $post->getScore(),
                 $post_vote,
@@ -873,78 +800,7 @@ JS);
             . '<div class="udf-body">' . $this->formatText($post->getBody()) . '</div>'
             . '</div></article>';
 
-        // comments: everything from others after the last visit of this post counts as new
-        $comment_sort = $this->getCommentSort();
-        $new_since = PHP_INT_MAX;
-        if ($this->isLoggedIn()) {
-            $since = $this->getReadSince();
-            $read = $this->udf_repo->getReadTimes($user_id, $this->object->getId(), [$post->getId()]);
-            $new_since = max($read[$post->getId()] ?? $since, $since);
-        }
-
-        $comments = $this->udf_repo->getCommentsForPost($post->getId());
-        $comment_votes = $this->udf_repo->getUserVotes(
-            ilUdfRepository::ITEM_COMMENT,
-            array_map(static fn(ilUdfComment $c): int => $c->getId(), $comments),
-            $user_id
-        );
-        $children = [];
-        $visible = 0;
-        $accepted = null;
-        foreach ($comments as $comment) {
-            $children[$comment->getParentId()][] = $comment;
-            if (!$comment->isDeleted()) {
-                $visible++;
-                if ($comment->getId() === $post->getAcceptedId()) {
-                    $accepted = $comment;
-                }
-            }
-        }
-        foreach ($children as &$siblings) {
-            usort($siblings, fn(ilUdfComment $a, ilUdfComment $b): int => $this->compareComments($a, $b, $comment_sort));
-        }
-        unset($siblings);
-
-        $html .= '<section class="udf-comments" id="udf-comments">';
-        $html .= '<div class="udf-comments-head"><h3 class="udf-heading">' . $this->esc($this->formatCommentCount($visible)) . '</h3>';
-        if ($visible > 1) {
-            $html .= '<nav class="udf-filters udf-filters-inline" aria-label="' . $this->esc($this->txt('sorting')) . '">';
-            foreach ([self::COMMENT_SORT_BEST => 'csort_best', self::COMMENT_SORT_NEW => 'csort_new', self::COMMENT_SORT_OLD => 'csort_old'] as $sort => $label) {
-                $params = [self::PARAM_POST => $post->getId()];
-                if ($sort !== self::COMMENT_SORT_BEST) {
-                    $params[self::PARAM_COMMENT_SORT] = $sort;
-                }
-                $html .= $this->renderChip(
-                    $this->txt($label),
-                    $this->linkWithParams('showPost', $params) . '#udf-comments',
-                    $comment_sort === $sort,
-                    true
-                );
-            }
-            $html .= '</nav>';
-        }
         $html .= '</div>';
-
-        if ($this->canParticipate()) {
-            $html .= $this->renderCommentForm($post, 0, $this->txt('write_comment'), $this->txt('send_comment'));
-        }
-
-        if ($accepted !== null) {
-            $html .= '<div class="udf-accepted-box">'
-                . '<div class="udf-accepted-label">✔ ' . $this->txt('accepted_answer') . '</div>'
-                . '<div class="udf-meta">' . $this->renderMeta($accepted->getUserId(), $accepted->getCreated(), $accepted->isEdited()) . '</div>'
-                . '<div class="udf-body">' . $this->formatText($accepted->getBody()) . '</div>'
-                . '<div class="udf-actions"><a href="#udf-c' . $accepted->getId() . '">' . $this->txt('show_in_discussion') . '</a></div>'
-                . '</div>';
-        }
-
-        if ($comments === []) {
-            $html .= '<p class="udf-empty">' . $this->txt('no_comments') . '</p>';
-        } else {
-            $html .= $this->renderCommentTree($post, 0, $children, $modals, $comment_votes, $new_since, $comment_sort);
-        }
-
-        $html .= '</section></div>';
 
         if ($this->isLoggedIn()) {
             $this->udf_repo->setReadTime($user_id, $this->object->getId(), $post->getId(), time());
@@ -954,139 +810,10 @@ JS);
         $this->tpl->setContent($html . $this->ui_renderer->render($modals));
     }
 
-    private function getCommentSort(): string
-    {
-        $sort = $this->getRequestedString($this->udf_query, self::PARAM_COMMENT_SORT);
-        return in_array($sort, [self::COMMENT_SORT_NEW, self::COMMENT_SORT_OLD], true) ? $sort : self::COMMENT_SORT_BEST;
-    }
 
-    private function compareComments(ilUdfComment $a, ilUdfComment $b, string $sort): int
-    {
-        switch ($sort) {
-            case self::COMMENT_SORT_NEW:
-                return [$b->getCreated(), $b->getId()] <=> [$a->getCreated(), $a->getId()];
-            case self::COMMENT_SORT_OLD:
-                return [$a->getCreated(), $a->getId()] <=> [$b->getCreated(), $b->getId()];
-            default:
-                // best: highest score first, then oldest first
-                return [$b->getScore(), $a->getCreated(), $a->getId()] <=> [$a->getScore(), $b->getCreated(), $b->getId()];
-        }
-    }
 
-    /**
-     * @param array<int, ilUdfComment[]> $children  parent id => comments
-     * @param Interruptive[]             $modals    collects the delete overlays
-     * @param array<int, int>            $votes     comment id => own vote
-     * @param int                        $new_since comments of others created after this time are new
-     */
-    private function renderCommentTree(
-        ilUdfPost $post,
-        int $parent_id,
-        array $children,
-        array &$modals,
-        array $votes,
-        int $new_since,
-        string $comment_sort
-    ): string {
-        if (!isset($children[$parent_id])) {
-            return '';
-        }
 
-        $html = '';
-        foreach ($children[$parent_id] as $comment) {
-            $is_accepted = !$comment->isDeleted() && $comment->getId() === $post->getAcceptedId();
-            $is_new = !$comment->isDeleted() && $comment->getCreated() > $new_since && !$this->isAuthor($comment->getUserId());
-            $html .= '<details class="udf-comment' . ($is_accepted ? ' udf-accepted' : '') . ($is_new ? ' udf-unread' : '')
-                . '" open id="udf-c' . $comment->getId() . '">';
-            $html .= '<summary class="udf-meta">'
-                . ($comment->isDeleted()
-                    ? '<span class="udf-deleted">' . $this->txt('deleted_comment') . '</span>'
-                    : $this->renderMeta($comment->getUserId(), $comment->getCreated(), $comment->isEdited()))
-                . ($is_new ? ' <span class="udf-new">' . $this->txt('new') . '</span>' : '')
-                . ($is_accepted ? ' <span class="udf-answered">✔ ' . $this->txt('accepted_answer') . '</span>' : '')
-                . '</summary>';
 
-            if (!$comment->isDeleted()) {
-                $html .= '<div class="udf-body">' . $this->formatText($comment->getBody()) . '</div>';
-                $return = [self::PARAM_POST => $post->getId()];
-                if ($comment_sort !== self::COMMENT_SORT_BEST) {
-                    $return[self::PARAM_COMMENT_SORT] = $comment_sort;
-                }
-                $vote = $this->renderVote(
-                    ilUdfRepository::ITEM_COMMENT,
-                    $comment->getId(),
-                    $comment->getScore(),
-                    $votes[$comment->getId()] ?? 0,
-                    $this->canVote($comment->getUserId()),
-                    $return,
-                    true
-                );
-                $html .= $this->renderCommentActions($post, $comment, $modals, $vote);
-            }
-
-            $html .= $this->renderCommentTree($post, $comment->getId(), $children, $modals, $votes, $new_since, $comment_sort);
-            $html .= '</details>';
-        }
-        return $html;
-    }
-
-    /**
-     * @param Interruptive[] $modals
-     */
-    private function renderCommentActions(ilUdfPost $post, ilUdfComment $comment, array &$modals, string $vote): string
-    {
-        $actions = [];
-        $reply_form = '';
-
-        if ($comment->canHaveReplies() && $this->canParticipate()) {
-            $reply_form = '<details class="udf-reply"><summary>' . $this->txt('reply') . '</summary>'
-                . $this->renderCommentForm($post, $comment->getId(), $this->txt('write_reply'), $this->txt('send_reply'))
-                . '</details>';
-        }
-        if ($this->canAccept($post)) {
-            $actions[] = $comment->getId() === $post->getAcceptedId()
-                ? $this->renderLink($this->txt('unaccept'), $this->linkToComment('unacceptComment', $post, $comment))
-                : $this->renderLink($this->txt('accept'), $this->linkToComment('acceptComment', $post, $comment));
-        }
-        if ($this->isAuthor($comment->getUserId())) {
-            $actions[] = $this->renderLink($this->txt('edit'), $this->linkToComment('editComment', $post, $comment));
-        }
-        if ($this->isAuthor($comment->getUserId()) || $this->isModerator()) {
-            $preview = mb_strlen($comment->getBody()) > 80
-                ? mb_substr($comment->getBody(), 0, 80) . ' …'
-                : $comment->getBody();
-            $modal = $this->buildConfirmModal(
-                $this->txt('confirm_delete_comment'),
-                $this->linkToComment('deleteComment', $post, $comment, true),
-                $comment->getId(),
-                $preview,
-                $this->lng->txt('delete')
-            );
-            $modals[] = $modal;
-            $actions[] = $this->ui_renderer->render(
-                $this->ui_factory->button()->shy($this->lng->txt('delete'), '')->withOnClick($modal->getShowSignal())
-            );
-        }
-
-        return '<div class="udf-actions">' . $vote . $reply_form
-            . ($actions !== [] ? '<span class="udf-actions-right">' . implode(' · ', $actions) . '</span>' : '')
-            . '</div>';
-    }
-
-    private function renderCommentForm(ilUdfPost $post, int $parent_id, string $placeholder, string $button): string
-    {
-        $this->ctrl->setParameter($this, self::PARAM_POST, $post->getId());
-        $this->ctrl->setParameter($this, self::PARAM_PARENT, $parent_id);
-        $action = $this->ctrl->getFormAction($this, 'saveComment');
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_POST);
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_PARENT);
-
-        return '<form class="udf-form" method="post" action="' . $this->esc($action) . '">'
-            . '<textarea class="form-control" name="' . self::POST_FIELD_BODY . '" rows="3" required placeholder="'
-            . $this->esc($placeholder) . '"></textarea>'
-            . '<button type="submit" class="btn btn-default" name="cmd[saveComment]">' . $this->esc($button) . '</button>'
-            . '</form>';
-    }
 
     // ------------------------------------------------------------------
     // Create / edit / delete posts
@@ -1220,159 +947,13 @@ JS);
         return $form;
     }
 
-    // ------------------------------------------------------------------
-    // Create / edit / delete comments
-    // ------------------------------------------------------------------
 
-    protected function saveComment(): void
-    {
-        $post = $this->requirePost();
-        $this->requireParticipation($post);
 
-        $parent_id = $this->getRequestedInt($this->udf_query, self::PARAM_PARENT);
-        $depth = 1;
-        if ($parent_id > 0) {
-            $parent = $this->udf_repo->getComment($parent_id);
-            if ($parent === null || $parent->getPostId() !== $post->getId() || !$parent->canHaveReplies()) {
-                $this->tpl->setOnScreenMessage('failure', $this->txt('reply_not_possible'), true);
-                $this->redirectToPost($post);
-            }
-            $depth = $parent->getDepth() + 1;
-        }
 
-        $body = trim($this->getRequestedString($this->udf_post, self::POST_FIELD_BODY));
-        if ($body === '') {
-            $this->tpl->setOnScreenMessage('failure', $this->txt('comment_empty'), true);
-            $this->redirectToPost($post);
-        }
 
-        $now = time();
-        $comment = new ilUdfComment();
-        $comment->setPostId($post->getId());
-        $comment->setParentId($parent_id);
-        $comment->setDepth($depth);
-        $comment->setUserId($this->udf_user->getId());
-        $comment->setBody($body);
-        $comment->setCreated($now);
-        $comment->setUpdated($now);
-        $this->udf_repo->saveComment($comment);
 
-        $this->tpl->setOnScreenMessage('success', $this->txt('comment_saved'), true);
-        $this->redirectToPost($post, 'udf-c' . $comment->getId());
-    }
 
-    protected function editComment(?ilPropertyFormGUI $form = null): void
-    {
-        $post = $this->requirePost();
-        $comment = $this->requireComment($post);
-        $this->requireAuthor($comment->getUserId(), $post);
-        $this->tabs->activateTab(self::TAB_CONTENT);
 
-        if ($form === null) {
-            $form = $this->initCommentForm($post, $comment);
-            $form->setValuesByArray(['body' => $comment->getBody()]);
-        }
-        $this->tpl->setContent($form->getHTML());
-    }
-
-    protected function updateComment(): void
-    {
-        $post = $this->requirePost();
-        $comment = $this->requireComment($post);
-        $this->requireAuthor($comment->getUserId(), $post);
-
-        $form = $this->initCommentForm($post, $comment);
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
-            $this->editComment($form);
-            return;
-        }
-
-        $comment->setBody(trim((string) $form->getInput('body')));
-        $comment->setUpdated(time());
-        $this->udf_repo->saveComment($comment);
-
-        $this->tpl->setOnScreenMessage('success', $this->txt('comment_updated'), true);
-        $this->redirectToPost($post, 'udf-c' . $comment->getId());
-    }
-
-    protected function deleteComment(): void
-    {
-        $post = $this->requirePost();
-        $comment = $this->requireComment($post);
-        if (!$this->isAuthor($comment->getUserId()) && !$this->isModerator()) {
-            $this->denyAndReturn($post);
-        }
-
-        $this->udf_repo->deleteComment($comment);
-        $this->tpl->setOnScreenMessage('success', $this->txt('comment_deleted'), true);
-        $this->redirectToPost($post, 'udf-comments');
-    }
-
-    private function initCommentForm(ilUdfPost $post, ilUdfComment $comment): ilPropertyFormGUI
-    {
-        $form = new ilPropertyFormGUI();
-        $form->setTitle($this->txt('edit_comment'));
-        $this->ctrl->setParameter($this, self::PARAM_POST, $post->getId());
-        $this->ctrl->setParameter($this, self::PARAM_COMMENT, $comment->getId());
-        $form->setFormAction($this->ctrl->getFormAction($this, 'updateComment'));
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_COMMENT);
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_POST);
-
-        $body = new ilTextAreaInputGUI($this->txt('comment'), 'body');
-        $body->setRequired(true);
-        $body->setRows(6);
-        $form->addItem($body);
-
-        $form->addCommandButton('updateComment', $this->lng->txt('save'));
-        $form->addCommandButton('showPost', $this->lng->txt('cancel'));
-
-        return $form;
-    }
-
-    // ------------------------------------------------------------------
-    // Accepted answers
-    // ------------------------------------------------------------------
-
-    protected function acceptComment(): void
-    {
-        $post = $this->requirePost();
-        $comment = $this->requireComment($post);
-        if (!$this->canAccept($post)) {
-            $this->denyAndReturn($post);
-        }
-
-        $post->setAcceptedId($comment->getId());
-        $this->udf_repo->savePost($post);
-
-        $this->tpl->setOnScreenMessage('success', $this->txt('answer_accepted'), true);
-        $this->redirectToPost($post, 'udf-comments');
-    }
-
-    protected function unacceptComment(): void
-    {
-        $post = $this->requirePost();
-        if (!$this->canAccept($post)) {
-            $this->denyAndReturn($post);
-        }
-
-        $post->setAcceptedId(0);
-        $this->udf_repo->savePost($post);
-
-        $this->tpl->setOnScreenMessage('success', $this->txt('answer_unaccepted'), true);
-        $this->redirectToPost($post, 'udf-comments');
-    }
-
-    /**
-     * Depending on the setting: the author of the post, or course/group admins.
-     */
-    private function canAccept(ilUdfPost $post): bool
-    {
-        if ($this->getForum()->getAcceptMode() === ilObjUdonForum::ACCEPT_ADMIN) {
-            return $this->isModerator();
-        }
-        return $this->isAuthor($post->getUserId());
-    }
 
     // ------------------------------------------------------------------
     // Categories (lecturers)
@@ -1618,7 +1199,7 @@ JS);
     // ------------------------------------------------------------------
 
     /**
-     * Logged-in users with read permission can write posts and comments.
+     * Logged-in users with read permission can write posts and vote.
      */
     private function canParticipate(): bool
     {
@@ -1718,19 +1299,6 @@ JS);
         return $post;
     }
 
-    /**
-     * Comment from the request; it must belong to the given post and not be deleted.
-     */
-    private function requireComment(ilUdfPost $post): ilUdfComment
-    {
-        $id = $this->getRequestedInt($this->udf_query, self::PARAM_COMMENT);
-        $comment = $id > 0 ? $this->udf_repo->getComment($id) : null;
-        if ($comment === null || $comment->getPostId() !== $post->getId() || $comment->isDeleted()) {
-            $this->tpl->setOnScreenMessage('failure', $this->txt('comment_not_found'), true);
-            $this->redirectToPost($post);
-        }
-        return $comment;
-    }
 
     private function linkToPost(string $cmd, ilUdfPost $post, bool $form_action = false): string
     {
@@ -1740,13 +1308,6 @@ JS);
         return $link;
     }
 
-    private function linkToComment(string $cmd, ilUdfPost $post, ilUdfComment $comment, bool $form_action = false): string
-    {
-        $this->ctrl->setParameter($this, self::PARAM_COMMENT, $comment->getId());
-        $link = $this->linkToPost($cmd, $post, $form_action);
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_COMMENT);
-        return $link;
-    }
 
     /**
      * @return never
@@ -1811,10 +1372,6 @@ JS);
         return implode(' · ', $parts);
     }
 
-    private function renderLink(string $label, string $url): string
-    {
-        return '<a href="' . $this->esc($url) . '">' . $this->esc($label) . '</a>';
-    }
 
     /**
      * Escapes the text, keeps line breaks and turns web addresses into links.
@@ -1835,10 +1392,6 @@ JS);
         return nl2br($html);
     }
 
-    private function formatCommentCount(int $count): string
-    {
-        return $count === 1 ? $this->txt('comment_count_one') : sprintf($this->txt('comment_count'), $count);
-    }
 
     private function formatRelativeTime(int $timestamp): string
     {
@@ -1919,44 +1472,24 @@ JS);
 .udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: #e3ecf7; color: #2b5797; }
 .udf-edited { font-style: italic; }
 .udf-preview, .udf-body { margin: 0.5rem 0; line-height: 1.5; overflow-wrap: anywhere; }
-.udf-actions { font-size: 0.85rem; margin-top: 0.25rem; }
-.udf-actions a, .udf-actions button { font-weight: 600; }
-.udf-actions-right { margin-left: 0.5rem; }
 .udf-back { margin-bottom: 0.75rem; }
-.udf-comments { margin-top: 1.5rem; }
 .udf-empty { color: #6f6f6f; }
-.udf-form { margin: 0.5rem 0 1rem; }
-.udf-form textarea { width: 100%; margin-bottom: 0.5rem; }
-.udf-comment { border-left: 2px solid #e0e0e0; padding: 0.25rem 0 0.25rem 0.75rem; margin: 0.5rem 0 0.5rem 0.25rem; }
-.udf-comment:hover { border-left-color: #9a9a9a; }
-.udf-comment > summary { cursor: pointer; list-style: none; }
-.udf-comment > summary::-webkit-details-marker { display: none; }
-.udf-comment:not([open]) > summary::after { content: " [+]"; }
-.udf-comment .udf-body { margin: 0.25rem 0; }
-.udf-deleted { color: #8a8a8a; font-style: italic; }
-.udf-reply { display: inline-block; vertical-align: top; }
-.udf-reply > summary { cursor: pointer; display: inline; font-weight: 600; color: #4c6586; }
-.udf-reply[open] { display: block; }
 .udf-pager { display: flex; gap: 0.5rem; margin-top: 1rem; }
-.udf-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.25rem 0 1rem; }
+.udf-controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.5rem 1rem; margin: 0.25rem 0 1rem; }
+.udf-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.udf-sorting { justify-content: flex-end; margin-left: auto; }
+.udf-sorting-periods { display: flex; flex-wrap: wrap; gap: 0.4rem; flex-basis: 100%; justify-content: flex-end; }
 .udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #c8c8c8; border-radius: 999px; font-size: 0.85rem; color: #333; text-decoration: none; background: #fff; }
 .udf-chip:hover { border-color: #6f6f6f; text-decoration: none; }
 .udf-chip-active { background: #4c6586; border-color: #4c6586; color: #fff; }
 .udf-chip-active:hover { color: #fff; }
-.udf-filter-sep { width: 1px; height: 1.4rem; background: #d6d6d6; margin: 0 0.3rem; }
 .udf-labels { margin-bottom: 0.3rem; }
 .udf-cat { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; color: #333; }
-.udf-answered { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; background: #dff3e4; color: #1e7b34; }
-.udf-accepted-box { border: 2px solid #3d9b55; border-radius: 8px; padding: 0.6rem 0.9rem; margin: 0.5rem 0 1rem; background: #f4fbf6; }
-.udf-accepted-label { font-weight: 700; color: #1e7b34; margin-bottom: 0.2rem; }
-.udf-comment.udf-accepted { border-left-color: #3d9b55; border-left-width: 3px; }
 .udf-card-voted { display: flex; gap: 0.75rem; align-items: flex-start; }
 .udf-card-main { flex: 1; min-width: 0; position: relative; }
 .udf-card-menu { float: right; margin-left: 0.5rem; }
 .udf-vote { display: flex; flex-direction: column; align-items: center; min-width: 2.2rem; margin: 0; }
-.udf-vote-inline { display: inline-flex; flex-direction: row; gap: 0.2rem; min-width: 0; margin-right: 0.75rem; vertical-align: middle; }
 .udf-arrow { background: none; border: 0; padding: 0 0.2rem; font-size: 1rem; line-height: 1.2; color: #8a8a8a; cursor: pointer; border-radius: 4px; }
-.udf-vote-inline .udf-arrow { font-size: 0.85rem; }
 button.udf-arrow:hover { background: #eef1f5; }
 .udf-up-active .udf-up { color: #d9480f; }
 .udf-down-active .udf-down { color: #3b5bdb; }
@@ -1966,10 +1499,7 @@ button.udf-arrow:hover { background: #eef1f5; }
 .udf-score { font-weight: 700; font-size: 0.9rem; color: #333; min-width: 1.2rem; text-align: center; }
 .udf-new { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; background: #fff0e0; color: #c2410c; }
 .udf-card.udf-unread { border-left: 4px solid #f08c00; }
-.udf-comment.udf-unread > summary .udf-author { color: #c2410c; }
 .udf-chip-small { font-size: 0.8rem; padding: 0.1rem 0.6rem; }
-.udf-comments-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
-.udf-filters-inline { margin: 0; }
 @media (max-width: 600px) { .udf-card { padding: 0.6rem 0.7rem; } .udf-card-voted { gap: 0.5rem; } }
 </style>
 CSS;

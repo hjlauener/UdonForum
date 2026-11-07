@@ -14,6 +14,7 @@ object_offline_info#:#This forum is not visible for course members. You can make
 confirm#:#Confirm
 no_permission#:#You do not have permission to do this.
 no_posts#:#There are no posts in this forum yet. Create the first post!
+no_posts_filtered#:#No posts found.
 back_to_forum#:#Back to the forum
 new_post#:#New post
 edit_post#:#Edit post
@@ -26,25 +27,7 @@ post_created#:#The post has been published.
 post_updated#:#The post has been saved.
 post_deleted#:#The post has been deleted.
 post_not_found#:#The post was not found.
-confirm_delete_post#:#Do you really want to delete this post including all comments?
-comment#:#Comment
-comment_count_one#:#1 comment
-comment_count#:#%s comments
-no_comments#:#No comments yet.
-write_comment#:#Write a comment …
-send_comment#:#Comment
-reply#:#Reply
-write_reply#:#Write a reply …
-send_reply#:#Send reply
-reply_not_possible#:#It is not possible to reply to this comment.
-edit_comment#:#Edit comment
-comment_saved#:#The comment has been published.
-comment_updated#:#The comment has been saved.
-comment_deleted#:#The comment has been deleted.
-comment_empty#:#Please enter a text.
-comment_not_found#:#The comment was not found.
-confirm_delete_comment#:#Do you really want to delete this comment?
-deleted_comment#:#[deleted]
+confirm_delete_post#:#Do you really want to delete this post?
 deleted_user#:#Deleted user
 lecturer#:#Lecturer
 edited#:#edited
@@ -54,7 +37,6 @@ time_hours#:#%s hrs. ago
 time_yesterday#:#yesterday
 time_days#:#%s days ago
 all_posts#:#All
-no_posts_filtered#:#No posts found.
 categories#:#Categories
 category#:#Category
 choose_category#:#– Please choose –
@@ -72,18 +54,6 @@ posts#:#Posts
 default_cat_general#:#General
 default_cat_questions#:#Questions
 default_cat_exam#:#Exam
-accept_mode#:#Accepted answers
-accept_mode_info#:#An accepted answer is shown at the top of the comments, and the post counts as answered.
-accept_mode_author#:#The person who created the post marks the accepted answer
-accept_mode_admin#:#The course admins (persons with edit permission) mark the accepted answer
-accepted_answer#:#Accepted answer
-answered#:#Answered
-unanswered#:#Unanswered
-accept#:#Accept as answer
-unaccept#:#Remove acceptance
-answer_accepted#:#The answer has been accepted.
-answer_unaccepted#:#The answer is no longer accepted.
-show_in_discussion#:#Show in the discussion
 sorting#:#Sorting
 filter#:#Filter
 sort_popular#:#Popular
@@ -92,16 +62,11 @@ sort_top#:#Best rated
 period_week#:#This week
 period_month#:#This month
 period_all#:#All time
-csort_best#:#Best
-csort_new#:#Newest
-csort_old#:#Oldest
 previous_page#:#Previous page
 next_page#:#Next page
 points#:#Points
 vote_up#:#Vote up
 vote_down#:#Vote down
 new#:#New
-new_comment_one#:#1 new
-new_comments#:#%s new
 mark_all_read#:#Mark all as read
-marked_all_read#:#All posts and comments are now marked as read.
+marked_all_read#:#All posts are now marked as read.

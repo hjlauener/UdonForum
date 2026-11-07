@@ -30,6 +30,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const TAB_STATISTICS = 'statistics';
     private const SUBTAB_STAT_STANDARD = 'stat_standard';
     private const SUBTAB_STAT_NETWORK = 'stat_network';
+    private const SUBTAB_STAT_BUBBLES = 'stat_bubbles';
+    /** colours of the topics in the bubble chart (distinguishable when overlapping) */
+    private const BUBBLE_COLORS = ['#c95100', '#1971c2', '#2f9e44', '#ae3ec9', '#e03131', '#0c8599', '#f08c00', '#5f3dc4'];
+    private const BUBBLE_COLOR_NO_CATEGORY = '#868e96';
 
     private const PARAM_POST = 'post_id';
     private const PARAM_REPLY = 'reply_id';
@@ -74,6 +78,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const STATISTICS_COMMANDS = [
         'showStatistics',
         'showNetwork',
+        'showBubbles',
     ];
 
     /** Commands that need read permission (further checks inside) */
@@ -1395,6 +1400,11 @@ JS);
             $this->txt('stat_network'),
             $this->ctrl->getLinkTarget($this, 'showNetwork')
         );
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_BUBBLES,
+            $this->txt('stat_bubbles'),
+            $this->ctrl->getLinkTarget($this, 'showBubbles')
+        );
         $this->tabs->activateSubTab($active);
     }
 
@@ -1431,6 +1441,82 @@ JS);
 
         // the sort button of the table is hidden; sorting via the column headers stays
         $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $this->ui_renderer->render($table) . '</div>');
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Bubble-Charts": every topic (category) as a
+     * circle, the larger the more posts; topics with the same active people
+     * overlap; a pie chart shows posts and replies.
+     */
+    protected function showBubbles(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_BUBBLES);
+
+        $activity = $this->udf_repo->getCategoryActivity($this->object->getId());
+        $bubbles = [];
+        foreach ($this->getCategories() as $i => $cat) {
+            if (!isset($activity[$cat->getId()])) {
+                continue;
+            }
+            $bubbles['c' . $cat->getId()] = $this->buildBubble(
+                $cat->getTitle(),
+                self::BUBBLE_COLORS[$i % count(self::BUBBLE_COLORS)],
+                $activity[$cat->getId()]
+            );
+        }
+        // posts without category (or of a deleted category)
+        $known = array_map(static fn(ilUdfCategory $c): int => $c->getId(), $this->getCategories());
+        $rest = ['posts' => 0, 'replies' => 0, 'users' => []];
+        foreach ($activity as $cat_id => $a) {
+            if (!in_array($cat_id, $known, true)) {
+                $rest['posts'] += $a['posts'];
+                $rest['replies'] += $a['replies'];
+                $rest['users'] += $a['users'];
+            }
+        }
+        if ($rest['posts'] > 0) {
+            $bubbles['c0'] = $this->buildBubble($this->txt('no_category'), self::BUBBLE_COLOR_NO_CATEGORY, $rest);
+        }
+
+        if (array_filter($bubbles, static fn(array $b): bool => $b['posts'] > 0) === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('stat_no_activity'));
+            return;
+        }
+
+        $chart = new ilUdfBubbleChart($bubbles);
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf-stat">'
+            . '<p class="udf-network-legend">'
+            . '<span class="udf-legend-bubble"></span> ' . $this->esc($this->txt('bubbles_legend_size'))
+            . '<span class="udf-legend-overlap"></span> ' . $this->esc($this->txt('bubbles_legend_overlap'))
+            . '<span class="udf-legend-pie"></span> ' . $this->esc($this->txt('bubbles_legend_pie'))
+            . '</p>'
+            . '<div class="udf-network-box">' . $chart->toSvg($this->txt('stat_bubbles'), $this->txt('bubbles_posts'), $this->txt('bubbles_post_one')) . '</div>'
+            . '</div>'
+        );
+    }
+
+    /**
+     * @param array{posts: int, replies: int, users: array<int, true>} $activity
+     * @return array{label: string, tooltip: string, color: string, posts: int, replies: int, users: array<int, true>}
+     */
+    private function buildBubble(string $label, string $color, array $activity): array
+    {
+        return [
+            'label' => $label,
+            'tooltip' => sprintf(
+                $this->txt('bubbles_tooltip'),
+                $label,
+                $activity['posts'],
+                $activity['replies'],
+                count($activity['users'])
+            ),
+            'color' => $color,
+            'posts' => $activity['posts'],
+            'replies' => $activity['replies'],
+            'users' => $activity['users'],
+        ];
     }
 
     /**
@@ -2057,6 +2143,13 @@ JS);
 .udf-network-legend { font-size: 0.85rem; color: #555; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c95100; background: radial-gradient(circle, #000 0 3px, rgba(247,166,74,0.35) 3.5px); }
 .udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(169,66,8,0.45); margin-left: 1rem; }
+.udf-bubbles { width: 100%; height: auto; display: block; }
+.udf-bubble { cursor: default; }
+.udf-legend-bubble { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #1971c2; background: rgba(25,113,194,0.22); }
+.udf-legend-overlap { display: inline-block; width: 30px; height: 18px; margin-left: 1rem; background:
+  radial-gradient(circle at 9px 9px, rgba(201,81,0,0.3) 8px, transparent 8.5px),
+  radial-gradient(circle at 21px 9px, rgba(25,113,194,0.3) 8px, transparent 8.5px); }
+.udf-legend-pie { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-left: 1rem; background: conic-gradient(#c95100 0 65%, rgba(201,81,0,0.35) 65% 100%); }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea,
 .udf-reply-form [data-il-ui-component="textarea-field-input"] .c-input__field textarea { height: 10rem !important; min-height: 6rem; }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 10rem; }

@@ -101,6 +101,10 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   - Unterreiter *Spinnennetz*: jede aktive Person als Punkt mit Namen; der
     Kreis darum wächst mit jedem eröffneten Beitrag; Linien zwischen Personen,
     die einander geantwortet haben – je mehr Antworten, desto dicker
+  - Unterreiter *Bubble-Charts*: jedes Thema (Kategorie) als Kreis, je
+    grösser, desto mehr Beiträge; verwandte Themen (dieselben aktiven Personen)
+    überlappen sich, nicht verwandte nie; in der Mitte ein Kuchendiagramm mit
+    dem Anteil Beiträge und Antworten
   - Beim Einführen des Rechts erhalten es alle Rollen, die das Forum
     bearbeiten dürfen.
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
@@ -126,6 +130,7 @@ classes/
   class.ilUdfReply.php             Antwort auf einen Beitrag
   class.ilUdfStatisticsTable.php   Daten und Sortierung der Statistik-Tabelle
   class.ilUdfNetworkGraph.php      Spinnennetz (Layout und SVG)
+  class.ilUdfBubbleChart.php       Bubble-Charts (Layout und SVG)
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon

@@ -84,6 +84,14 @@ network_node_tooltip#:#%s: %s Beiträge eröffnet, %s Antworten
 network_edge_tooltip#:#%s und %s: %s Antworten aufeinander
 network_legend_ring#:#Kreis: wächst mit jedem eröffneten Beitrag
 network_legend_line#:#Linie: Antworten zwischen zwei Personen – je mehr, desto dicker
+stat_bubbles#:#Bubble-Charts
+no_category#:#Ohne Kategorie
+bubbles_posts#:#%s Beiträge
+bubbles_post_one#:#1 Beitrag
+bubbles_tooltip#:#%s: %s Beiträge, %s Antworten, %s aktive Personen
+bubbles_legend_size#:#Kreis: ein Thema (Kategorie) – je grösser, desto mehr Beiträge
+bubbles_legend_overlap#:#Überlappung: verwandte Themen, in denen dieselben Personen aktiv sind
+bubbles_legend_pie#:#Kuchendiagramm: Anteil Beiträge (dunkel) und Antworten (hell)
 stat_participants#:#Teilnehmende
 stat_lastname#:#Name
 stat_firstname#:#Vorname

@@ -84,6 +84,14 @@ network_node_tooltip#:#%s: %s posts opened, %s replies
 network_edge_tooltip#:#%s and %s: %s replies to each other
 network_legend_ring#:#Circle: grows with every post opened
 network_legend_line#:#Line: replies between two people – the more, the thicker
+stat_bubbles#:#Bubble charts
+no_category#:#Without category
+bubbles_posts#:#%s posts
+bubbles_post_one#:#1 post
+bubbles_tooltip#:#%s: %s posts, %s replies, %s active people
+bubbles_legend_size#:#Circle: one topic (category) – the larger, the more posts
+bubbles_legend_overlap#:#Overlap: related topics in which the same people are active
+bubbles_legend_pie#:#Pie chart: share of posts (dark) and replies (light)
 stat_participants#:#Participants
 stat_lastname#:#Last name
 stat_firstname#:#First name

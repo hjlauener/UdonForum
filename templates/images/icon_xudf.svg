@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Udon Forum: two speech bubbles in orange -->
-  <path d="M26 6h28a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8h-1v7.5a1 1 0 0 1-1.7.7L43 38H26a8 8 0 0 1-8-8V14a8 8 0 0 1 8-8z" fill="#f7a64a"/>
-  <path d="M10 20h30a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H23l-9.3 8.3A1 1 0 0 1 12 61.5V54h-2a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z" fill="#c95100"/>
-  <path d="M10 20h30a8 8 0 0 1 8 8v18a8 8 0 0 1-8 8H23l-9.3 8.3A1 1 0 0 1 12 61.5V54h-2a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z" fill="none" stroke="#fff" stroke-width="2" stroke-opacity="0.9"/>
-  <circle cx="15" cy="37" r="3.6" fill="#fff"/>
-  <circle cx="25" cy="37" r="3.6" fill="#fff"/>
-  <circle cx="35" cy="37" r="3.6" fill="#fff"/>
+  <!-- Udon Forum: orange tile, speech bubble with up arrow (votes) -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a3c"/><stop offset="1" stop-color="#c95100"/></linearGradient></defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/>
+  <path d="M32 12c11.6 0 21 7.6 21 17s-9.4 17-21 17c-2 0-3.9-.2-5.7-.6L17 51l1.6-8.4C13.9 39.5 11 34.6 11 29c0-9.4 9.4-17 21-17z" fill="#fff"/>
+  <path d="M32 37V22m-6.5 6.5L32 22l6.5 6.5" fill="none" stroke="#c95100" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

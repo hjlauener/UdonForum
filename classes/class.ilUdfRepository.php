@@ -323,6 +323,50 @@ class ilUdfRepository
         return $list;
     }
 
+    /**
+     * Activity per category (topic) for the bubble chart: number of posts and
+     * replies, and who was active (opened a post or replied) in it.
+     *
+     * @return array<int, array{posts: int, replies: int, users: array<int, true>}> category id (0 = none) => activity
+     */
+    public function getCategoryActivity(int $obj_id): array
+    {
+        $result = [];
+
+        $set = $this->db->query(
+            'SELECT cat_id, user_id, COUNT(*) cnt FROM ' . self::TABLE_POST .
+            ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' GROUP BY cat_id, user_id'
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $cat = (int) $rec['cat_id'];
+            $result[$cat]['posts'] = ($result[$cat]['posts'] ?? 0) + (int) $rec['cnt'];
+            $result[$cat]['users'][(int) $rec['user_id']] = true;
+        }
+
+        $set = $this->db->query(
+            'SELECT p.cat_id, c.user_id, COUNT(*) cnt FROM ' . self::TABLE_COMMENT . ' c' .
+            ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+            ' WHERE p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' AND c.is_deleted = ' . $this->db->quote(0, 'integer') .
+            ' GROUP BY p.cat_id, c.user_id'
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $cat = (int) $rec['cat_id'];
+            $result[$cat]['replies'] = ($result[$cat]['replies'] ?? 0) + (int) $rec['cnt'];
+            $result[$cat]['users'][(int) $rec['user_id']] = true;
+        }
+
+        foreach ($result as $cat => $activity) {
+            $result[$cat] = [
+                'posts' => $activity['posts'] ?? 0,
+                'replies' => $activity['replies'] ?? 0,
+                'users' => $activity['users'] ?? [],
+            ];
+        }
+        return $result;
+    }
+
     // ------------------------------------------------------------------
     // Votes
     // ------------------------------------------------------------------

@@ -66,13 +66,18 @@ bewertet, sortiert und nach Kategorien gefiltert werden.
 - **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
 - **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau),
   25 pro Seite; Klick auf den Titel öffnet den ganzen Beitrag
-- **Filter** links: Alle / pro Kategorie
+- **Filter** links: Alle / pro Kategorie. Kategorie und Sortierung bleiben pro
+  Forum erhalten, auch beim Hin- und Hernavigieren – bis zum Abmelden.
 - **Sortierung** rechts: *Beliebt* (Punkte und Alter, wie Reddit), *Neu*,
   *Bestbewertet* (diese Woche / dieser Monat / gesamt)
 - **Bewerten wie Reddit**: ▲/▼, erneuter Klick nimmt die Stimme zurück, ohne
   Neuladen der Seite; eigene Beiträge können nicht bewertet werden
 - **Beiträge** erstellen, bearbeiten (Autor), löschen (Autor oder Kursleitung)
-  – im Menü der Beitragskarte oder in der Beitragsansicht, mit Rückfrage
+  – im Menü der Beitragskarte oder in der Beitragsansicht, mit Rückfrage.
+  Ist im Feed eine Kategorie gewählt, ist sie beim neuen Beitrag vorausgewählt.
+- **Markdown-Editor** von ILIAS (UI-Formular): Knöpfe für fett, kursiv, Listen,
+  Links, Überschriften und eine Vorschau. Angezeigt wird der Text mit der
+  Markdown-Umwandlung von ILIAS (HTML im Text wird nicht ausgeführt).
 - **Kategorien** (Reiter *Kategorien*): Dozierende legen sie an, benennen um,
   sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
   und *Prüfung*.
@@ -96,6 +101,7 @@ classes/
   class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kategorien, Stimmen)
   class.ilUdfPost.php              Beitrag
   class.ilUdfCategory.php          Kategorie
+  class.ilUdfMarkdownRenderer.php  Markdown: Vorschau im Editor, Anzeige der Beiträge
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use ILIAS\HTTP\Wrapper\ArrayBasedRequestWrapper;
 use ILIAS\Refinery\Factory as Refinery;
+use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Component\Modal\Interruptive;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * GUI class of the Udon Forum repository object.
@@ -70,6 +72,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editPost',
         'updatePost',
         'deletePost',
+        'renderMarkdownPreview',
         'vote',
         'markAllRead',
     ];
@@ -79,6 +82,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private ArrayBasedRequestWrapper $udf_query;
     private ArrayBasedRequestWrapper $udf_post;
     private ilObjUser $udf_user;
+    private ServerRequestInterface $udf_request;
+    private ?ilUdfMarkdownRenderer $udf_markdown = null;
 
     /** @var array<int, string> user id => escaped name */
     private array $udf_name_cache = [];
@@ -96,6 +101,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $this->udf_query = $DIC->http()->wrapper()->query();
         $this->udf_post = $DIC->http()->wrapper()->post();
         $this->udf_user = $DIC->user();
+        $this->udf_request = $DIC->http()->request();
     }
 
     final public function getType(): string
@@ -316,7 +322,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     ): string {
         $link = $this->linkToPost('showPost', $post);
 
-        $preview = $post->getBody();
+        $preview = $this->getMarkdownRenderer()->toPlainText($post->getBody());
         if (mb_strlen($preview) > self::PREVIEW_LENGTH) {
             $preview = rtrim(mb_substr($preview, 0, self::PREVIEW_LENGTH)) . ' …';
         }
@@ -482,24 +488,47 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     }
 
     /**
-     * Current feed settings (sorting, filters, page) from the request.
+     * Current feed settings (sorting, category filter, page).
+     *
+     * Category and sorting are remembered per forum in the ILIAS session: when
+     * the user comes back to the forum (tab, back link, ...), the same
+     * category and sorting are shown again – until logout.
      *
      * @return array<string, int|string>
      */
     private function getFeedState(): array
     {
-        $sort = $this->getRequestedString($this->udf_query, self::PARAM_SORT);
+        $saved = ilSession::get($this->getFeedSessionKey());
+        if (!is_array($saved)) {
+            $saved = [];
+        }
+
+        $sort = $this->udf_query->has(self::PARAM_SORT)
+            ? $this->getRequestedString($this->udf_query, self::PARAM_SORT)
+            : (string) ($saved[self::PARAM_SORT] ?? '');
         if (!in_array($sort, [ilUdfRepository::SORT_POPULAR, ilUdfRepository::SORT_NEW, ilUdfRepository::SORT_TOP], true)) {
             $sort = ilUdfRepository::SORT_POPULAR;
         }
-        $period = $this->getRequestedString($this->udf_query, self::PARAM_PERIOD);
+
+        $period = $this->udf_query->has(self::PARAM_PERIOD)
+            ? $this->getRequestedString($this->udf_query, self::PARAM_PERIOD)
+            : (string) ($saved[self::PARAM_PERIOD] ?? '');
         if (!in_array($period, [self::PERIOD_WEEK, self::PERIOD_MONTH, self::PERIOD_ALL], true)) {
             $period = self::PERIOD_WEEK;
         }
-        $cat = $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_CAT);
+
+        $cat = $this->udf_query->has(self::PARAM_FILTER_CAT)
+            ? $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_CAT)
+            : (int) ($saved[self::PARAM_FILTER_CAT] ?? 0);
         if ($cat > 0 && $this->getCategoryTitle($cat) === null) {
             $cat = 0;
         }
+
+        ilSession::set($this->getFeedSessionKey(), [
+            self::PARAM_SORT => $sort,
+            self::PARAM_PERIOD => $period,
+            self::PARAM_FILTER_CAT => $cat,
+        ]);
 
         return [
             self::PARAM_SORT => $sort,
@@ -509,25 +538,29 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         ];
     }
 
+    private function getFeedSessionKey(): string
+    {
+        return 'udf_feed_' . $this->object->getId();
+    }
+
     /**
-     * Only the values that differ from the default end up in the address.
+     * Parameters of a feed link. Category and sorting are always part of the
+     * link, so that switching back to "all" or "popular" is remembered too.
      *
      * @param array<string, int|string> $state
      * @return array<string, int|string>
      */
     private function getFeedParams(array $state): array
     {
-        $params = [];
-        if ($state[self::PARAM_SORT] !== ilUdfRepository::SORT_POPULAR) {
-            $params[self::PARAM_SORT] = $state[self::PARAM_SORT];
-            if ($state[self::PARAM_SORT] === ilUdfRepository::SORT_TOP && $state[self::PARAM_PERIOD] !== self::PERIOD_WEEK) {
-                $params[self::PARAM_PERIOD] = $state[self::PARAM_PERIOD];
-            }
+        $params = [
+            self::PARAM_FILTER_CAT => (int) $state[self::PARAM_FILTER_CAT],
+            self::PARAM_SORT => (string) $state[self::PARAM_SORT],
+        ];
+        if ($state[self::PARAM_SORT] === ilUdfRepository::SORT_TOP) {
+            $params[self::PARAM_PERIOD] = (string) $state[self::PARAM_PERIOD];
         }
-        foreach ([self::PARAM_FILTER_CAT, self::PARAM_PAGE] as $key) {
-            if ((int) $state[$key] > 0) {
-                $params[$key] = (int) $state[$key];
-            }
+        if ((int) $state[self::PARAM_PAGE] > 0) {
+            $params[self::PARAM_PAGE] = (int) $state[self::PARAM_PAGE];
         }
         return $params;
     }
@@ -802,7 +835,7 @@ JS);
             . $this->renderPostLabels($post)
             . '<h2 class="udf-title">' . $this->esc($post->getTitle()) . '</h2>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
-            . '<div class="udf-body">' . $this->formatText($post->getBody()) . '</div>'
+            . '<div class="udf-body udf-md">' . $this->getMarkdownRenderer()->render($post->getBody()) . '</div>'
             . '</div></article>';
 
         $html .= '</div>';
@@ -824,28 +857,25 @@ JS);
     // Create / edit / delete posts
     // ------------------------------------------------------------------
 
-    protected function createPost(?ilPropertyFormGUI $form = null): void
+    protected function createPost(?StandardForm $form = null): void
     {
         $this->requireParticipation();
         $this->tabs->activateTab(self::TAB_CONTENT);
 
         if ($form === null) {
-            $form = $this->initPostForm(null);
             // coming from a category of the feed: preselect it
             $cat_id = $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_CAT);
-            if ($cat_id > 0 && $this->getCategoryTitle($cat_id) !== null) {
-                $form->setValuesByArray(['cat_id' => (string) $cat_id]);
-            }
+            $form = $this->buildPostForm(null, $this->getCategoryTitle($cat_id) !== null ? $cat_id : 0);
         }
-        $this->tpl->setContent($form->getHTML());
+        $this->showPostForm($form, $this->txt('new_post'));
     }
 
     protected function savePost(): void
     {
         $this->requireParticipation();
-        $form = $this->initPostForm(null);
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
+        $form = $this->buildPostForm(null, 0)->withRequest($this->udf_request);
+        $data = $form->getData();
+        if ($data === null) {
             $this->createPost($form);
             return;
         }
@@ -854,9 +884,7 @@ JS);
         $post = new ilUdfPost();
         $post->setObjId($this->object->getId());
         $post->setUserId($this->udf_user->getId());
-        $post->setTitle(trim((string) $form->getInput('title')));
-        $post->setBody(trim((string) $form->getInput('body')));
-        $post->setCatId($this->getCategoryInput($form));
+        $this->applyPostData($post, $data);
         $post->setCreated($now);
         $post->setUpdated($now);
         $this->udf_repo->savePost($post);
@@ -865,21 +893,14 @@ JS);
         $this->redirectToPost($post);
     }
 
-    protected function editPost(?ilPropertyFormGUI $form = null): void
+    protected function editPost(?StandardForm $form = null): void
     {
         $post = $this->requirePost();
         $this->requireAuthor($post->getUserId(), $post);
         $this->tabs->activateTab(self::TAB_CONTENT);
 
-        if ($form === null) {
-            $form = $this->initPostForm($post);
-            $form->setValuesByArray([
-                'title' => $post->getTitle(),
-                'body' => $post->getBody(),
-                'cat_id' => (string) $post->getCatId(),
-            ]);
-        }
-        $this->tpl->setContent($form->getHTML());
+        $form ??= $this->buildPostForm($post, $post->getCatId());
+        $this->showPostForm($form, $this->txt('edit_post'), $post);
     }
 
     protected function updatePost(): void
@@ -887,16 +908,14 @@ JS);
         $post = $this->requirePost();
         $this->requireAuthor($post->getUserId(), $post);
 
-        $form = $this->initPostForm($post);
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
+        $form = $this->buildPostForm($post, $post->getCatId())->withRequest($this->udf_request);
+        $data = $form->getData();
+        if ($data === null) {
             $this->editPost($form);
             return;
         }
 
-        $post->setTitle(trim((string) $form->getInput('title')));
-        $post->setBody(trim((string) $form->getInput('body')));
-        $post->setCatId($this->getCategoryInput($form));
+        $this->applyPostData($post, $data);
         $post->setUpdated(time());
         $this->udf_repo->savePost($post);
 
@@ -916,48 +935,89 @@ JS);
         $this->ctrl->redirect($this, 'showContent');
     }
 
-    private function initPostForm(?ilUdfPost $post): ilPropertyFormGUI
+    /**
+     * Async endpoint for the preview tab of the Markdown field.
+     */
+    protected function renderMarkdownPreview(): void
     {
-        $form = new ilPropertyFormGUI();
-        if ($post === null) {
-            $form->setTitle($this->txt('new_post'));
-            $form->setFormAction($this->ctrl->getFormAction($this, 'savePost'));
-        } else {
-            $form->setTitle($this->txt('edit_post'));
-            $this->ctrl->setParameter($this, self::PARAM_POST, $post->getId());
-            $form->setFormAction($this->ctrl->getFormAction($this, 'updatePost'));
-            $this->ctrl->clearParameterByClass(self::class, self::PARAM_POST);
-        }
+        $this->getMarkdownRenderer()->renderAsync();
+    }
+
+    /**
+     * Form of a post (ILIAS UI form): category, title and text with the
+     * Markdown editor (formatting buttons and preview).
+     */
+    private function buildPostForm(?ilUdfPost $post, int $cat_id): StandardForm
+    {
+        $field = $this->ui_factory->input()->field();
+        $inputs = [];
 
         $categories = $this->getCategories();
         if ($categories !== []) {
-            $options = ['' => $this->txt('choose_category')];
+            $options = [];
             foreach ($categories as $cat) {
                 $options[(string) $cat->getId()] = $cat->getTitle();
             }
-            $cat_input = new ilSelectInputGUI($this->txt('category'), 'cat_id');
-            $cat_input->setOptions($options);
-            $cat_input->setRequired(true);
-            $form->addItem($cat_input);
+            $select = $field->select($this->txt('category'), $options)->withRequired(true);
+            if (isset($options[(string) $cat_id])) {
+                $select = $select->withValue((string) $cat_id);
+            }
+            $inputs['cat_id'] = $select;
         }
 
-        $title = new ilTextInputGUI($this->txt('post_title'), 'title');
-        $title->setRequired(true);
-        $title->setMaxLength(255);
-        $form->addItem($title);
+        $inputs['title'] = $field->text($this->txt('post_title'))
+            ->withRequired(true)
+            ->withMaxLength(255)
+            ->withValue($post !== null ? $post->getTitle() : '');
 
-        $body = new ilTextAreaInputGUI($this->txt('post_body'), 'body');
-        $body->setRows(10);
-        $form->addItem($body);
+        $inputs['body'] = $field->markdown($this->getMarkdownRenderer(), $this->txt('post_body'), $this->txt('post_body_info'))
+            ->withValue($post !== null ? $post->getBody() : '');
 
-        if ($post === null) {
-            $form->addCommandButton('savePost', $this->txt('publish'));
-        } else {
-            $form->addCommandButton('updatePost', $this->lng->txt('save'));
-            $form->addCommandButton('showPost', $this->lng->txt('cancel'));
+        $action = $post === null
+            ? $this->ctrl->getFormAction($this, 'savePost')
+            : $this->linkToPost('updatePost', $post, true);
+
+        return $this->ui_factory->input()->container()->form()->standard($action, $inputs)
+            ->withSubmitLabel($post === null ? $this->txt('publish') : $this->lng->txt('save'));
+    }
+
+    /**
+     * @param array<string, mixed> $data result of the post form
+     */
+    private function applyPostData(ilUdfPost $post, array $data): void
+    {
+        $cat_id = (int) ($data['cat_id'] ?? 0);
+        $post->setCatId($this->getCategoryTitle($cat_id) !== null ? $cat_id : 0);
+        $post->setTitle(trim((string) ($data['title'] ?? '')));
+        $post->setBody(trim((string) ($data['body'] ?? '')));
+    }
+
+    private function showPostForm(StandardForm $form, string $title, ?ilUdfPost $post = null): void
+    {
+        $back = $post !== null ? $this->linkToPost('showPost', $post) : $this->ctrl->getLinkTarget($this, 'showContent');
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf">'
+            . '<p class="udf-back">' . $this->ui_renderer->render(
+                $this->ui_factory->link()->standard('← ' . $this->txt($post !== null ? 'back_to_post' : 'back_to_forum'), $back)
+            ) . '</p>'
+            . '<h2 class="udf-heading">' . $this->esc($title) . '</h2>'
+            . $this->ui_renderer->render($form)
+            . '</div>'
+        );
+    }
+
+    private function getMarkdownRenderer(): ilUdfMarkdownRenderer
+    {
+        if ($this->udf_markdown === null) {
+            global $DIC;
+            $this->udf_markdown = new ilUdfMarkdownRenderer(
+                $this->ctrl->getLinkTarget($this, 'renderMarkdownPreview', null, true),
+                $this->udf_refinery,
+                $DIC->http()
+            );
         }
-
-        return $form;
+        return $this->udf_markdown;
     }
 
 
@@ -1198,14 +1258,6 @@ JS);
         return self::CATEGORY_COLORS[0];
     }
 
-    /**
-     * Selected category of the post form; only categories of this forum are accepted.
-     */
-    private function getCategoryInput(ilPropertyFormGUI $form): int
-    {
-        $cat_id = (int) $form->getInput('cat_id');
-        return $this->getCategoryTitle($cat_id) !== null ? $cat_id : 0;
-    }
 
     // ------------------------------------------------------------------
     // Permissions
@@ -1386,24 +1438,6 @@ JS);
     }
 
 
-    /**
-     * Escapes the text, keeps line breaks and turns web addresses into links.
-     */
-    private function formatText(string $text): string
-    {
-        $html = $this->esc($text);
-        $html = (string) preg_replace_callback(
-            '~https?://(?:(?!&quot;|&#039;|&lt;|&gt;)[^\s<])+~u',
-            static function (array $m): string {
-                // punctuation at the end belongs to the sentence, not to the address
-                $url = rtrim($m[0], '.,;:!?)');
-                $rest = substr($m[0], strlen($url));
-                return '<a href="' . $url . '" target="_blank" rel="noopener noreferrer">' . $url . '</a>' . $rest;
-            },
-            $html
-        );
-        return nl2br($html);
-    }
 
 
     private function formatRelativeTime(int $timestamp): string
@@ -1485,6 +1519,16 @@ JS);
 .udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: #e3ecf7; color: #2b5797; }
 .udf-edited { font-style: italic; }
 .udf-preview, .udf-body { margin: 0.5rem 0; line-height: 1.5; overflow-wrap: anywhere; }
+.udf-md > :first-child { margin-top: 0; }
+.udf-md > :last-child { margin-bottom: 0; }
+.udf-md p, .udf-md ul, .udf-md ol, .udf-md blockquote, .udf-md pre { margin: 0 0 0.6rem; }
+.udf-md ul, .udf-md ol { padding-left: 1.5rem; }
+.udf-md h1, .udf-md h2, .udf-md h3, .udf-md h4 { font-size: 1.1rem; font-weight: 700; margin: 0.8rem 0 0.4rem; }
+.udf-md h1 { font-size: 1.3rem; }
+.udf-md blockquote { border-left: 3px solid #f0b27a; padding-left: 0.75rem; color: #555; }
+.udf-md code { background: #f3f3f3; padding: 0 0.25rem; border-radius: 3px; font-size: 0.9em; }
+.udf-md pre { background: #f6f6f6; padding: 0.6rem 0.8rem; border-radius: 6px; overflow-x: auto; }
+.udf-md pre code { background: none; padding: 0; }
 .udf-back { margin-bottom: 0.75rem; }
 .udf-empty { color: #6f6f6f; }
 .udf-pager { display: flex; gap: 0.5rem; margin-top: 1rem; }

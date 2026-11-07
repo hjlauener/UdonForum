@@ -11,12 +11,13 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * GUI class of the Udon Forum repository object.
  *
- * Reddit-like forum without comments: a feed of posts (cards) with votes,
- * sorting and categories, and a detail view per post.
+ * Reddit-like forum: a feed of posts (cards) with votes, sorting and
+ * categories, and a detail view per post with replies (one level).
  *
  * Permissions:
- * - read:  read the forum, write posts, vote, edit/delete own posts
- * - write: settings, visibility, categories, delete posts of others
+ * - read:  read the forum, write posts and replies, vote, edit/delete own ones
+ * - write: settings, visibility, categories, delete posts/replies of others
+ * - udf_statistics ("Statistik einsehen"): tab "Statistik"
  *
  * @ilCtrl_isCalledBy ilObjUdonForumGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjUdonForumGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilCommonActionDispatcherGUI
@@ -26,8 +27,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const TAB_CONTENT = 'content';
     private const TAB_PROPERTIES = 'properties';
     private const TAB_CATEGORIES = 'categories';
+    private const TAB_STATISTICS = 'statistics';
+    private const SUBTAB_STAT_STANDARD = 'stat_standard';
 
     private const PARAM_POST = 'post_id';
+    private const PARAM_REPLY = 'reply_id';
     private const PARAM_PAGE = 'page';
     private const PARAM_CATEGORY = 'cat_id';
     /** feed filter: category */
@@ -63,6 +67,11 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'moveCategoryDown',
     ];
 
+    /** Commands that need the permission "Statistik einsehen" */
+    private const STATISTICS_COMMANDS = [
+        'showStatistics',
+    ];
+
     /** Commands that need read permission (further checks inside) */
     private const READ_COMMANDS = [
         'showContent',
@@ -72,6 +81,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editPost',
         'updatePost',
         'deletePost',
+        'saveReply',
+        'editReply',
+        'updateReply',
+        'deleteReply',
         'renderMarkdownPreview',
         'vote',
         'markAllRead',
@@ -84,6 +97,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private ilObjUser $udf_user;
     private ServerRequestInterface $udf_request;
     private ?ilUdfMarkdownRenderer $udf_markdown = null;
+    private ilTree $udf_tree;
 
     /** @var array<int, string> user id => escaped name */
     private array $udf_name_cache = [];
@@ -102,6 +116,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $this->udf_post = $DIC->http()->wrapper()->post();
         $this->udf_user = $DIC->user();
         $this->udf_request = $DIC->http()->request();
+        $this->udf_tree = $DIC->repositoryTree();
     }
 
     final public function getType(): string
@@ -124,6 +139,12 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         if (in_array($cmd, self::WRITE_COMMANDS, true)) {
             $this->checkPermission('write');
             $this->ensureDefaultCategories();
+            $this->$cmd();
+            return;
+        }
+
+        if (in_array($cmd, self::STATISTICS_COMMANDS, true)) {
+            $this->checkPermission(ilUdonForumPlugin::OP_STATISTICS);
             $this->$cmd();
             return;
         }
@@ -161,6 +182,14 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
                 self::TAB_CATEGORIES,
                 $this->txt('categories'),
                 $this->ctrl->getLinkTarget($this, 'showCategories')
+            );
+        }
+
+        if ($this->canViewStatistics()) {
+            $this->tabs->addTab(
+                self::TAB_STATISTICS,
+                $this->txt('statistics'),
+                $this->ctrl->getLinkTarget($this, 'showStatistics')
             );
         }
 
@@ -331,6 +360,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $preview = $post->isMarkdown()
             ? $this->getMarkdownRenderer()->toPlainText($post->getBody())
             : trim((string) preg_replace('/\s+/u', ' ', $post->getBody()));
+
         if (mb_strlen($preview) > self::PREVIEW_LENGTH) {
             $preview = rtrim(mb_substr($preview, 0, self::PREVIEW_LENGTH)) . ' …';
         }
@@ -800,7 +830,7 @@ JS);
     // Post detail view
     // ------------------------------------------------------------------
 
-    protected function showPost(): void
+    protected function showPost(?StandardForm $reply_form = null): void
     {
         $post = $this->requirePost();
         $this->tabs->activateTab(self::TAB_CONTENT);
@@ -843,9 +873,10 @@ JS);
             . $this->renderPostLabels($post)
             . '<h2 class="udf-title">' . $this->esc($post->getTitle()) . '</h2>'
             . '<div class="udf-meta">' . $this->renderMeta($post->getUserId(), $post->getCreated(), $post->isEdited()) . '</div>'
-            . '<div class="udf-body udf-md">' . $this->renderBody($post) . '</div>'
+            . '<div class="udf-body udf-md">' . $this->renderBody($post->getBody(), $post->isMarkdown()) . '</div>'
             . '</div></article>';
 
+        $html .= $this->renderReplies($post, $modals, $reply_form);
         $html .= '</div>';
 
         if ($this->isLoggedIn()) {
@@ -1026,13 +1057,296 @@ JS);
     }
 
     /**
-     * Text of a post as HTML: Markdown or plain text, depending on how it was written.
+     * Text of a post or reply as HTML: Markdown or plain text, depending on how it was written.
      */
-    private function renderBody(ilUdfPost $post): string
+    private function renderBody(string $body, bool $is_markdown): string
     {
-        return $post->isMarkdown()
-            ? $this->getMarkdownRenderer()->render($post->getBody())
-            : $this->getMarkdownRenderer()->renderPlain($post->getBody());
+        return $is_markdown
+            ? $this->getMarkdownRenderer()->render($body)
+            : $this->getMarkdownRenderer()->renderPlain($body);
+    }
+
+    // ------------------------------------------------------------------
+    // Replies
+    // ------------------------------------------------------------------
+
+    /**
+     * Replies below a post (oldest first) and the reply field.
+     *
+     * @param Interruptive[] $modals collects the delete overlays
+     */
+    private function renderReplies(ilUdfPost $post, array &$modals, ?StandardForm $reply_form): string
+    {
+        $replies = $this->udf_repo->getRepliesForPost($post->getId());
+        $count = count($replies);
+
+        $html = '<section class="udf-replies" id="udf-replies">'
+            . '<h3 class="udf-heading">' . $this->esc(
+                $count === 1 ? $this->txt('reply_count_one') : sprintf($this->txt('reply_count'), $count)
+            ) . '</h3>';
+
+        foreach ($replies as $reply) {
+            $actions = [];
+            if ($this->isAuthor($reply->getUserId())) {
+                $actions[] = '<a href="' . $this->esc($this->linkToReply('editReply', $post, $reply)) . '">'
+                    . $this->esc($this->txt('edit')) . '</a>';
+            }
+            if ($this->canDeleteReply($reply)) {
+                $modal = $this->buildConfirmModal(
+                    $this->txt('confirm_delete_reply'),
+                    $this->linkToReply('deleteReply', $post, $reply, true),
+                    $reply->getId(),
+                    $this->shorten($this->getMarkdownRenderer()->toPlainText($reply->getBody()), 80),
+                    $this->lng->txt('delete')
+                );
+                $modals[] = $modal;
+                $actions[] = $this->ui_renderer->render(
+                    $this->ui_factory->button()->shy($this->lng->txt('delete'), '')->withOnClick($modal->getShowSignal())
+                );
+            }
+
+            $html .= '<article class="udf-reply" id="udf-r' . $reply->getId() . '">'
+                . '<div class="udf-meta">' . $this->renderMeta($reply->getUserId(), $reply->getCreated(), $reply->isEdited()) . '</div>'
+                . '<div class="udf-body udf-md">' . $this->renderBody($reply->getBody(), $reply->isMarkdown()) . '</div>'
+                . ($actions !== [] ? '<div class="udf-reply-actions">' . implode(' · ', $actions) . '</div>' : '')
+                . '</article>';
+        }
+
+        if ($count === 0) {
+            $html .= '<p class="udf-empty">' . $this->esc($this->txt('no_replies')) . '</p>';
+        }
+
+        if ($this->canParticipate()) {
+            $reply_form ??= $this->buildReplyForm($post, null);
+            $html .= '<div class="udf-reply-form udf-post-form">' . $this->ui_renderer->render($reply_form) . '</div>';
+        }
+
+        return $html . '</section>';
+    }
+
+    /**
+     * Reply field: Markdown editor or simple text field (setting), text required.
+     */
+    private function buildReplyForm(ilUdfPost $post, ?ilUdfReply $reply): StandardForm
+    {
+        $field = $this->ui_factory->input()->field();
+        $label = $this->txt('your_reply');
+        $body = $this->getForum()->usesMarkdown()
+            ? $field->markdown($this->getMarkdownRenderer(), $label)
+            : $field->textarea($label);
+        $body = $body
+            ->withRequired(true)
+            ->withValue($reply !== null ? $reply->getBody() : '')
+            ->withAdditionalTransformation($this->udf_refinery->custom()->constraint(
+                static fn($value): bool => trim((string) $value) !== '',
+                $this->txt('body_required')
+            ));
+
+        $action = $reply === null
+            ? $this->linkToPost('saveReply', $post, true)
+            : $this->linkToReply('updateReply', $post, $reply, true);
+
+        return $this->ui_factory->input()->container()->form()->standard($action, ['body' => $body])
+            ->withSubmitLabel($reply === null ? $this->txt('send_reply') : $this->lng->txt('save'));
+    }
+
+    protected function saveReply(): void
+    {
+        $post = $this->requirePost();
+        $this->requireParticipation($post);
+
+        $form = $this->buildReplyForm($post, null)->withRequest($this->udf_request);
+        $data = $form->getData();
+        if ($data === null) {
+            $this->showPost($form);
+            return;
+        }
+
+        $now = time();
+        $reply = new ilUdfReply();
+        $reply->setPostId($post->getId());
+        $reply->setUserId($this->udf_user->getId());
+        $reply->setBody(trim((string) ($data['body'] ?? '')));
+        $reply->setBodyFormat($this->getForum()->usesMarkdown() ? ilUdfPost::FORMAT_MARKDOWN : ilUdfPost::FORMAT_TEXT);
+        $reply->setCreated($now);
+        $reply->setUpdated($now);
+        $this->udf_repo->saveReply($reply);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('reply_saved'), true);
+        $this->redirectToPost($post, 'udf-r' . $reply->getId());
+    }
+
+    protected function editReply(?StandardForm $form = null): void
+    {
+        $post = $this->requirePost();
+        $reply = $this->requireReply($post);
+        $this->requireAuthor($reply->getUserId(), $post);
+        $this->tabs->activateTab(self::TAB_CONTENT);
+
+        $form ??= $this->buildReplyForm($post, $reply);
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf udf-post-form">'
+            . '<p class="udf-back">' . $this->ui_renderer->render(
+                $this->ui_factory->link()->standard('← ' . $this->txt('back_to_post'), $this->linkToPost('showPost', $post))
+            ) . '</p>'
+            . '<h2 class="udf-heading">' . $this->esc($this->txt('edit_reply')) . '</h2>'
+            . $this->ui_renderer->render($form)
+            . '</div>'
+        );
+    }
+
+    protected function updateReply(): void
+    {
+        $post = $this->requirePost();
+        $reply = $this->requireReply($post);
+        $this->requireAuthor($reply->getUserId(), $post);
+
+        $form = $this->buildReplyForm($post, $reply)->withRequest($this->udf_request);
+        $data = $form->getData();
+        if ($data === null) {
+            $this->editReply($form);
+            return;
+        }
+
+        $reply->setBody(trim((string) ($data['body'] ?? '')));
+        $reply->setBodyFormat($this->getForum()->usesMarkdown() ? ilUdfPost::FORMAT_MARKDOWN : ilUdfPost::FORMAT_TEXT);
+        $reply->setUpdated(time());
+        $this->udf_repo->saveReply($reply);
+
+        $this->tpl->setOnScreenMessage('success', $this->txt('reply_updated'), true);
+        $this->redirectToPost($post, 'udf-r' . $reply->getId());
+    }
+
+    protected function deleteReply(): void
+    {
+        $post = $this->requirePost();
+        $reply = $this->requireReply($post);
+        if (!$this->canDeleteReply($reply)) {
+            $this->denyAndReturn($post);
+        }
+
+        $this->udf_repo->deleteReply($reply);
+        $this->tpl->setOnScreenMessage('success', $this->txt('reply_deleted'), true);
+        $this->redirectToPost($post, 'udf-replies');
+    }
+
+    private function canDeleteReply(ilUdfReply $reply): bool
+    {
+        return $this->isAuthor($reply->getUserId()) || $this->isModerator();
+    }
+
+    /**
+     * Reply from the request; it must belong to the given post.
+     */
+    private function requireReply(ilUdfPost $post): ilUdfReply
+    {
+        $id = $this->getRequestedInt($this->udf_query, self::PARAM_REPLY);
+        $reply = $id > 0 ? $this->udf_repo->getReply($id) : null;
+        if ($reply === null || $reply->getPostId() !== $post->getId()) {
+            $this->tpl->setOnScreenMessage('failure', $this->txt('reply_not_found'), true);
+            $this->redirectToPost($post);
+        }
+        return $reply;
+    }
+
+    private function linkToReply(string $cmd, ilUdfPost $post, ilUdfReply $reply, bool $form_action = false): string
+    {
+        $this->ctrl->setParameter($this, self::PARAM_REPLY, $reply->getId());
+        $link = $this->linkToPost($cmd, $post, $form_action);
+        $this->ctrl->clearParameterByClass(self::class, self::PARAM_REPLY);
+        return $link;
+    }
+
+    private function shorten(string $text, int $length): string
+    {
+        return mb_strlen($text) > $length ? rtrim(mb_substr($text, 0, $length)) . ' …' : $text;
+    }
+
+    // ------------------------------------------------------------------
+    // Statistics
+    // ------------------------------------------------------------------
+
+    private function canViewStatistics(): bool
+    {
+        return $this->access->checkAccess(ilUdonForumPlugin::OP_STATISTICS, '', $this->object->getRefId());
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Standard": table of all participants of the
+     * course/group (and everybody who wrote in the forum), sortable by every column.
+     */
+    protected function showStatistics(): void
+    {
+        $this->tabs->activateTab(self::TAB_STATISTICS);
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_STANDARD,
+            $this->txt('stat_standard'),
+            $this->ctrl->getLinkTarget($this, 'showStatistics')
+        );
+        $this->tabs->activateSubTab(self::SUBTAB_STAT_STANDARD);
+
+        $columns_factory = $this->ui_factory->table()->column();
+        $columns = [
+            ilUdfStatisticsTable::COL_LASTNAME => $columns_factory->text($this->txt('stat_lastname')),
+            ilUdfStatisticsTable::COL_FIRSTNAME => $columns_factory->text($this->txt('stat_firstname')),
+            ilUdfStatisticsTable::COL_EMAIL => $columns_factory->eMail($this->txt('stat_email')),
+            ilUdfStatisticsTable::COL_POSTS => $columns_factory->number($this->txt('stat_posts')),
+            ilUdfStatisticsTable::COL_REPLIES => $columns_factory->number($this->txt('stat_replies')),
+            ilUdfStatisticsTable::COL_WORDS => $columns_factory->number($this->txt('stat_words')),
+        ];
+
+        $table = $this->ui_factory->table()->data(
+            new ilUdfStatisticsTable($this->buildStatisticsRecords()),
+            $this->txt('stat_participants'),
+            $columns
+        )->withId('udf_stat_' . $this->object->getId())
+         ->withRequest($this->udf_request);
+
+        $this->tpl->setContent($this->ui_renderer->render($table));
+    }
+
+    /**
+     * @return array<int, array<string, string|int>> user id => record
+     */
+    private function buildStatisticsRecords(): array
+    {
+        $user_ids = [];
+
+        // participants of the course or group the forum is in
+        $parent_ref_id = (int) $this->udf_tree->getParentId($this->object->getRefId());
+        if (in_array(ilObject::_lookupType($parent_ref_id, true), ['crs', 'grp'], true)) {
+            $user_ids = array_map('intval', ilParticipants::getInstance($parent_ref_id)->getParticipants());
+        }
+
+        // and everybody who wrote something (e.g. no longer a member)
+        $texts = $this->udf_repo->getTextsPerUser($this->object->getId());
+        $user_ids = array_unique(array_merge($user_ids, array_keys($texts)));
+
+        $renderer = $this->getMarkdownRenderer();
+        $records = [];
+        foreach ($user_ids as $user_id) {
+            $name = ilObjUser::_lookupName($user_id);
+            if (($name['login'] ?? '') === '' && !isset($texts[$user_id])) {
+                continue; // deleted user without contributions
+            }
+
+            $words = 0;
+            foreach (array_merge($texts[$user_id]['posts'] ?? [], $texts[$user_id]['replies'] ?? []) as [$body, $format]) {
+                $plain = $format === ilUdfPost::FORMAT_TEXT ? $body : $renderer->toPlainText($body);
+                $words += ilUdfStatisticsTable::countWords($plain);
+            }
+
+            $records[$user_id] = [
+                ilUdfStatisticsTable::COL_LASTNAME => ($name['login'] ?? '') !== '' ? (string) $name['lastname'] : $this->txt('deleted_user'),
+                ilUdfStatisticsTable::COL_FIRSTNAME => (string) ($name['firstname'] ?? ''),
+                ilUdfStatisticsTable::COL_EMAIL => ($name['login'] ?? '') !== '' ? ilObjUser::_lookupEmail($user_id) : '',
+                ilUdfStatisticsTable::COL_POSTS => count($texts[$user_id]['posts'] ?? []),
+                ilUdfStatisticsTable::COL_REPLIES => count($texts[$user_id]['replies'] ?? []),
+                ilUdfStatisticsTable::COL_WORDS => $words,
+            ];
+        }
+        return $records;
     }
 
     private function getMarkdownRenderer(): ilUdfMarkdownRenderer
@@ -1566,6 +1880,15 @@ JS);
 .udf-md code { background: #f3f3f3; padding: 0 0.25rem; border-radius: 3px; font-size: 0.9em; }
 .udf-md pre { background: #f6f6f6; padding: 0.6rem 0.8rem; border-radius: 6px; overflow-x: auto; }
 .udf-md pre code { background: none; padding: 0; }
+.udf-replies { margin-top: 1.5rem; }
+.udf-reply { border-left: 3px solid #f0b27a; padding: 0.4rem 0 0.4rem 0.9rem; margin: 0 0 1rem 0.25rem; }
+.udf-reply .udf-body { margin: 0.3rem 0; }
+.udf-reply-actions { font-size: 0.85rem; }
+.udf-reply-actions a, .udf-reply-actions button { font-weight: 600; }
+.udf-reply-form { margin-top: 1rem; }
+.udf-reply-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea,
+.udf-reply-form [data-il-ui-component="textarea-field-input"] .c-input__field textarea { height: 10rem !important; min-height: 6rem; }
+.udf-reply-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 10rem; }
 .udf-back { margin-bottom: 0.75rem; }
 .udf-empty { color: #6f6f6f; }
 .udf-pager { display: flex; gap: 0.5rem; margin-top: 1rem; }

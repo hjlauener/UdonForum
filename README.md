@@ -59,8 +59,8 @@ udf
 
 ## Aktueller Stand
 
-Forum im Stil von Reddit, **ohne Kommentare**: Es gibt nur Beiträge, die
-bewertet, sortiert und nach Kategorien gefiltert werden.
+Forum im Stil von Reddit: Beiträge werden bewertet, sortiert und nach
+Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
 
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
 - **Sichtbar / nicht sichtbar** (Reiter *Einstellungen*)
@@ -86,10 +86,20 @@ bewertet, sortiert und nach Kategorien gefiltert werden.
   und *Prüfung*.
 - **Ungelesen**: Etikett „Neu“ für neue Beiträge anderer; „Alle als gelesen
   markieren“. Beim ersten Besuch gilt alles Bestehende als gelesen.
+- **Antworten**: eigenes Antwortfeld unter jedem Beitrag (Markdown-Editor bzw.
+  Textfeld je nach Einstellung, Text Pflicht); Antworten älteste zuerst,
+  bearbeiten (Autor), löschen (Autor oder Kursleitung) mit Rückfrage
+- **Statistik** (eigenes Recht „Statistik einsehen“): Reiter *Statistik*,
+  Unterreiter *Standard* mit allen Teilnehmenden des Kurses/der Gruppe (und
+  allen, die im Forum geschrieben haben): Name, Vorname, E-Mail,
+  „Forumsbeitrag eröffnet“, „Forumsantwort“, „Anzahl Wörter“ (Text der
+  Beiträge und Antworten) – nach jeder Spalte sortierbar. Beim Einführen des
+  Rechts erhalten es alle Rollen, die das Forum bearbeiten dürfen.
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
 
-Rechte: *Lesen* = lesen, Beiträge schreiben und bewerten; *Bearbeiten* =
-Einstellungen, Kategorien und Beiträge anderer löschen.
+Rechte: *Lesen* = lesen, Beiträge und Antworten schreiben, bewerten;
+*Bearbeiten* = Einstellungen, Kategorien, Beiträge/Antworten anderer löschen;
+*Statistik einsehen* = Reiter *Statistik*.
 
 ## Struktur
 
@@ -105,6 +115,8 @@ classes/
   class.ilUdfPost.php              Beitrag
   class.ilUdfCategory.php          Kategorie
   class.ilUdfMarkdownRenderer.php  Markdown: Vorschau im Editor, Anzeige der Beiträge
+  class.ilUdfReply.php             Antwort auf einen Beitrag
+  class.ilUdfStatisticsTable.php   Daten und Sortierung der Statistik-Tabelle
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon

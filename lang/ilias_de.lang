@@ -32,7 +32,7 @@ post_created#:#Der Beitrag wurde veröffentlicht.
 post_updated#:#Der Beitrag wurde gespeichert.
 post_deleted#:#Der Beitrag wurde gelöscht.
 post_not_found#:#Der Beitrag wurde nicht gefunden.
-confirm_delete_post#:#Soll dieser Beitrag gelöscht werden?
+confirm_delete_post#:#Soll dieser Beitrag mit allen Antworten gelöscht werden?
 deleted_user#:#Gelöschter Benutzer
 lecturer#:#Dozierende
 edited#:#bearbeitet
@@ -75,3 +75,25 @@ vote_down#:#Negativ bewerten
 new#:#Neu
 mark_all_read#:#Alle als gelesen markieren
 marked_all_read#:#Alle Beiträge gelten jetzt als gelesen.
+udf_statistics#:#Statistik einsehen
+xudf_udf_statistics#:#Statistik des Udon Forums einsehen (Reiter „Statistik“)
+statistics#:#Statistik
+stat_standard#:#Standard
+stat_participants#:#Teilnehmende
+stat_lastname#:#Name
+stat_firstname#:#Vorname
+stat_email#:#E-Mail
+stat_posts#:#Forumsbeitrag eröffnet
+stat_replies#:#Forumsantwort
+stat_words#:#Anzahl Wörter
+reply_count_one#:#1 Antwort
+reply_count#:#%s Antworten
+no_replies#:#Noch keine Antworten.
+your_reply#:#Ihre Antwort
+send_reply#:#Antworten
+edit_reply#:#Antwort bearbeiten
+reply_saved#:#Die Antwort wurde veröffentlicht.
+reply_updated#:#Die Antwort wurde gespeichert.
+reply_deleted#:#Die Antwort wurde gelöscht.
+reply_not_found#:#Die Antwort wurde nicht gefunden.
+confirm_delete_reply#:#Soll diese Antwort gelöscht werden?

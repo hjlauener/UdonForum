@@ -131,3 +131,11 @@ if (!$ilDB->tableColumnExists('rep_robj_xudf_post', 'body_format')) {
     $ilDB->addTableColumn('rep_robj_xudf_post', 'body_format', ['type' => 'text', 'length' => 8, 'notnull' => true, 'default' => 'md']);
 }
 ?>
+<#10>
+<?php
+/** @var ilDBInterface $ilDB */
+// replies (stored in the former comment table): format 'md' = Markdown, 'text' = plain text
+if (!$ilDB->tableColumnExists('rep_robj_xudf_cmt', 'body_format')) {
+    $ilDB->addTableColumn('rep_robj_xudf_cmt', 'body_format', ['type' => 'text', 'length' => 8, 'notnull' => true, 'default' => 'md']);
+}
+?>

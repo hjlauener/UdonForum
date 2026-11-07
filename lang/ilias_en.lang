@@ -32,7 +32,7 @@ post_created#:#The post has been published.
 post_updated#:#The post has been saved.
 post_deleted#:#The post has been deleted.
 post_not_found#:#The post was not found.
-confirm_delete_post#:#Do you really want to delete this post?
+confirm_delete_post#:#Do you really want to delete this post including all replies?
 deleted_user#:#Deleted user
 lecturer#:#Lecturer
 edited#:#edited
@@ -75,3 +75,25 @@ vote_down#:#Vote down
 new#:#New
 mark_all_read#:#Mark all as read
 marked_all_read#:#All posts are now marked as read.
+udf_statistics#:#View statistics
+xudf_udf_statistics#:#View the statistics of the Udon Forum (tab “Statistics”)
+statistics#:#Statistics
+stat_standard#:#Standard
+stat_participants#:#Participants
+stat_lastname#:#Last name
+stat_firstname#:#First name
+stat_email#:#E-mail
+stat_posts#:#Forum posts opened
+stat_replies#:#Forum replies
+stat_words#:#Number of words
+reply_count_one#:#1 reply
+reply_count#:#%s replies
+no_replies#:#No replies yet.
+your_reply#:#Your reply
+send_reply#:#Reply
+edit_reply#:#Edit reply
+reply_saved#:#The reply has been published.
+reply_updated#:#The reply has been saved.
+reply_deleted#:#The reply has been deleted.
+reply_not_found#:#The reply was not found.
+confirm_delete_reply#:#Do you really want to delete this reply?

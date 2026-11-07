@@ -3,11 +3,11 @@
 declare(strict_types=1);
 
 /**
- * Database access for the Udon Forum: object settings, posts, categories,
- * votes and read status.
+ * Database access for the Udon Forum: object settings, posts, replies,
+ * categories, votes, read status and statistics.
  *
- * The comment table (TABLE_COMMENT) is no longer used; it is only kept so that
- * old data is removed together with posts and forums, and on uninstall.
+ * Replies are stored in TABLE_COMMENT (former comments; only parent_id 0 and
+ * not deleted rows are shown as replies).
  */
 class ilUdfRepository
 {
@@ -197,6 +197,108 @@ class ilUdfRepository
 
 
 
+
+    // ------------------------------------------------------------------
+    // Replies
+    // ------------------------------------------------------------------
+
+    /**
+     * Replies of a post, oldest first.
+     *
+     * @return ilUdfReply[]
+     */
+    public function getRepliesForPost(int $post_id): array
+    {
+        $set = $this->db->query(
+            'SELECT * FROM ' . self::TABLE_COMMENT .
+            ' WHERE post_id = ' . $this->db->quote($post_id, 'integer') .
+            ' AND is_deleted = ' . $this->db->quote(0, 'integer') .
+            ' ORDER BY created, id'
+        );
+        $list = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $list[] = $this->buildReply($rec);
+        }
+        return $list;
+    }
+
+    public function getReply(int $id): ?ilUdfReply
+    {
+        $set = $this->db->query(
+            'SELECT * FROM ' . self::TABLE_COMMENT .
+            ' WHERE id = ' . $this->db->quote($id, 'integer') .
+            ' AND is_deleted = ' . $this->db->quote(0, 'integer')
+        );
+        $rec = $this->db->fetchAssoc($set);
+        return $rec ? $this->buildReply($rec) : null;
+    }
+
+    public function saveReply(ilUdfReply $reply): void
+    {
+        $fields = [
+            'post_id' => ['integer', $reply->getPostId()],
+            'user_id' => ['integer', $reply->getUserId()],
+            'body' => ['clob', $reply->getBody()],
+            'body_format' => ['text', $reply->getBodyFormat()],
+            'created' => ['integer', $reply->getCreated()],
+            'updated' => ['integer', $reply->getUpdated()],
+        ];
+
+        if ($reply->getId() === 0) {
+            $reply->setId($this->db->nextId(self::TABLE_COMMENT));
+            $fields['id'] = ['integer', $reply->getId()];
+            $fields['parent_id'] = ['integer', 0];
+            $fields['depth'] = ['integer', 1];
+            $fields['is_deleted'] = ['integer', 0];
+            $fields['score'] = ['integer', 0];
+            $this->db->insert(self::TABLE_COMMENT, $fields);
+            return;
+        }
+
+        $this->db->update(self::TABLE_COMMENT, $fields, ['id' => ['integer', $reply->getId()]]);
+    }
+
+    public function deleteReply(ilUdfReply $reply): void
+    {
+        $this->db->manipulate(
+            'DELETE FROM ' . self::TABLE_COMMENT .
+            ' WHERE id = ' . $this->db->quote($reply->getId(), 'integer')
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Statistics
+    // ------------------------------------------------------------------
+
+    /**
+     * Texts of all posts and replies of a forum, for the statistics.
+     *
+     * @return array<int, array{posts: string[][], replies: string[][]}> user id => [[body, format], ...]
+     */
+    public function getTextsPerUser(int $obj_id): array
+    {
+        $result = [];
+
+        $set = $this->db->query(
+            'SELECT user_id, body, body_format FROM ' . self::TABLE_POST .
+            ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $result[(int) $rec['user_id']]['posts'][] = [(string) ($rec['body'] ?? ''), (string) ($rec['body_format'] ?? 'md')];
+        }
+
+        $set = $this->db->query(
+            'SELECT c.user_id, c.body, c.body_format FROM ' . self::TABLE_COMMENT . ' c' .
+            ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+            ' WHERE p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' AND c.is_deleted = ' . $this->db->quote(0, 'integer')
+        );
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $result[(int) $rec['user_id']]['replies'][] = [(string) ($rec['body'] ?? ''), (string) ($rec['body_format'] ?? 'md')];
+        }
+
+        return $result;
+    }
 
     // ------------------------------------------------------------------
     // Votes
@@ -492,5 +594,21 @@ class ilUdfRepository
         $cat->setTitle((string) $rec['title']);
         $cat->setSortOrder((int) $rec['sort_order']);
         return $cat;
+    }
+
+    /**
+     * @param array<string, mixed> $rec
+     */
+    private function buildReply(array $rec): ilUdfReply
+    {
+        $reply = new ilUdfReply();
+        $reply->setId((int) $rec['id']);
+        $reply->setPostId((int) $rec['post_id']);
+        $reply->setUserId((int) $rec['user_id']);
+        $reply->setBody((string) ($rec['body'] ?? ''));
+        $reply->setBodyFormat((string) ($rec['body_format'] ?? ilUdfPost::FORMAT_MARKDOWN));
+        $reply->setCreated((int) $rec['created']);
+        $reply->setUpdated((int) $rec['updated']);
+        return $reply;
     }
 }

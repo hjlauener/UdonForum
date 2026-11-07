@@ -5,7 +5,7 @@ declare(strict_types=1);
 $id = 'xudf';
 
 // code version; must be changed for all code changes
-$version = '0.7.0';
+$version = '0.8.0';
 
 // ilias min and max version; must always reflect the versions that should
 // run with the plugin

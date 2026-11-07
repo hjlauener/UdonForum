@@ -233,10 +233,16 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         $this->tabs->activateTab(self::TAB_CONTENT);
         $this->showOfflineInfo();
 
+        $state = $this->getFeedState();
+
         if ($this->canParticipate()) {
+            // within a category, the new post gets this category preselected
             $this->toolbar->addComponent($this->ui_factory->button()->primary(
                 $this->txt('new_post'),
-                $this->ctrl->getLinkTarget($this, 'createPost')
+                $this->linkWithParams(
+                    'createPost',
+                    $state[self::PARAM_FILTER_CAT] > 0 ? [self::PARAM_FILTER_CAT => $state[self::PARAM_FILTER_CAT]] : []
+                )
             ));
             $this->toolbar->addComponent($this->ui_factory->button()->standard(
                 $this->txt('mark_all_read'),
@@ -249,7 +255,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $this->getReadSince();
         }
 
-        $state = $this->getFeedState();
         $since = 0;
         if ($state[self::PARAM_SORT] === ilUdfRepository::SORT_TOP && $state[self::PARAM_PERIOD] !== self::PERIOD_ALL) {
             $since = time() - ($state[self::PARAM_PERIOD] === self::PERIOD_WEEK ? 7 : 30) * 86400;
@@ -823,7 +828,15 @@ JS);
     {
         $this->requireParticipation();
         $this->tabs->activateTab(self::TAB_CONTENT);
-        $form ??= $this->initPostForm(null);
+
+        if ($form === null) {
+            $form = $this->initPostForm(null);
+            // coming from a category of the feed: preselect it
+            $cat_id = $this->getRequestedInt($this->udf_query, self::PARAM_FILTER_CAT);
+            if ($cat_id > 0 && $this->getCategoryTitle($cat_id) !== null) {
+                $form->setValuesByArray(['cat_id' => (string) $cat_id]);
+            }
+        }
         $this->tpl->setContent($form->getHTML());
     }
 

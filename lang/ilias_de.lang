@@ -1,27 +1,109 @@
+# Udon Forum – Sprachdatei Deutsch (Schweizer Schreibweise mit ss).
+# Zeilen mit # am Anfang sind Kommentare. Schlüssel und Reihenfolge wie in ilias_en.lang.
+
+# --- Objekt und Rechte ---
 obj_xudf#:#Udon Forum
 objs_xudf#:#Udon Foren
 xudf_new#:#Neues Udon Forum
 xudf_add#:#Udon Forum hinzufügen
 obj_xudf_duplicate#:#Udon Forum kopieren
-edit#:#Bearbeiten
+udf_statistics#:#Statistik einsehen
+xudf_udf_statistics#:#Statistik des Udon Forums einsehen (Reiter „Statistik“)
+
+# --- Reiter und allgemeine Texte ---
 content#:#Inhalt
+members#:#Mitglieder
+statistics#:#Statistik
 properties#:#Einstellungen
-status#:#Status
-online#:#Online
-online_info#:#Nur wenn das Forum online ist, können Kursmitglieder es sehen.
-use_markdown#:#Markdown-Editor
-use_markdown_info#:#Beiträge werden mit dem Markdown-Editor geschrieben: Knöpfe für fett, kursiv, Listen und Links sowie eine Vorschau. Ohne Markdown-Editor gibt es ein einfaches Textfeld. Bestehende Beiträge werden weiterhin so angezeigt, wie sie geschrieben wurden.
-offline#:#Offline
-object_offline_info#:#Dieses Forum ist offline und für Kursmitglieder nicht sichtbar. Sie können es unter „Einstellungen“ online schalten.
+edit#:#Bearbeiten
+actions#:#Aktionen
 confirm#:#Bestätigen
 no_permission#:#Dafür fehlt Ihnen die Berechtigung.
+back_to_forum#:#Zurück zum Forum
+deleted_user#:#Gelöschter Benutzer
+lecturer#:#Dozierende
+edited#:#bearbeitet
+status#:#Status
+
+# --- Einstellungen ---
+online#:#Online
+offline#:#Offline
+online_info#:#Nur wenn das Forum online ist, sehen es die Mitglieder des Kurses bzw. der Gruppe.
+object_offline_info#:#Dieses Forum ist offline und für die Mitglieder des Kurses bzw. der Gruppe nicht sichtbar. Sie können es unter „Einstellungen“ online schalten.
+use_markdown#:#Markdown-Editor
+use_markdown_info#:#Beiträge werden mit dem Markdown-Editor geschrieben: Knöpfe für fett, kursiv, Listen und Links sowie eine Vorschau. Ohne Markdown-Editor gibt es ein einfaches Textfeld. Bestehende Beiträge werden weiterhin so angezeigt, wie sie geschrieben wurden.
+thousand_ways#:#1000 ways Forum
+thousand_ways_info#:#Jedes Mitglied (ausser den Dozierenden) erhält zufällig eine von vier Rollen, wie es im Forum diskutiert: Hakutaku (Fakten), Kitsune (Hinterfragen), Tanuki (Beispiele) oder Kodama (Verbinden und Schlichten). Die Rollen sind gleichmässig verteilt; die Dozierenden können sie im Reiter „Mitglieder“ ändern oder neu mischen.
+
+# --- Einstellungen › Farbe ---
+color#:#Farbe
+color_info#:#Akzentfarbe des Forums für Schaltflächen, Filter, Links, Etiketten und Statistiken – traditionelle japanische Farben (和色, Wairo).
+color_kaki#:#Kaki – Orange
+color_ai#:#Ai – Indigoblau
+color_hanada#:#Hanada – Blaugrün
+color_tokiwa#:#Tokiwa – Immergrün
+color_kuchiba#:#Kuchiba – Herbstlaub
+color_enji#:#Enji – Karminrot
+color_botan#:#Botan – Päonienrosa
+color_edomurasaki#:#Edo-Murasaki – Violett
+color_sumi#:#Sumi – Tusche
+
+# --- Kategorien ---
+categories#:#Kategorien
+category#:#Kategorie
+no_categories#:#Es gibt noch keine Kategorien. Beiträge können dann ohne Kategorie erstellt werden.
+no_category#:#Ohne Kategorie
+cat_option_info#:#Kategorien gliedern die Beiträge im Forum. Sie können später unter „Einstellungen › Kategorien“ geändert werden.
+cat_choice#:#Vorgabe
+cat_custom#:#Eigene Kategorien
+cat_custom_list#:#Kategorien
+cat_custom_info#:#Mehrere Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung
+cat_list_title#:#Alle Kategorien auf einmal
+cat_list_info#:#Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung. Leerzeichen nach dem Semikolon sind erlaubt, sie gehören nicht zum Namen. Die Reihenfolge wird übernommen. Umbenennen: einfach den Namen an seiner Stelle ändern – die Beiträge bleiben in der Kategorie. Entfernte Kategorien werden gelöscht, ihre Beiträge bleiben erhalten (unter „Alle“, ohne Kategorie).
+cat_list_saved#:#Die Kategorien wurden gespeichert.
+cat_list_created#:#%s neu
+cat_list_renamed#:#%s umbenannt
+cat_list_removed#:#%s entfernt
+cat_list_unassigned#:#Beiträge ohne Kategorie: %s
+
+# --- Plugin-Konfiguration (Administration) ---
+config_title#:#Konfiguration des Udon Forums
+config_presets#:#Kategorie-Vorgaben
+config_presets_info#:#Diese Vorgaben werden beim Anlegen eines Udon Forums zur Auswahl angeboten. Eine Vorgabe pro Zeile: Name, Doppelpunkt, dann die Kategorien mit Semikolon getrennt. Zum Beispiel: „Vorlesung: Allgemeines; Fragen; Prüfung“ oder „Seminar: Organisation; Literatur; Diskussion“.
+config_saved#:#Die Konfiguration wurde gespeichert.
+
+# --- Feed: Filter, Sortierung, Seiten ---
+all_posts#:#Alle
+filter#:#Filter
+sorting#:#Sortierung
+sort_popular#:#Beliebt
+sort_new#:#Neu
+sort_top#:#Bestbewertet
+period_week#:#Diese Woche
+period_month#:#Dieser Monat
+period_all#:#Gesamt
 no_posts#:#In diesem Forum gibt es noch keine Beiträge. Erstellen Sie den ersten Beitrag!
 no_posts_filtered#:#Keine Beiträge gefunden.
-back_to_forum#:#Zurück zum Forum
+previous_page#:#Vorherige Seite
+next_page#:#Nächste Seite
+new#:#Neu
+mark_all_read#:#Alle als gelesen markieren
+marked_all_read#:#Alle Beiträge gelten jetzt als gelesen.
+
+# --- Bewertung und Zeitangaben ---
+points#:#Punkte
+vote_up#:#Positiv bewerten
+vote_down#:#Negativ bewerten
+time_just_now#:#gerade eben
+time_minutes#:#vor %s Min.
+time_hours#:#vor %s Std.
+time_yesterday#:#gestern
+time_days#:#vor %s Tagen
+
+# --- Beiträge ---
 new_post#:#Neuer Beitrag
 edit_post#:#Beitrag bearbeiten
 delete_post#:#Beitrag löschen
-actions#:#Aktionen
 post_title#:#Titel
 post_body#:#Text
 post_body_info#:#Die Knöpfe über dem Feld helfen beim Formatieren (fett, kursiv, Listen, Links). Die Vorschau zeigt, wie der Beitrag aussehen wird.
@@ -32,67 +114,8 @@ post_updated#:#Der Beitrag wurde gespeichert.
 post_deleted#:#Der Beitrag wurde gelöscht.
 post_not_found#:#Der Beitrag wurde nicht gefunden.
 confirm_delete_post#:#Soll dieser Beitrag mit allen Antworten gelöscht werden?
-deleted_user#:#Gelöschter Benutzer
-lecturer#:#Dozierende
-edited#:#bearbeitet
-time_just_now#:#gerade eben
-time_minutes#:#vor %s Min.
-time_hours#:#vor %s Std.
-time_yesterday#:#gestern
-time_days#:#vor %s Tagen
-all_posts#:#Alle
-categories#:#Kategorien
-category#:#Kategorie
-no_categories#:#Es gibt noch keine Kategorien. Beiträge können dann ohne Kategorie erstellt werden.
-sorting#:#Sortierung
-filter#:#Filter
-sort_popular#:#Beliebt
-sort_new#:#Neu
-sort_top#:#Bestbewertet
-period_week#:#Diese Woche
-period_month#:#Dieser Monat
-period_all#:#Gesamt
-previous_page#:#Vorherige Seite
-next_page#:#Nächste Seite
-points#:#Punkte
-vote_up#:#Positiv bewerten
-vote_down#:#Negativ bewerten
-new#:#Neu
-mark_all_read#:#Alle als gelesen markieren
-marked_all_read#:#Alle Beiträge gelten jetzt als gelesen.
-udf_statistics#:#Statistik einsehen
-xudf_udf_statistics#:#Statistik des Udon Forums einsehen (Reiter „Statistik“)
-statistics#:#Statistik
-stat_standard#:#Standard
-stat_network#:#Spinnennetz
-stat_no_activity#:#Im Forum war noch niemand aktiv.
-network_node_tooltip#:#%s: %s Beiträge eröffnet, %s Antworten
-network_edge_tooltip#:#%s und %s: %s Antworten aufeinander
-network_legend_ring#:#Kreis: wächst mit jedem eröffneten Beitrag
-network_legend_line#:#Linie: Antworten zwischen zwei Personen – je mehr, desto dicker
-stat_bubbles#:#Bubble-Charts
-no_category#:#Ohne Kategorie
-bubbles_posts#:#%s Beiträge
-bubbles_post_one#:#1 Beitrag
-bubbles_tooltip#:#%s: %s Beiträge, %s Antworten, %s aktive Personen
-bubbles_legend_size#:#Kreis: ein Thema (Kategorie) – je grösser, desto mehr Beiträge
-bubbles_legend_overlap#:#Überlappung: verwandte Themen, in denen dieselben Personen aktiv sind
-bubbles_legend_pie#:#Kuchendiagramm: Anteil Beiträge (dunkel) und Antworten (hell)
-stat_pearls#:#Perlenkette
-pearls_count#:#%s Perlen
-pearls_count_one#:#1 Perle
-pearl_tooltip_post#:#%s · %s · Beitrag eröffnet: „%s“
-pearl_tooltip_reply#:#%s · %s · Antwort auf „%s“
-pearls_legend_post#:#Perle: Beitrag eröffnet
-pearls_legend_reply#:#Ring: Antwort
-pearls_legend_line#:#Linie: verbindet die Beiträge einer Person in zeitlicher Reihenfolge – sortiert nach Anzahl Perlen
-stat_participants#:#Teilnehmende
-stat_lastname#:#Name
-stat_firstname#:#Vorname
-stat_email#:#E-Mail
-stat_posts#:#Forumsbeitrag eröffnet
-stat_replies#:#Forumsantwort
-stat_words#:#Anzahl Wörter
+
+# --- Antworten ---
 reply_count_one#:#1 Antwort
 reply_count#:#%s Antworten
 no_replies#:#Noch keine Antworten.
@@ -104,7 +127,45 @@ reply_updated#:#Die Antwort wurde gespeichert.
 reply_deleted#:#Die Antwort wurde gelöscht.
 reply_not_found#:#Die Antwort wurde nicht gefunden.
 confirm_delete_reply#:#Soll diese Antwort gelöscht werden?
-members#:#Mitglieder
+
+# --- Statistik › Standard ---
+stat_standard#:#Standard
+stat_no_activity#:#Im Forum war noch niemand aktiv.
+stat_participants#:#Teilnehmende
+stat_lastname#:#Name
+stat_firstname#:#Vorname
+stat_email#:#E-Mail
+stat_posts#:#Forumsbeitrag eröffnet
+stat_replies#:#Forumsantwort
+stat_words#:#Anzahl Wörter
+
+# --- Statistik › Spinnennetz ---
+stat_network#:#Spinnennetz
+network_node_tooltip#:#%s: %s Beiträge eröffnet, %s Antworten
+network_edge_tooltip#:#%s und %s: %s Antworten aufeinander
+network_legend_ring#:#Kreis: wächst mit jedem eröffneten Beitrag
+network_legend_line#:#Linie: Antworten zwischen zwei Personen – je mehr, desto dicker
+
+# --- Statistik › Bubble-Charts ---
+stat_bubbles#:#Bubble-Charts
+bubbles_posts#:#%s Beiträge
+bubbles_post_one#:#1 Beitrag
+bubbles_tooltip#:#%s: %s Beiträge, %s Antworten, %s aktive Personen
+bubbles_legend_size#:#Kreis: ein Thema (Kategorie) – je grösser, desto mehr Beiträge
+bubbles_legend_overlap#:#Überlappung: verwandte Themen, in denen dieselben Personen aktiv sind
+bubbles_legend_pie#:#Kuchendiagramm: Anteil Beiträge (dunkel) und Antworten (hell)
+
+# --- Statistik › Perlenkette ---
+stat_pearls#:#Perlenkette
+pearls_count#:#%s Perlen
+pearls_count_one#:#1 Perle
+pearl_tooltip_post#:#%s · %s · Beitrag eröffnet: „%s“
+pearl_tooltip_reply#:#%s · %s · Antwort auf „%s“
+pearls_legend_post#:#Perle: Beitrag eröffnet
+pearls_legend_reply#:#Ring: Antwort
+pearls_legend_line#:#Linie: verbindet die Beiträge einer Person in zeitlicher Reihenfolge – sortiert nach Anzahl Perlen
+
+# --- Mitglieder ---
 members_view#:#Ansicht
 members_roles#:#Rollen zuteilen
 member_role#:#Rolle
@@ -112,8 +173,8 @@ no_members#:#Dieses Forum liegt in keinem Kurs und keiner Gruppe; es gibt deshal
 role_admin#:#Dozierende
 role_tutor#:#Tutor/in
 role_member#:#Mitglied
-thousand_ways#:#1000 ways Forum
-thousand_ways_info#:#Jedes Mitglied (ausser den Dozierenden) erhält zufällig eine von vier Rollen, wie es im Forum diskutiert: Hakutaku (Fakten), Kitsune (Hinterfragen), Tanuki (Beispiele) oder Kodama (Verbinden und Schlichten). Die Rollen sind gleichmässig verteilt; die Dozierenden können sie im Reiter „Mitglieder“ ändern oder neu mischen.
+
+# --- 1000 ways Forum: Figuren und Chef ---
 thousand_ways_role#:#1000-ways-Rolle
 creature_your_role#:#Ihre Rolle: %s (%s) – %s
 creature_hakutaku#:#Hakutaku
@@ -137,6 +198,8 @@ reshuffle#:#Neu mischen
 confirm_reshuffle#:#Sollen die Rollen aller Mitglieder neu und zufällig verteilt werden? Die bisherige Zuteilung geht verloren.
 roles_saved#:#Die Rollen wurden gespeichert.
 roles_reshuffled#:#Die Rollen wurden neu gemischt.
+
+# --- Udon-Schüssel ---
 udon_bowl#:#Udon-Schüssel
 udon_bowl_tooltip#:#Udon-Schüssel: %s Nudeln – %s
 udon_bowl_tooltip_one#:#Udon-Schüssel: %s Nudel – %s
@@ -146,6 +209,8 @@ udon_rank_broth#:#Brühe-Kenner
 udon_rank_tempura#:#Tempura-Meister
 udon_rank_sensei#:#Udon-Sensei
 udon_rank_from#:#ab %s Nudeln
+
+# --- Gute-Nacht-Gruss (20–5 Uhr) ---
 goodnight_title#:#Gute Nacht!
 goodnight_title_name#:#Gute Nacht, %s!
 goodnight_1#:#Es ist schon nach 20 Uhr. Die Nudeln ruhen sich aus – gönnen Sie sich auch eine Pause. Morgen geht es weiter.
@@ -153,30 +218,3 @@ goodnight_2#:#Der Kodama schläft schon tief im Wald. Was heute unbeantwortet bl
 goodnight_3#:#Auch Udon-Sensei brauchen Schlaf. Schlafen Sie gut – das Forum hält die Brühe warm.
 goodnight_4#:#Der Tanuki hat sich in ein Kopfkissen verwandelt. Zeit, den Bildschirm zuzuklappen.
 goodnight_close#:#Für heute Nacht ausblenden
-config_title#:#Konfiguration Udon Forum
-config_presets#:#Kategorie-Vorgaben
-config_presets_info#:#Diese Vorgaben werden beim Anlegen eines Udon Forums zur Auswahl angeboten. Eine Vorgabe pro Zeile: Name, Doppelpunkt, dann die Kategorien mit Semikolon getrennt. Zum Beispiel: „Vorlesung: Allgemeines; Fragen; Prüfung“ oder „Seminar: Organisation; Literatur; Diskussion“.
-config_saved#:#Die Konfiguration wurde gespeichert.
-cat_option_info#:#Kategorien gliedern die Beiträge im Forum. Sie können später unter „Einstellungen › Kategorien“ geändert werden.
-cat_choice#:#Vorgabe
-cat_custom#:#Eigene Kategorien
-cat_custom_list#:#Kategorien
-cat_custom_info#:#Mehrere Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung
-cat_list_title#:#Alle Kategorien auf einmal
-cat_list_info#:#Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung. Leerzeichen nach dem Semikolon sind erlaubt, sie gehören nicht zum Namen. Die Reihenfolge wird übernommen. Umbenennen: einfach den Namen an seiner Stelle ändern – die Beiträge bleiben in der Kategorie. Entfernte Kategorien werden gelöscht, ihre Beiträge bleiben erhalten (unter „Alle“, ohne Kategorie).
-cat_list_saved#:#Die Kategorien wurden gespeichert.
-cat_list_created#:#%s neu
-cat_list_renamed#:#%s umbenannt
-cat_list_removed#:#%s entfernt
-cat_list_unassigned#:#Beiträge ohne Kategorie: %s
-color#:#Farbe
-color_info#:#Akzentfarbe des Forums für Schaltflächen, Filter, Links, Etiketten und Statistiken – traditionelle japanische Farben (和色, Wairo).
-color_kaki#:#Kaki – Orange
-color_ai#:#Ai – Indigoblau
-color_hanada#:#Hanada – Blaugrün
-color_tokiwa#:#Tokiwa – Immergrün
-color_kuchiba#:#Kuchiba – Herbstlaub
-color_enji#:#Enji – Karminrot
-color_botan#:#Botan – Päonienrosa
-color_edomurasaki#:#Edo-Murasaki – Violett
-color_sumi#:#Sumi – Tusche

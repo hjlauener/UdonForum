@@ -1,98 +1,121 @@
+# Udon Forum – language file English (British spelling).
+# Lines starting with # are comments. Same keys and order as ilias_de.lang.
+
+# --- Object and permissions ---
 obj_xudf#:#Udon Forum
 objs_xudf#:#Udon Forums
 xudf_new#:#New Udon Forum
 xudf_add#:#Add Udon Forum
 obj_xudf_duplicate#:#Copy Udon Forum
-edit#:#Edit
+udf_statistics#:#View statistics
+xudf_udf_statistics#:#View the statistics of the Udon Forum (“Statistics” tab)
+
+# --- Tabs and general texts ---
 content#:#Content
+members#:#Members
+statistics#:#Statistics
 properties#:#Settings
-status#:#Status
-online#:#Online
-online_info#:#Course members can only see the forum if it is online.
-use_markdown#:#Markdown editor
-use_markdown_info#:#Posts are written with the Markdown editor: buttons for bold, italic, lists and links as well as a preview. Without the Markdown editor there is a simple text field. Existing posts are still shown as they were written.
-offline#:#Offline
-object_offline_info#:#This forum is offline and not visible for course members. You can switch it online under “Settings”.
+edit#:#Edit
+actions#:#Actions
 confirm#:#Confirm
 no_permission#:#You do not have permission to do this.
+back_to_forum#:#Back to the forum
+deleted_user#:#Deleted user
+lecturer#:#Lecturer
+edited#:#edited
+status#:#Status
+
+# --- Settings ---
+online#:#Online
+offline#:#Offline
+online_info#:#Members of the course or group can only see the forum if it is online.
+object_offline_info#:#This forum is offline and not visible to members of the course or group. You can switch it online under “Settings”.
+use_markdown#:#Markdown editor
+use_markdown_info#:#Posts are written with the Markdown editor: buttons for bold, italic, lists and links as well as a preview. Without the Markdown editor there is a simple text field. Existing posts are still shown as they were written.
+thousand_ways#:#1000 ways Forum
+thousand_ways_info#:#Every member (except the lecturers) randomly gets one of four roles that shape how they discuss in the forum: Hakutaku (facts), Kitsune (questioning), Tanuki (examples) or Kodama (connecting and mediating). The roles are distributed evenly; lecturers can change or reshuffle them in the “Members” tab.
+
+# --- Settings › colour ---
+color#:#Colour
+color_info#:#Accent colour of the forum for buttons, filters, links, labels and statistics – traditional Japanese colours (和色, wairo).
+color_kaki#:#Kaki – orange
+color_ai#:#Ai – indigo
+color_hanada#:#Hanada – blue-green
+color_tokiwa#:#Tokiwa – evergreen
+color_kuchiba#:#Kuchiba – autumn leaves
+color_enji#:#Enji – carmine
+color_botan#:#Botan – peony pink
+color_edomurasaki#:#Edo-murasaki – violet
+color_sumi#:#Sumi – ink
+
+# --- Categories ---
+categories#:#Categories
+category#:#Category
+no_categories#:#There are no categories yet. Posts can then be created without a category.
+no_category#:#No category
+cat_option_info#:#Categories structure the posts in the forum. They can be changed later under “Settings › Categories”.
+cat_choice#:#Preset
+cat_custom#:#Custom categories
+cat_custom_list#:#Categories
+cat_custom_info#:#Separate several categories with semicolons, e.g.: General; Questions; Exam
+cat_list_title#:#All categories at once
+cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed; they are not part of the name. The order is kept. Renaming: simply change the name in its place – the posts stay in the category. Removed categories are deleted; their posts are kept (under “All”, without a category).
+cat_list_saved#:#The categories have been saved.
+cat_list_created#:#%s new
+cat_list_renamed#:#%s renamed
+cat_list_removed#:#%s removed
+cat_list_unassigned#:#posts without a category: %s
+
+# --- Plugin configuration (administration) ---
+config_title#:#Udon Forum configuration
+config_presets#:#Category presets
+config_presets_info#:#These presets are offered when an Udon Forum is created. One preset per line: name, colon, then the categories separated by semicolons. For example: “Lecture: General; Questions; Exam” or “Seminar: Organisation; Literature; Discussion”.
+config_saved#:#The configuration has been saved.
+
+# --- Feed: filter, sorting, pages ---
+all_posts#:#All
+filter#:#Filter
+sorting#:#Sorting
+sort_popular#:#Popular
+sort_new#:#New
+sort_top#:#Top rated
+period_week#:#This week
+period_month#:#This month
+period_all#:#All time
 no_posts#:#There are no posts in this forum yet. Create the first post!
 no_posts_filtered#:#No posts found.
-back_to_forum#:#Back to the forum
+previous_page#:#Previous page
+next_page#:#Next page
+new#:#New
+mark_all_read#:#Mark all as read
+marked_all_read#:#All posts are now marked as read.
+
+# --- Votes and times ---
+points#:#Points
+vote_up#:#Upvote
+vote_down#:#Downvote
+time_just_now#:#just now
+time_minutes#:#%s min ago
+time_hours#:#%s h ago
+time_yesterday#:#yesterday
+time_days#:#%s days ago
+
+# --- Posts ---
 new_post#:#New post
 edit_post#:#Edit post
 delete_post#:#Delete post
-actions#:#Actions
 post_title#:#Title
 post_body#:#Text
 post_body_info#:#The buttons above the field help with formatting (bold, italic, lists, links). The preview shows how the post will look.
-body_required#:#Please enter a text.
+body_required#:#Please enter some text.
 publish#:#Publish
 post_created#:#The post has been published.
 post_updated#:#The post has been saved.
 post_deleted#:#The post has been deleted.
 post_not_found#:#The post was not found.
 confirm_delete_post#:#Do you really want to delete this post including all replies?
-deleted_user#:#Deleted user
-lecturer#:#Lecturer
-edited#:#edited
-time_just_now#:#just now
-time_minutes#:#%s min. ago
-time_hours#:#%s hrs. ago
-time_yesterday#:#yesterday
-time_days#:#%s days ago
-all_posts#:#All
-categories#:#Categories
-category#:#Category
-no_categories#:#There are no categories yet. Posts can then be created without a category.
-sorting#:#Sorting
-filter#:#Filter
-sort_popular#:#Popular
-sort_new#:#New
-sort_top#:#Best rated
-period_week#:#This week
-period_month#:#This month
-period_all#:#All time
-previous_page#:#Previous page
-next_page#:#Next page
-points#:#Points
-vote_up#:#Vote up
-vote_down#:#Vote down
-new#:#New
-mark_all_read#:#Mark all as read
-marked_all_read#:#All posts are now marked as read.
-udf_statistics#:#View statistics
-xudf_udf_statistics#:#View the statistics of the Udon Forum (tab “Statistics”)
-statistics#:#Statistics
-stat_standard#:#Standard
-stat_network#:#Spider web
-stat_no_activity#:#Nobody has been active in the forum yet.
-network_node_tooltip#:#%s: %s posts opened, %s replies
-network_edge_tooltip#:#%s and %s: %s replies to each other
-network_legend_ring#:#Circle: grows with every post opened
-network_legend_line#:#Line: replies between two people – the more, the thicker
-stat_bubbles#:#Bubble charts
-no_category#:#Without category
-bubbles_posts#:#%s posts
-bubbles_post_one#:#1 post
-bubbles_tooltip#:#%s: %s posts, %s replies, %s active people
-bubbles_legend_size#:#Circle: one topic (category) – the larger, the more posts
-bubbles_legend_overlap#:#Overlap: related topics in which the same people are active
-bubbles_legend_pie#:#Pie chart: share of posts (dark) and replies (light)
-stat_pearls#:#String of pearls
-pearls_count#:#%s pearls
-pearls_count_one#:#1 pearl
-pearl_tooltip_post#:#%s · %s · post opened: “%s”
-pearl_tooltip_reply#:#%s · %s · reply to “%s”
-pearls_legend_post#:#Pearl: post opened
-pearls_legend_reply#:#Ring: reply
-pearls_legend_line#:#Line: connects the contributions of a person in time order – sorted by number of pearls
-stat_participants#:#Participants
-stat_lastname#:#Last name
-stat_firstname#:#First name
-stat_email#:#E-mail
-stat_posts#:#Forum posts opened
-stat_replies#:#Forum replies
-stat_words#:#Number of words
+
+# --- Replies ---
 reply_count_one#:#1 reply
 reply_count#:#%s replies
 no_replies#:#No replies yet.
@@ -104,16 +127,54 @@ reply_updated#:#The reply has been saved.
 reply_deleted#:#The reply has been deleted.
 reply_not_found#:#The reply was not found.
 confirm_delete_reply#:#Do you really want to delete this reply?
-members#:#Members
+
+# --- Statistics › Standard ---
+stat_standard#:#Standard
+stat_no_activity#:#Nobody has been active in the forum yet.
+stat_participants#:#Participants
+stat_lastname#:#Last name
+stat_firstname#:#First name
+stat_email#:#E-mail
+stat_posts#:#Forum posts opened
+stat_replies#:#Forum replies
+stat_words#:#Number of words
+
+# --- Statistics › Spider web ---
+stat_network#:#Spider web
+network_node_tooltip#:#%s: %s posts opened, %s replies
+network_edge_tooltip#:#%s and %s: %s replies to each other
+network_legend_ring#:#Circle: grows with every post opened
+network_legend_line#:#Line: replies between two people – the more, the thicker
+
+# --- Statistics › Bubble charts ---
+stat_bubbles#:#Bubble charts
+bubbles_posts#:#%s posts
+bubbles_post_one#:#1 post
+bubbles_tooltip#:#%s: %s posts, %s replies, %s active people
+bubbles_legend_size#:#Circle: one topic (category) – the larger, the more posts
+bubbles_legend_overlap#:#Overlap: related topics in which the same people are active
+bubbles_legend_pie#:#Pie chart: share of posts (dark) and replies (light)
+
+# --- Statistics › String of pearls ---
+stat_pearls#:#String of pearls
+pearls_count#:#%s pearls
+pearls_count_one#:#1 pearl
+pearl_tooltip_post#:#%s · %s · post opened: “%s”
+pearl_tooltip_reply#:#%s · %s · reply to “%s”
+pearls_legend_post#:#Pearl: post opened
+pearls_legend_reply#:#Ring: reply
+pearls_legend_line#:#Line: connects the contributions of a person in time order – sorted by number of pearls
+
+# --- Members ---
 members_view#:#View
 members_roles#:#Assign roles
 member_role#:#Role
-no_members#:#This forum is not located in a course or group; therefore there are no members.
+no_members#:#This forum is not inside a course or group, so it has no members.
 role_admin#:#Lecturer
 role_tutor#:#Tutor
 role_member#:#Member
-thousand_ways#:#1000 ways Forum
-thousand_ways_info#:#Every member (except the lecturers) randomly gets one of four roles for how to discuss in the forum: Hakutaku (facts), Kitsune (questioning), Tanuki (examples) or Kodama (connecting and mediating). The roles are distributed evenly; lecturers can change or reshuffle them in the tab “Members”.
+
+# --- 1000 ways Forum: creatures and chef ---
 thousand_ways_role#:#1000-ways role
 creature_your_role#:#Your role: %s (%s) – %s
 creature_hakutaku#:#Hakutaku
@@ -131,12 +192,14 @@ creature_kodama_hint#:#Like the tree spirit carrying the echo through the forest
 creature_chef#:#Chef
 creature_chef_numbered#:#Chef %s
 creature_chef_role#:#Leads the discussion
-creature_chef_hint#:#As chef you lead the discussion: set impulses and questions, make sure that all four roles have their say, and record the results at the end. For example: “What do you think about …?”, “Kitsune, what speaks against it?”, “Let us record: …”.
+creature_chef_hint#:#As chef you lead the discussion: give prompts and questions, make sure that all four roles have their say, and record the results at the end. For example: “What do you think about …?”, “Kitsune, what speaks against it?”, “Let us note: …”.
 chef_info#:#The lecturers (administrators of the course or group) automatically have the role “Chef”, with several “Chef 1”, “Chef 2” and so on.
 reshuffle#:#Reshuffle
 confirm_reshuffle#:#Do you want to distribute the roles of all members anew at random? The current assignment will be lost.
 roles_saved#:#The roles have been saved.
 roles_reshuffled#:#The roles have been reshuffled.
+
+# --- Udon bowl ---
 udon_bowl#:#Udon bowl
 udon_bowl_tooltip#:#Udon bowl: %s noodles – %s
 udon_bowl_tooltip_one#:#Udon bowl: %s noodle – %s
@@ -146,6 +209,8 @@ udon_rank_broth#:#Broth connoisseur
 udon_rank_tempura#:#Tempura master
 udon_rank_sensei#:#Udon sensei
 udon_rank_from#:#from %s noodles
+
+# --- Good-night greeting (8 pm – 5 am) ---
 goodnight_title#:#Good night!
 goodnight_title_name#:#Good night, %s!
 goodnight_1#:#It is already after 8 pm. The noodles are resting – take a break, too. We will continue tomorrow.
@@ -153,30 +218,3 @@ goodnight_2#:#The Kodama is already asleep deep in the forest. Whatever remained
 goodnight_3#:#Even udon senseis need sleep. Sleep well – the forum keeps the broth warm.
 goodnight_4#:#The Tanuki has turned into a pillow. Time to close the screen.
 goodnight_close#:#Hide for tonight
-config_title#:#Configuration Udon Forum
-config_presets#:#Category presets
-config_presets_info#:#These presets are offered when an Udon Forum is created. One preset per line: name, colon, then the categories separated by semicolons. For example: “Lecture: General; Questions; Exam” or “Seminar: Organisation; Literature; Discussion”.
-config_saved#:#The configuration has been saved.
-cat_option_info#:#Categories structure the posts in the forum. They can be changed later under “Settings › Categories”.
-cat_choice#:#Preset
-cat_custom#:#Own categories
-cat_custom_list#:#Categories
-cat_custom_info#:#Separate several categories with semicolons, e.g.: General; Questions; Exam
-cat_list_title#:#All categories at once
-cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed, they are not part of the name. The order is applied. Renaming: simply change the name at its place – the posts stay in the category. Removed categories are deleted, their posts are kept (under “All”, without category).
-cat_list_saved#:#The categories have been saved.
-cat_list_created#:#%s new
-cat_list_renamed#:#%s renamed
-cat_list_removed#:#%s removed
-cat_list_unassigned#:#posts without category: %s
-color#:#Colour
-color_info#:#Accent colour of the forum for buttons, filters, links, labels and statistics – traditional Japanese colours (和色, wairo).
-color_kaki#:#Kaki – orange
-color_ai#:#Ai – indigo
-color_hanada#:#Hanada – blue-green
-color_tokiwa#:#Tokiwa – evergreen
-color_kuchiba#:#Kuchiba – autumn leaves
-color_enji#:#Enji – carmine
-color_botan#:#Botan – peony pink
-color_edomurasaki#:#Edo-murasaki – violet
-color_sumi#:#Sumi – ink

@@ -14,6 +14,10 @@ ILIAS 11 in Docker). Aufbau und Arbeitsweise wie beim Gruppenmanagement-Plugin
   „Online“ / „Offline“ für die Sichtbarkeit des Forums.
   Schweizer Schreibweise (ss statt ß).
 - Kein Text fest im PHP-Code; Plugin-Texte über `$this->txt("key")`.
+- Die Dateien sind in Abschnitte gegliedert (`# --- Abschnitt ---`; Zeilen mit
+  `#` am Anfang ignoriert ILIAS). Neue Schlüssel in den passenden Abschnitt,
+  in beiden Dateien an derselben Stelle. Deutsch mit „Sie“, Englisch britisch.
+- Vom Auftraggeber gewählte Namen bleiben: „Bubble-Charts“, „1000 ways Forum“.
 
 Prüfen:
 

@@ -698,13 +698,6 @@ class ilUdfRepository
         return $counts;
     }
 
-    public function markCategoriesInitialized(int $obj_id): void
-    {
-        $this->db->manipulate(
-            'UPDATE ' . self::TABLE_DATA . ' SET cats_init = ' . $this->db->quote(1, 'integer') .
-            ' WHERE id = ' . $this->db->quote($obj_id, 'integer')
-        );
-    }
 
     private function getMaxSortOrder(int $obj_id): int
     {

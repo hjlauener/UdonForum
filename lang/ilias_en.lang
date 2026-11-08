@@ -55,9 +55,6 @@ confirm_delete_category#:#Do you really want to delete this category? The posts 
 move_up#:#Move up
 move_down#:#Move down
 posts#:#Posts
-default_cat_general#:#General
-default_cat_questions#:#Questions
-default_cat_exam#:#Exam
 sorting#:#Sorting
 filter#:#Filter
 sort_popular#:#Popular
@@ -167,3 +164,12 @@ goodnight_2#:#The Kodama is already asleep deep in the forest. Whatever remained
 goodnight_3#:#Even udon senseis need sleep. Sleep well – the forum keeps the broth warm.
 goodnight_4#:#The Tanuki has turned into a pillow. Time to close the screen.
 goodnight_close#:#Hide for tonight
+config_title#:#Configuration Udon Forum
+config_presets#:#Category presets
+config_presets_info#:#These presets are offered when an Udon Forum is created. One preset per line: name, colon, then the categories separated by semicolons. For example: “Lecture: General; Questions; Exam” or “Seminar: Organisation; Literature; Discussion”.
+config_saved#:#The configuration has been saved.
+cat_option_info#:#Categories structure the posts in the forum. They can be changed later under “Settings › Categories”.
+cat_choice#:#Preset
+cat_custom#:#Own categories
+cat_custom_list#:#Categories
+cat_custom_info#:#Separate several categories with semicolons, e.g.: General; Questions; Exam

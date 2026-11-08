@@ -64,6 +64,10 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const POST_FIELD_ASYNC = 'udf_async';
     private const CREATE_FIELD_ONLINE = 'udf_online';
     private const CREATE_FIELD_MARKDOWN = 'udf_markdown';
+    private const CREATE_FIELD_CATEGORIES = 'udf_categories';
+    private const CATEGORIES_CUSTOM = 'custom';
+    /** prefix of the keys of the presets in the creation form (preset_0, preset_1, ...) */
+    private const CATEGORIES_PRESET = 'preset_';
 
     private const PERIOD_WEEK = 'week';
     private const PERIOD_MONTH = 'month';
@@ -180,6 +184,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
             $fields['didactic_templates'] = $didactic_templates;
         }
 
+        $fields[self::CREATE_FIELD_CATEGORIES] = $this->buildCategoryChoice();
+
         $fields[self::CREATE_FIELD_ONLINE] = $field->checkbox($this->txt('online'), $this->txt('online_info'))
             ->withValue(true);
         $fields[self::CREATE_FIELD_MARKDOWN] = $field->checkbox($this->txt('use_markdown'), $this->txt('use_markdown_info'))
@@ -224,7 +230,68 @@ JS);
     }
 
     /**
-     * After creating: store "Online" and "Markdown-Editor" from the creation form.
+     * Creation form, field "Kategorien" (like "Begrenzte Mitgliederanzahl" in
+     * the course settings): a checkbox, unchecked by default (no categories).
+     * When checked, a choice opens: one of the presets of the plugin
+     * administration, or own categories separated by semicolons. Without
+     * presets only the text field for own categories is shown.
+     */
+    private function buildCategoryChoice(): \ILIAS\UI\Component\Input\Field\OptionalGroup
+    {
+        $field = $this->ui_factory->input()->field();
+        $own = $field->text($this->txt('cat_custom_list'), $this->txt('cat_custom_info'))->withRequired(true);
+
+        $presets = ilUdfCategoryPresets::load();
+        if ($presets === []) {
+            $inputs = ['list' => $own];
+        } else {
+            $groups = [];
+            foreach ($presets as $i => $preset) {
+                $groups[self::CATEGORIES_PRESET . $i] = $field->group([], $preset['name'], implode('; ', $preset['categories']));
+            }
+            $groups[self::CATEGORIES_CUSTOM] = $field->group(['list' => $own], $this->txt('cat_custom'));
+            $inputs = [
+                'choice' => $field->switchableGroup($groups, $this->txt('cat_choice'))
+                    ->withValue(self::CATEGORIES_PRESET . '0'),
+            ];
+        }
+
+        return $field->optionalGroup($inputs, $this->txt('categories'), $this->txt('cat_option_info'))
+            ->withValue(null);
+    }
+
+    /**
+     * Categories chosen in the creation form.
+     *
+     * @param mixed $data value of the optional group: null (unchecked), ['list' => ...]
+     *                    or ['choice' => [key, values]]
+     * @return string[]
+     */
+    private function getChosenCategories(mixed $data): array
+    {
+        if (!is_array($data)) {
+            return [];
+        }
+        if (isset($data['list'])) {
+            return ilUdfCategoryPresets::parseList((string) $data['list']);
+        }
+        $choice = $data['choice'] ?? null;
+        if (!is_array($choice) || !isset($choice[0])) {
+            return [];
+        }
+        $key = (string) $choice[0];
+        if ($key === self::CATEGORIES_CUSTOM) {
+            return ilUdfCategoryPresets::parseList((string) ($choice[1]['list'] ?? ''));
+        }
+        if (str_starts_with($key, self::CATEGORIES_PRESET)) {
+            $presets = ilUdfCategoryPresets::load();
+            return $presets[(int) substr($key, strlen(self::CATEGORIES_PRESET))]['categories'] ?? [];
+        }
+        return [];
+    }
+
+    /**
+     * After creating: store "Online", "Markdown-Editor" and the categories from the creation form.
      */
     protected function afterSave(ilObject $new_object): void
     {
@@ -233,7 +300,17 @@ JS);
             if (is_array($data)) {
                 $new_object->setOnline((bool) ($data[self::CREATE_FIELD_ONLINE] ?? true));
                 $new_object->setUseMarkdown((bool) ($data[self::CREATE_FIELD_MARKDOWN] ?? true));
+                $new_object->setCategoriesInitialized(true);
                 $new_object->update();
+
+                $sort = 0;
+                foreach ($this->getChosenCategories($data[self::CREATE_FIELD_CATEGORIES] ?? null) as $title) {
+                    $cat = new ilUdfCategory();
+                    $cat->setObjId($new_object->getId());
+                    $cat->setTitle($title);
+                    $cat->setSortOrder($sort += 10);
+                    $this->udf_repo->saveCategory($cat);
+                }
             }
         }
         parent::afterSave($new_object);
@@ -248,7 +325,6 @@ JS);
     {
         if (in_array($cmd, self::WRITE_COMMANDS, true)) {
             $this->checkPermission('write');
-            $this->ensureDefaultCategories();
             $this->$cmd();
             return;
         }
@@ -260,7 +336,6 @@ JS);
         }
 
         $this->checkPermission('read');
-        $this->ensureDefaultCategories();
         if (in_array($cmd, self::READ_COMMANDS, true)) {
             $this->$cmd();
             return;
@@ -2050,29 +2125,6 @@ JS);
     // Categories (lecturers)
     // ------------------------------------------------------------------
 
-    /**
-     * Creates the default categories once per forum.
-     */
-    private function ensureDefaultCategories(): void
-    {
-        $forum = $this->getForum();
-        if ($forum->getId() <= 0 || $forum->areCategoriesInitialized()) {
-            return;
-        }
-
-        if ($this->udf_repo->getCategories($forum->getId()) === []) {
-            foreach (['default_cat_general', 'default_cat_questions', 'default_cat_exam'] as $key) {
-                $cat = new ilUdfCategory();
-                $cat->setObjId($forum->getId());
-                $cat->setTitle($this->txt($key));
-                $this->udf_repo->saveCategory($cat);
-            }
-        }
-
-        $this->udf_repo->markCategoriesInitialized($forum->getId());
-        $forum->setCategoriesInitialized(true);
-        $this->udf_categories = null;
-    }
 
     protected function showCategories(): void
     {

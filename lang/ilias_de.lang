@@ -55,9 +55,6 @@ confirm_delete_category#:#Soll diese Kategorie gelöscht werden? Die Beiträge b
 move_up#:#Nach oben
 move_down#:#Nach unten
 posts#:#Beiträge
-default_cat_general#:#Allgemeines
-default_cat_questions#:#Fragen
-default_cat_exam#:#Prüfung
 sorting#:#Sortierung
 filter#:#Filter
 sort_popular#:#Beliebt
@@ -167,3 +164,12 @@ goodnight_2#:#Der Kodama schläft schon tief im Wald. Was heute unbeantwortet bl
 goodnight_3#:#Auch Udon-Sensei brauchen Schlaf. Schlafen Sie gut – das Forum hält die Brühe warm.
 goodnight_4#:#Der Tanuki hat sich in ein Kopfkissen verwandelt. Zeit, den Bildschirm zuzuklappen.
 goodnight_close#:#Für heute Nacht ausblenden
+config_title#:#Konfiguration Udon Forum
+config_presets#:#Kategorie-Vorgaben
+config_presets_info#:#Diese Vorgaben werden beim Anlegen eines Udon Forums zur Auswahl angeboten. Eine Vorgabe pro Zeile: Name, Doppelpunkt, dann die Kategorien mit Semikolon getrennt. Zum Beispiel: „Vorlesung: Allgemeines; Fragen; Prüfung“ oder „Seminar: Organisation; Literatur; Diskussion“.
+config_saved#:#Die Konfiguration wurde gespeichert.
+cat_option_info#:#Kategorien gliedern die Beiträge im Forum. Sie können später unter „Einstellungen › Kategorien“ geändert werden.
+cat_choice#:#Vorgabe
+cat_custom#:#Eigene Kategorien
+cat_custom_list#:#Kategorien
+cat_custom_info#:#Mehrere Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung

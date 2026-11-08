@@ -85,9 +85,13 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   In den *Einstellungen* abschaltbar (bei neuen Foren eingeschaltet); dann gibt
   es ein einfaches Textfeld. Jeder Beitrag wird so angezeigt, wie er
   geschrieben wurde. Der Text eines Beitrags ist Pflicht.
-- **Kategorien** (Reiter *Einstellungen*, Unterreiter *Kategorien*): Dozierende legen sie an, benennen um,
-  sortieren und löschen sie. Neue Foren starten mit *Allgemeines*, *Fragen*
-  und *Prüfung*.
+- **Kategorien**: Beim Anlegen eines Forums die Option *Kategorien* (Checkbox,
+  standardmässig aus). Angekreuzt: eine der *Kategorie-Vorgaben* wählen oder
+  *Eigene Kategorien* mit Semikolon getrennt eingeben. Die Vorgaben legt ein
+  Plugin-Admin unter *Administration › Erweiterungen › Plugins › UdonForum ›
+  Konfigurieren* fest (eine pro Zeile: „Name: Kat 1; Kat 2; Kat 3“). Später
+  änderbar unter *Einstellungen › Kategorien* (anlegen, umbenennen,
+  sortieren, löschen).
 - **Ungelesen**: Etikett „Neu“ für neue Beiträge anderer; „Alle als gelesen
   markieren“. Beim ersten Besuch gilt alles Bestehende als gelesen.
 - **Antworten**: eigenes Antwortfeld unter jedem Beitrag (Markdown-Editor bzw.
@@ -149,6 +153,8 @@ classes/
   class.ilUdfRepository.php        Datenbankzugriff (Beiträge, Kategorien, Stimmen)
   class.ilUdfPost.php              Beitrag
   class.ilUdfCategory.php          Kategorie
+  class.ilUdfCategoryPresets.php   Kategorie-Vorgaben (Plugin-Konfiguration) und Kategorie-Listen
+  class.ilUdonForumConfigGUI.php   Konfiguration in der Plugin-Administration
   class.ilUdfMarkdownRenderer.php  Markdown: Vorschau im Editor, Anzeige der Beiträge
   class.ilUdfReply.php             Antwort auf einen Beitrag
   class.ilUdfStatisticsTable.php   Daten und Sortierung der Statistik-Tabelle

@@ -7,6 +7,15 @@ objs_xudf#:#Udon Forums
 xudf_new#:#New Udon Forum
 xudf_add#:#Add Udon Forum
 obj_xudf_duplicate#:#Copy Udon Forum
+# Texts for the permission tables of ILIAS (permissions, role templates, permission log)
+create_xudf#:#Create Udon Forum
+crs_create_xudf#:#User can create an Udon Forum in the course
+grp_create_xudf#:#User can create an Udon Forum in the group
+xudf_visible#:#Udon Forum is visible
+xudf_read#:#User can read the Udon Forum, write posts and replies and vote
+xudf_write#:#User can edit settings, categories and 1000-ways roles and delete posts and replies of others
+xudf_delete#:#User can move or delete the Udon Forum
+xudf_edit_permission#:#User can change permission settings
 udf_statistics#:#View statistics
 xudf_udf_statistics#:#View the statistics of the Udon Forum (“Statistics” tab)
 

@@ -7,6 +7,15 @@ objs_xudf#:#Udon Foren
 xudf_new#:#Neues Udon Forum
 xudf_add#:#Udon Forum hinzufügen
 obj_xudf_duplicate#:#Udon Forum kopieren
+# Texte für die Rechte-Tabellen von ILIAS (Rechte, Rollenvorlagen, Rechte-Protokoll)
+create_xudf#:#Udon Forum anlegen
+crs_create_xudf#:#Udon Forum im Kurs anlegen
+grp_create_xudf#:#Udon Forum in der Gruppe anlegen
+xudf_visible#:#Udon Forum ist sichtbar
+xudf_read#:#Udon Forum lesen, Beiträge und Antworten schreiben und bewerten
+xudf_write#:#Einstellungen, Kategorien und 1000-ways-Rollen bearbeiten, Beiträge und Antworten anderer löschen
+xudf_delete#:#Udon Forum löschen oder verschieben
+xudf_edit_permission#:#Rechteeinstellungen ändern
 udf_statistics#:#Statistik einsehen
 xudf_udf_statistics#:#Statistik des Udon Forums einsehen (Reiter „Statistik“)
 

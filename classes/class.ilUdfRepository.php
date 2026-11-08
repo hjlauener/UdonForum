@@ -614,15 +614,6 @@ class ilUdfRepository
         return $list;
     }
 
-    public function getCategory(int $id): ?ilUdfCategory
-    {
-        $set = $this->db->query(
-            'SELECT * FROM ' . self::TABLE_CATEGORY .
-            ' WHERE id = ' . $this->db->quote($id, 'integer')
-        );
-        $rec = $this->db->fetchAssoc($set);
-        return $rec ? $this->buildCategory($rec) : null;
-    }
 
     public function saveCategory(ilUdfCategory $cat): void
     {
@@ -710,25 +701,6 @@ class ilUdfRepository
         );
     }
 
-    /**
-     * Moves a category one position up (-1) or down (+1).
-     */
-    public function moveCategory(ilUdfCategory $cat, int $direction): void
-    {
-        $cats = $this->getCategories($cat->getObjId());
-        $ids = array_map(static fn(ilUdfCategory $c): int => $c->getId(), $cats);
-        $pos = array_search($cat->getId(), $ids, true);
-        $new_pos = $pos === false ? false : $pos + $direction;
-        if ($new_pos === false || !isset($cats[$new_pos])) {
-            return;
-        }
-
-        [$cats[$pos], $cats[$new_pos]] = [$cats[$new_pos], $cats[$pos]];
-        foreach ($cats as $i => $c) {
-            $c->setSortOrder(($i + 1) * 10);
-            $this->saveCategory($c);
-        }
-    }
 
     /**
      * @return array<int, int> category id => number of posts

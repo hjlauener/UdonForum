@@ -51,7 +51,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const PARAM_POST = 'post_id';
     private const PARAM_REPLY = 'reply_id';
     private const PARAM_PAGE = 'page';
-    private const PARAM_CATEGORY = 'cat_id';
     /** feed filter: category */
     private const PARAM_FILTER_CAT = 'fcat';
     /** feed sorting: see ilUdfRepository::SORT_* */
@@ -82,13 +81,6 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'editProperties',
         'updateProperties',
         'showCategories',
-        'createCategory',
-        'saveCategory',
-        'editCategory',
-        'updateCategory',
-        'deleteCategory',
-        'moveCategoryUp',
-        'moveCategoryDown',
         'saveCategoryList',
         'editCreatures',
         'saveCreatures',
@@ -2130,56 +2122,10 @@ JS);
     protected function showCategories(): void
     {
         $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
-
-        $this->toolbar->addComponent($this->ui_factory->button()->primary(
-            $this->txt('new_category'),
-            $this->ctrl->getLinkTarget($this, 'createCategory')
-        ));
-
-        $categories = $this->getCategories();
-        $list_form = $this->initCategoryListForm()->getHTML();
-        if ($categories === []) {
+        if ($this->getCategories() === []) {
             $this->tpl->setOnScreenMessage('info', $this->txt('no_categories'));
-            $this->tpl->setContent($list_form);
-            return;
         }
-
-        $counts = $this->udf_repo->countPostsPerCategory($this->object->getId());
-        $items = [];
-        $modals = [];
-        $last = count($categories) - 1;
-        foreach ($categories as $i => $cat) {
-            $actions = [
-                $this->ui_factory->button()->shy($this->txt('edit'), $this->linkToCategory('editCategory', $cat)),
-            ];
-            if ($i > 0) {
-                $actions[] = $this->ui_factory->button()->shy($this->txt('move_up'), $this->linkToCategory('moveCategoryUp', $cat));
-            }
-            if ($i < $last) {
-                $actions[] = $this->ui_factory->button()->shy($this->txt('move_down'), $this->linkToCategory('moveCategoryDown', $cat));
-            }
-            $modal = $this->buildConfirmModal(
-                $this->txt('confirm_delete_category'),
-                $this->linkToCategory('deleteCategory', $cat, true),
-                $cat->getId(),
-                $cat->getTitle(),
-                $this->lng->txt('delete')
-            );
-            $modals[] = $modal;
-            $actions[] = $this->ui_factory->button()->shy($this->lng->txt('delete'), '')
-                ->withOnClick($modal->getShowSignal());
-
-            $items[] = $this->ui_factory->item()->standard($this->esc($cat->getTitle()))
-                ->withProperties([$this->txt('posts') => (string) ($counts[$cat->getId()] ?? 0)])
-                ->withActions($this->ui_factory->dropdown()->standard($actions));
-        }
-
-        $panel = $this->ui_factory->panel()->listing()->standard(
-            $this->txt('categories'),
-            [$this->ui_factory->item()->group('', $items)]
-        );
-
-        $this->tpl->setContent($list_form . $this->ui_renderer->render(array_merge([$panel], $modals)));
+        $this->tpl->setContent($this->initCategoryListForm()->getHTML());
     }
 
     /**
@@ -2222,120 +2168,15 @@ JS);
         $this->ctrl->redirect($this, 'showCategories');
     }
 
-    protected function createCategory(?ilPropertyFormGUI $form = null): void
-    {
-        $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
-        $form ??= $this->initCategoryForm(null);
-        $this->tpl->setContent($form->getHTML());
-    }
 
-    protected function saveCategory(): void
-    {
-        $form = $this->initCategoryForm(null);
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
-            $this->createCategory($form);
-            return;
-        }
 
-        $cat = new ilUdfCategory();
-        $cat->setObjId($this->object->getId());
-        $cat->setTitle(trim((string) $form->getInput('title')));
-        $this->udf_repo->saveCategory($cat);
 
-        $this->tpl->setOnScreenMessage('success', $this->txt('category_saved'), true);
-        $this->ctrl->redirect($this, 'showCategories');
-    }
 
-    protected function editCategory(?ilPropertyFormGUI $form = null): void
-    {
-        $cat = $this->requireCategory();
-        $this->setSettingsSubTabs(self::SUBTAB_CATEGORIES);
-        if ($form === null) {
-            $form = $this->initCategoryForm($cat);
-            $form->setValuesByArray(['title' => $cat->getTitle()]);
-        }
-        $this->tpl->setContent($form->getHTML());
-    }
 
-    protected function updateCategory(): void
-    {
-        $cat = $this->requireCategory();
-        $form = $this->initCategoryForm($cat);
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
-            $this->editCategory($form);
-            return;
-        }
 
-        $cat->setTitle(trim((string) $form->getInput('title')));
-        $this->udf_repo->saveCategory($cat);
 
-        $this->tpl->setOnScreenMessage('success', $this->txt('category_saved'), true);
-        $this->ctrl->redirect($this, 'showCategories');
-    }
 
-    protected function deleteCategory(): void
-    {
-        $cat = $this->requireCategory();
-        $this->udf_repo->deleteCategory($cat);
 
-        $this->tpl->setOnScreenMessage('success', $this->txt('category_deleted'), true);
-        $this->ctrl->redirect($this, 'showCategories');
-    }
-
-    protected function moveCategoryUp(): void
-    {
-        $this->udf_repo->moveCategory($this->requireCategory(), -1);
-        $this->ctrl->redirect($this, 'showCategories');
-    }
-
-    protected function moveCategoryDown(): void
-    {
-        $this->udf_repo->moveCategory($this->requireCategory(), 1);
-        $this->ctrl->redirect($this, 'showCategories');
-    }
-
-    private function initCategoryForm(?ilUdfCategory $cat): ilPropertyFormGUI
-    {
-        $form = new ilPropertyFormGUI();
-        if ($cat === null) {
-            $form->setTitle($this->txt('new_category'));
-            $form->setFormAction($this->ctrl->getFormAction($this, 'saveCategory'));
-            $form->addCommandButton('saveCategory', $this->lng->txt('save'));
-        } else {
-            $form->setTitle($this->txt('edit_category'));
-            $form->setFormAction($this->linkToCategory('updateCategory', $cat, true));
-            $form->addCommandButton('updateCategory', $this->lng->txt('save'));
-        }
-        $form->addCommandButton('showCategories', $this->lng->txt('cancel'));
-
-        $title = new ilTextInputGUI($this->txt('category_title'), 'title');
-        $title->setRequired(true);
-        $title->setMaxLength(255);
-        $form->addItem($title);
-
-        return $form;
-    }
-
-    private function requireCategory(): ilUdfCategory
-    {
-        $id = $this->getRequestedInt($this->udf_query, self::PARAM_CATEGORY);
-        $cat = $id > 0 ? $this->udf_repo->getCategory($id) : null;
-        if ($cat === null || $cat->getObjId() !== $this->object->getId()) {
-            $this->tpl->setOnScreenMessage('failure', $this->txt('category_not_found'), true);
-            $this->ctrl->redirect($this, 'showCategories');
-        }
-        return $cat;
-    }
-
-    private function linkToCategory(string $cmd, ilUdfCategory $cat, bool $form_action = false): string
-    {
-        $this->ctrl->setParameter($this, self::PARAM_CATEGORY, $cat->getId());
-        $link = $form_action ? $this->ctrl->getFormAction($this, $cmd) : $this->ctrl->getLinkTarget($this, $cmd);
-        $this->ctrl->clearParameterByClass(self::class, self::PARAM_CATEGORY);
-        return $link;
-    }
 
     /**
      * @return ilUdfCategory[]

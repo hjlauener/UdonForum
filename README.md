@@ -90,10 +90,9 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   *Eigene Kategorien* mit Semikolon getrennt eingeben. Die Vorgaben legt ein
   Plugin-Admin unter *Administration › Erweiterungen › Plugins › UdonForum ›
   Konfigurieren* fest (eine pro Zeile: „Name: Kat 1; Kat 2; Kat 3“). Später
-  änderbar unter *Einstellungen › Kategorien*: alle auf einmal als
-  Semikolon-Liste (Leerzeichen nach dem Semikolon gehören nicht zum Namen;
-  gleiche Namen behalten ihre Beiträge) oder einzeln in der Liste darunter
-  (umbenennen, sortieren, löschen).
+  änderbar unter *Einstellungen › Kategorien* als Semikolon-Liste
+  (Leerzeichen nach dem Semikolon gehören nicht zum Namen; gleiche Namen
+  behalten ihre Beiträge, entfernte oder umbenannte werden gelöscht).
 - **Ungelesen**: Etikett „Neu“ für neue Beiträge anderer; „Alle als gelesen
   markieren“. Beim ersten Besuch gilt alles Bestehende als gelesen.
 - **Antworten**: eigenes Antwortfeld unter jedem Beitrag (Markdown-Editor bzw.

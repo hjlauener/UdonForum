@@ -43,18 +43,7 @@ time_days#:#%s days ago
 all_posts#:#All
 categories#:#Categories
 category#:#Category
-choose_category#:#– Please choose –
-new_category#:#New category
-edit_category#:#Edit category
-category_title#:#Name of the category
 no_categories#:#There are no categories yet. Posts can then be created without a category.
-category_saved#:#The category has been saved.
-category_deleted#:#The category has been deleted.
-category_not_found#:#The category was not found.
-confirm_delete_category#:#Do you really want to delete this category? The posts are kept and will no longer belong to a category.
-move_up#:#Move up
-move_down#:#Move down
-posts#:#Posts
 sorting#:#Sorting
 filter#:#Filter
 sort_popular#:#Popular
@@ -174,6 +163,6 @@ cat_custom#:#Own categories
 cat_custom_list#:#Categories
 cat_custom_info#:#Separate several categories with semicolons, e.g.: General; Questions; Exam
 cat_list_title#:#All categories at once
-cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed, they are not part of the name. The order is applied. Removed categories are deleted, their posts then have no category. To rename without losing the assignment, use “Edit” in the list below.
+cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed, they are not part of the name. The order is applied. Categories with the same name keep their posts. Removed or renamed categories are deleted, their posts then have no category.
 cat_list_saved#:#The categories have been saved.
 cat_list_saved_details#:#%s new, %s removed, posts without category: %s.

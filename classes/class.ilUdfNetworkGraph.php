@@ -21,16 +21,21 @@ class ilUdfNetworkGraph
     private const PADDING = 80;
 
     private const DOT_RADIUS = 4;
-    private const COLOR_RING = '#c95100';
-    private const COLOR_RING_FILL = '#f7a64a';
-    private const COLOR_LINE = '#a94208';
+
+    private string $color_ring;
+    private string $color_ring_fill;
+    private string $color_line;
 
     /**
      * @param array<int, array{label: string, tooltip: string, posts: int}> $nodes user id => node
      * @param array<int, array{0: int, 1: int, 2: int, 3: string}>          $edges [user a, user b, weight, tooltip]
+     * @param string                                                        $color colour of the forum (circles and lines)
      */
-    public function __construct(private array $nodes, private array $edges)
+    public function __construct(private array $nodes, private array $edges, string $color = '#c95100')
     {
+        $this->color_ring = $color;
+        $this->color_ring_fill = ilUdfColors::mix($color, '#ffffff', 0.35);
+        $this->color_line = ilUdfColors::mix($color, '#000000', 0.18);
     }
 
     /**
@@ -172,7 +177,7 @@ class ilUdfNetworkGraph
             }
             $svg .= '<line x1="' . self::num($pos[$a][0]) . '" y1="' . self::num($pos[$a][1]) . '"'
                 . ' x2="' . self::num($pos[$b][0]) . '" y2="' . self::num($pos[$b][1]) . '"'
-                . ' stroke="' . self::COLOR_LINE . '" stroke-opacity="0.45" stroke-linecap="round"'
+                . ' stroke="' . $this->color_line . '" stroke-opacity="0.45" stroke-linecap="round"'
                 . ' stroke-width="' . self::num(self::lineWidth($weight)) . '">'
                 . '<title>' . self::esc($tooltip) . '</title></line>';
         }
@@ -184,7 +189,7 @@ class ilUdfNetworkGraph
             $svg .= '<g class="udf-network-node"><title>' . self::esc($node['tooltip']) . '</title>';
             if ($ring > 0) {
                 $svg .= '<circle cx="' . self::num($x) . '" cy="' . self::num($y) . '" r="' . self::num($ring) . '"'
-                    . ' fill="' . self::COLOR_RING_FILL . '" fill-opacity="0.35" stroke="' . self::COLOR_RING . '" stroke-width="2"/>';
+                    . ' fill="' . $this->color_ring_fill . '" fill-opacity="0.35" stroke="' . $this->color_ring . '" stroke-width="2"/>';
             }
             $svg .= '<circle cx="' . self::num($x) . '" cy="' . self::num($y) . '" r="' . self::DOT_RADIUS . '" fill="#000"/>'
                 . '<text x="' . self::num($x) . '" y="' . self::num($y + max($ring, self::DOT_RADIUS) + 15) . '"'

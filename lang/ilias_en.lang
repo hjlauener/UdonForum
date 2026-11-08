@@ -169,3 +169,14 @@ cat_list_created#:#%s new
 cat_list_renamed#:#%s renamed
 cat_list_removed#:#%s removed
 cat_list_unassigned#:#posts without category: %s
+color#:#Colour
+color_info#:#Accent colour of the forum for buttons, filters, links, labels and statistics – traditional Japanese colours (和色, wairo).
+color_kaki#:#Kaki – orange
+color_ai#:#Ai – indigo
+color_hanada#:#Hanada – blue-green
+color_tokiwa#:#Tokiwa – evergreen
+color_kuchiba#:#Kuchiba – autumn leaves
+color_enji#:#Enji – carmine
+color_botan#:#Botan – peony pink
+color_edomurasaki#:#Edo-murasaki – violet
+color_sumi#:#Sumi – ink

@@ -401,6 +401,7 @@ JS);
                 'online' => $this->getForum()->isOnline(),
                 'use_markdown' => $this->getForum()->usesMarkdown(),
                 'thousand_ways' => $this->getForum()->isThousandWays(),
+                'color' => $this->getForum()->getColor(),
             ]);
         }
 
@@ -422,6 +423,7 @@ JS);
         $forum->setOnline((bool) $form->getInput('online'));
         $forum->setUseMarkdown((bool) $form->getInput('use_markdown'));
         $forum->setThousandWays((bool) $form->getInput('thousand_ways'));
+        $forum->setColor((string) $form->getInput('color'));
         $forum->update();
         $this->ensureCreatures();
 
@@ -455,6 +457,17 @@ JS);
         $thousand_ways = new ilCheckboxInputGUI($this->txt('thousand_ways'), 'thousand_ways');
         $thousand_ways->setInfo($this->txt('thousand_ways_info'));
         $form->addItem($thousand_ways);
+
+        $color = new ilRadioGroupInputGUI($this->txt('color'), 'color');
+        $color->setInfo($this->txt('color_info'));
+        foreach (array_keys(ilUdfColors::THEMES) as $key) {
+            $color->addOption(new ilRadioOption(
+                ilUdfColors::swatch($key) . $this->esc($this->txt('color_' . $key)) . ' <span style="color:#777">'
+                . ilUdfColors::kanji($key) . '</span>',
+                $key
+            ));
+        }
+        $form->addItem($color);
 
         $form->addCommandButton('updateProperties', $this->lng->txt('save'));
 
@@ -1924,7 +1937,7 @@ JS);
             ];
         }
 
-        $chart = new ilUdfPearlChart($rows);
+        $chart = new ilUdfPearlChart($rows, ilUdfColors::accent($this->getForum()->getColor()));
         $this->tpl->setContent(
             $this->getStyles()
             . '<div class="udf-stat">'
@@ -2048,7 +2061,7 @@ JS);
             $edges[] = [$a, $b, $weight, sprintf($this->txt('network_edge_tooltip'), $nodes[$a]['label'], $nodes[$b]['label'], $weight)];
         }
 
-        $graph = new ilUdfNetworkGraph($nodes, $edges);
+        $graph = new ilUdfNetworkGraph($nodes, $edges, ilUdfColors::accent($this->getForum()->getColor()));
         $this->tpl->setContent(
             $this->getStyles()
             . '<div class="udf-stat">'
@@ -2557,7 +2570,8 @@ JS);
 
     private function getStyles(): string
     {
-        return <<<'CSS'
+        $color = $this->object instanceof ilObjUdonForum ? $this->object->getColor() : ilUdfColors::DEFAULT;
+        return '<style>' . ilUdfColors::cssVariables($color) . '</style>' . <<<'CSS'
 <style>
 .udf { max-width: 860px; }
 /* post form: full width, the text field (Markdown) with the label above it and taller */
@@ -2571,15 +2585,15 @@ JS);
 .udf-post-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 26rem; }
 .udf-heading { font-size: 1.1rem; margin: 0.5rem 0 0.75rem; }
 .udf-card { border: 1px solid #d6d6d6; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; background: #fff; }
-.udf-card:hover { border-color: #f0b27a; }
+.udf-card:hover { border-color: var(--udf-a-light); }
 .udf-card-full:hover { border-color: #d6d6d6; }
 .udf-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 0.25rem; }
 .udf-card-full .udf-title { font-size: 1.4rem; }
 .udf-title a { color: inherit; text-decoration: none; }
-.udf-title a:hover { text-decoration: underline; color: #a94208; }
+.udf-title a:hover { text-decoration: underline; color: var(--udf-a-dark); }
 .udf-meta { font-size: 0.85rem; color: #6f6f6f; }
 .udf-author { font-weight: 600; color: #333; }
-.udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: #fff0e0; color: #a94208; }
+.udf-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0 0.4rem; border-radius: 4px; background: var(--udf-a-soft); color: var(--udf-a-dark); }
 .udf-edited { font-style: italic; }
 .udf-preview, .udf-body { margin: 0.5rem 0; line-height: 1.5; overflow-wrap: anywhere; }
 .udf-md > :first-child { margin-top: 0; }
@@ -2588,12 +2602,12 @@ JS);
 .udf-md ul, .udf-md ol { padding-left: 1.5rem; }
 .udf-md h1, .udf-md h2, .udf-md h3, .udf-md h4 { font-size: 1.1rem; font-weight: 700; margin: 0.8rem 0 0.4rem; }
 .udf-md h1 { font-size: 1.3rem; }
-.udf-md blockquote { border-left: 3px solid #f0b27a; padding-left: 0.75rem; color: #555; }
+.udf-md blockquote { border-left: 3px solid var(--udf-a-light); padding-left: 0.75rem; color: #555; }
 .udf-md code { background: #f3f3f3; padding: 0 0.25rem; border-radius: 3px; font-size: 0.9em; }
 .udf-md pre { background: #f6f6f6; padding: 0.6rem 0.8rem; border-radius: 6px; overflow-x: auto; }
 .udf-md pre code { background: none; padding: 0; }
 .udf-replies { margin-top: 1.5rem; }
-.udf-reply { border-left: 3px solid #f0b27a; padding: 0.4rem 0 0.4rem 0.9rem; margin: 0 0 1rem 0.25rem; }
+.udf-reply { border-left: 3px solid var(--udf-a-light); padding: 0.4rem 0 0.4rem 0.9rem; margin: 0 0 1rem 0.25rem; }
 .udf-reply .udf-body { margin: 0.3rem 0; }
 .udf-reply-actions { font-size: 0.85rem; }
 .udf-reply-actions a, .udf-reply-actions button { font-weight: 600; }
@@ -2607,9 +2621,9 @@ JS);
 .udf-creature-card { display: flex; gap: 0.5rem; align-items: center; border: 1px solid var(--udf-creature); border-left-width: 4px; border-radius: 8px; padding: 0.4rem 0.7rem; font-size: 0.85rem; background: #fff; }
 .udf-kanji { color: #777; font-weight: 400; }
 /* udon bowl */
-.udf-bowl { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 0.75rem; font-weight: 700; color: #a94208; vertical-align: middle; cursor: default; }
+.udf-bowl { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 0.75rem; font-weight: 700; color: var(--udf-a-dark); vertical-align: middle; cursor: default; }
 .udf-bowl-icon { flex: none; }
-.udf-bowl-ranks { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; font-size: 0.85rem; margin: 0 0 1rem; padding: 0.5rem 0.8rem; border: 1px solid #f0b27a; border-radius: 8px; background: #fffaf5; }
+.udf-bowl-ranks { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; font-size: 0.85rem; margin: 0 0 1rem; padding: 0.5rem 0.8rem; border: 1px solid var(--udf-a-light); border-radius: 8px; background: var(--udf-a-pale); }
 .udf-bowl-ranks-title { color: #555; width: 100%; }
 .udf-bowl-rank { display: inline-flex; align-items: center; gap: 0.3rem; }
 /* good night greeting */
@@ -2624,23 +2638,23 @@ JS);
 .udf-goodnight-close:hover { color: #fff; }
 /* statistics: no sort button above the table (sorting via column headers) */
 .udf-stat .il-viewcontrol-sortation { display: none !important; }
-.udf-network-box { border: 1px solid #f0b27a; border-radius: 8px; background: #fff; padding: 0.5rem; }
+.udf-network-box { border: 1px solid var(--udf-a-light); border-radius: 8px; background: #fff; padding: 0.5rem; }
 .udf-network { width: 100%; height: auto; display: block; }
 .udf-network-node:hover circle { stroke-width: 3; }
 .udf-network-legend { font-size: 0.85rem; color: #555; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
-.udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c95100; background: radial-gradient(circle, #000 0 3px, rgba(247,166,74,0.35) 3.5px); }
-.udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(169,66,8,0.45); margin-left: 1rem; }
+.udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--udf-a); background: radial-gradient(circle, #000 0 3px, rgba(var(--udf-a-rgb),0.2) 3.5px); }
+.udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(var(--udf-a-dark-rgb),0.45); margin-left: 1rem; }
 .udf-bubbles { width: 100%; height: auto; display: block; }
 .udf-pearls { width: 100%; height: auto; display: block; }
 .udf-pearl:hover { stroke-width: 4; }
-.udf-legend-pearl { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #c95100; border: 2px solid #c95100; }
+.udf-legend-pearl { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: var(--udf-a); border: 2px solid var(--udf-a); }
 .udf-legend-pearl-reply { background: #fff; margin-left: 1rem; }
 .udf-bubble { cursor: default; }
 .udf-legend-bubble { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #1971c2; background: rgba(25,113,194,0.22); }
 .udf-legend-overlap { display: inline-block; width: 30px; height: 18px; margin-left: 1rem; background:
-  radial-gradient(circle at 9px 9px, rgba(201,81,0,0.3) 8px, transparent 8.5px),
+  radial-gradient(circle at 9px 9px, rgba(var(--udf-a-rgb),0.3) 8px, transparent 8.5px),
   radial-gradient(circle at 21px 9px, rgba(25,113,194,0.3) 8px, transparent 8.5px); }
-.udf-legend-pie { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-left: 1rem; background: conic-gradient(#c95100 0 65%, rgba(201,81,0,0.35) 65% 100%); }
+.udf-legend-pie { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-left: 1rem; background: conic-gradient(var(--udf-a) 0 65%, rgba(var(--udf-a-rgb),0.35) 65% 100%); }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-input__field .c-field-markdown textarea,
 .udf-reply-form [data-il-ui-component="textarea-field-input"] .c-input__field textarea { height: 10rem !important; min-height: 6rem; }
 .udf-reply-form [data-il-ui-component="markdown-field-input"] .c-field-markdown__preview { min-height: 10rem; }
@@ -2651,27 +2665,27 @@ JS);
 .udf-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .udf-sorting { justify-content: flex-end; margin-left: auto; }
 .udf-sorting-periods { display: flex; flex-wrap: wrap; gap: 0.4rem; flex-basis: 100%; justify-content: flex-end; }
-.udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid #f0b27a; border-radius: 999px; font-size: 0.85rem; color: #a94208; text-decoration: none; background: #fff; }
-.udf-chip:hover, .udf-chip:focus { border-color: #c95100; background: #fff4e6; color: #a94208; text-decoration: none; }
-.udf-chip-active, .udf-chip-active:hover, .udf-chip-active:focus { background: #c95100; border-color: #c95100; color: #fff; }
+.udf-chip { display: inline-block; padding: 0.2rem 0.75rem; border: 1px solid var(--udf-a-light); border-radius: 999px; font-size: 0.85rem; color: var(--udf-a-dark); text-decoration: none; background: #fff; }
+.udf-chip:hover, .udf-chip:focus { border-color: var(--udf-a); background: var(--udf-a-tint); color: var(--udf-a-dark); text-decoration: none; }
+.udf-chip-active, .udf-chip-active:hover, .udf-chip-active:focus { background: var(--udf-a); border-color: var(--udf-a); color: #fff; }
 /* orange inside the forum: links in posts and replies, buttons in the forms */
-.udf .udf-body a, .udf .udf-reply-actions a, .udf .udf-reply-actions button.btn-link { color: #a94208; }
-.udf .udf-body a:hover, .udf .udf-reply-actions a:hover { color: #7f3105; }
-.udf .c-form__actions .btn:not([formaction]) { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
-.udf .c-form__actions .btn:not([formaction]):hover, .udf .c-form__actions .btn:not([formaction]):focus { background-color: #a94208 !important; border-color: #a94208 !important; }
-.udf .c-form__actions .btn[formaction] { background-color: #fff !important; border-color: #c95100 !important; color: #a94208 !important; }
-.udf .c-form__actions .btn[formaction]:hover, .udf .c-form__actions .btn[formaction]:focus { background-color: #fff4e6 !important; }
-.udf .c-field-markdown__actions .btn { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
-.udf .c-field-markdown__actions .btn:hover, .udf .c-field-markdown__actions .btn:focus { background-color: #a94208 !important; border-color: #a94208 !important; }
+.udf .udf-body a, .udf .udf-reply-actions a, .udf .udf-reply-actions button.btn-link { color: var(--udf-a-dark); }
+.udf .udf-body a:hover, .udf .udf-reply-actions a:hover { color: var(--udf-a-darker); }
+.udf .c-form__actions .btn:not([formaction]) { background-color: var(--udf-a) !important; border-color: var(--udf-a) !important; color: #fff !important; }
+.udf .c-form__actions .btn:not([formaction]):hover, .udf .c-form__actions .btn:not([formaction]):focus { background-color: var(--udf-a-dark) !important; border-color: var(--udf-a-dark) !important; }
+.udf .c-form__actions .btn[formaction] { background-color: #fff !important; border-color: var(--udf-a) !important; color: var(--udf-a-dark) !important; }
+.udf .c-form__actions .btn[formaction]:hover, .udf .c-form__actions .btn[formaction]:focus { background-color: var(--udf-a-tint) !important; }
+.udf .c-field-markdown__actions .btn { background-color: var(--udf-a) !important; border-color: var(--udf-a) !important; color: #fff !important; }
+.udf .c-field-markdown__actions .btn:hover, .udf .c-field-markdown__actions .btn:focus { background-color: var(--udf-a-dark) !important; border-color: var(--udf-a-dark) !important; }
 .udf .c-field-markdown__actions .btn .glyph, .udf .c-field-markdown__actions .btn span { color: #fff !important; }
-.udf .il-viewcontrol-mode .btn.engaged { border-color: #c95100 !important; color: #a94208 !important; }
-.udf .il-viewcontrol-mode .btn:not(.engaged) { color: #a94208 !important; }
+.udf .il-viewcontrol-mode .btn.engaged { border-color: var(--udf-a) !important; color: var(--udf-a-dark) !important; }
+.udf .il-viewcontrol-mode .btn:not(.engaged) { color: var(--udf-a-dark) !important; }
 /* toolbar of the forum pages: other buttons with orange outline */
-.c-toolbar .btn.btn-default:not(.btn-primary) { background-color: #fff !important; border-color: #c95100 !important; color: #a94208 !important; }
-.c-toolbar .btn.btn-default:not(.btn-primary):hover, .c-toolbar .btn.btn-default:not(.btn-primary):focus { background-color: #fff4e6 !important; }
+.c-toolbar .btn.btn-default:not(.btn-primary) { background-color: #fff !important; border-color: var(--udf-a) !important; color: var(--udf-a-dark) !important; }
+.c-toolbar .btn.btn-default:not(.btn-primary):hover, .c-toolbar .btn.btn-default:not(.btn-primary):focus { background-color: var(--udf-a-tint) !important; }
 /* "Neuer Beitrag" (primary button in the toolbar of the forum) in orange */
-.c-toolbar .btn.btn-primary { background-color: #c95100 !important; border-color: #c95100 !important; color: #fff !important; }
-.c-toolbar .btn.btn-primary:hover, .c-toolbar .btn.btn-primary:focus { background-color: #a94208 !important; border-color: #a94208 !important; color: #fff !important; }
+.c-toolbar .btn.btn-primary { background-color: var(--udf-a) !important; border-color: var(--udf-a) !important; color: #fff !important; }
+.c-toolbar .btn.btn-primary:hover, .c-toolbar .btn.btn-primary:focus { background-color: var(--udf-a-dark) !important; border-color: var(--udf-a-dark) !important; color: #fff !important; }
 .udf-labels { margin-bottom: 0.3rem; }
 .udf-cat { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.05rem 0.5rem; border-radius: 999px; color: #333; }
 .udf-card-voted { display: flex; gap: 0.75rem; align-items: flex-start; }
@@ -2680,14 +2694,14 @@ JS);
 .udf-vote { display: flex; flex-direction: column; align-items: center; min-width: 2.2rem; margin: 0; }
 .udf-arrow { background: none; border: 0; padding: 0 0.2rem; font-size: 1rem; line-height: 1.2; color: #8a8a8a; cursor: pointer; border-radius: 4px; }
 button.udf-arrow:hover { background: #eef1f5; }
-.udf-up-active .udf-up { color: #d9480f; }
+.udf-up-active .udf-up { color: var(--udf-a); }
 .udf-down-active .udf-down { color: #3b5bdb; }
-.udf-up-active .udf-score { color: #d9480f; }
+.udf-up-active .udf-score { color: var(--udf-a); }
 .udf-down-active .udf-score { color: #3b5bdb; }
 .udf-vote-disabled .udf-arrow { cursor: default; opacity: 0.4; }
 .udf-score { font-weight: 700; font-size: 0.9rem; color: #333; min-width: 1.2rem; text-align: center; }
-.udf-new { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; background: #fff0e0; color: #c2410c; }
-.udf-card.udf-unread { border-left: 4px solid #f08c00; }
+.udf-new { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; background: var(--udf-a-soft); color: var(--udf-a-dark); }
+.udf-card.udf-unread { border-left: 4px solid var(--udf-a-bright); }
 .udf-chip-small { font-size: 0.8rem; padding: 0.1rem 0.6rem; }
 @media (max-width: 600px) { .udf-card { padding: 0.6rem 0.7rem; } .udf-card-voted { gap: 0.5rem; } }
 </style>

@@ -15,6 +15,7 @@ class ilObjUdonForum extends ilObjectPlugin
     protected bool $categories_initialized = false;
     protected bool $use_markdown = true;
     protected bool $thousand_ways = false;
+    protected string $color = ilUdfColors::DEFAULT;
 
     public function __construct(int $a_ref_id = 0)
     {
@@ -44,6 +45,7 @@ class ilObjUdonForum extends ilObjectPlugin
             $this->categories_initialized = (bool) $rec['cats_init'];
             $this->use_markdown = (bool) ($rec['use_markdown'] ?? 1);
             $this->thousand_ways = (bool) ($rec['thousand_ways'] ?? 0);
+            $this->setColor((string) ($rec['color'] ?? ilUdfColors::DEFAULT));
         }
     }
 
@@ -66,6 +68,7 @@ class ilObjUdonForum extends ilObjectPlugin
             'cats_init' => ['integer', (int) $this->categories_initialized],
             'use_markdown' => ['integer', (int) $this->use_markdown],
             'thousand_ways' => ['integer', (int) $this->thousand_ways],
+            'color' => ['text', $this->color],
         ];
     }
 
@@ -126,5 +129,18 @@ class ilObjUdonForum extends ilObjectPlugin
     public function setThousandWays(bool $thousand_ways): void
     {
         $this->thousand_ways = $thousand_ways;
+    }
+
+    /**
+     * Colour of the forum (key of ilUdfColors::THEMES).
+     */
+    public function getColor(): string
+    {
+        return $this->color;
+    }
+
+    public function setColor(string $color): void
+    {
+        $this->color = ilUdfColors::isValid($color) ? $color : ilUdfColors::DEFAULT;
     }
 }

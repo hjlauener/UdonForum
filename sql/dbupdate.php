@@ -156,3 +156,11 @@ if (!$ilDB->tableExists('rep_robj_xudf_mrole')) {
     $ilDB->addPrimaryKey('rep_robj_xudf_mrole', ['obj_id', 'user_id']);
 }
 ?>
+<#12>
+<?php
+/** @var ilDBInterface $ilDB */
+// colour of the forum (traditional Japanese colour, see ilUdfColors)
+if (!$ilDB->tableColumnExists('rep_robj_xudf_data', 'color')) {
+    $ilDB->addTableColumn('rep_robj_xudf_data', 'color', ['type' => 'text', 'length' => 16, 'notnull' => true, 'default' => 'kaki']);
+}
+?>

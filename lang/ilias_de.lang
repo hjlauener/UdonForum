@@ -169,3 +169,14 @@ cat_list_created#:#%s neu
 cat_list_renamed#:#%s umbenannt
 cat_list_removed#:#%s entfernt
 cat_list_unassigned#:#Beiträge ohne Kategorie: %s
+color#:#Farbe
+color_info#:#Akzentfarbe des Forums für Schaltflächen, Filter, Links, Etiketten und Statistiken – traditionelle japanische Farben (和色, Wairo).
+color_kaki#:#Kaki – Orange
+color_ai#:#Ai – Indigoblau
+color_hanada#:#Hanada – Blaugrün
+color_tokiwa#:#Tokiwa – Immergrün
+color_kuchiba#:#Kuchiba – Herbstlaub
+color_enji#:#Enji – Karminrot
+color_botan#:#Botan – Päonienrosa
+color_edomurasaki#:#Edo-Murasaki – Violett
+color_sumi#:#Sumi – Tusche

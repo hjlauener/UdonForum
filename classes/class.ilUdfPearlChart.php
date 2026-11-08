@@ -21,14 +21,21 @@ class ilUdfPearlChart
     private const ROW_HEIGHT = 34;
     private const AXIS_HEIGHT = 34;
     private const PEARL_RADIUS = 7;
-    private const COLOR = '#c95100';
+
+    private string $color;
+    private string $color_dark;
+    private string $color_pale;
 
     /**
      * @param array<int, array{label: string, items: array<int, array{0: int, 1: string, 2: string}>}> $rows
      *        user id => [label, items: [timestamp, TYPE_*, tooltip]]
+     * @param string $color colour of the forum (pearls and lines)
      */
-    public function __construct(private array $rows)
+    public function __construct(private array $rows, string $color = '#c95100')
     {
+        $this->color = $color;
+        $this->color_dark = ilUdfColors::mix($color, '#000000', 0.18);
+        $this->color_pale = ilUdfColors::mix($color, '#ffffff', 0.95);
     }
 
     /**
@@ -142,22 +149,22 @@ class ilUdfPearlChart
             $count = count($items);
 
             if ($i % 2 === 1) {
-                $svg .= '<rect x="0" y="' . self::num($y - self::ROW_HEIGHT / 2) . '" width="' . self::WIDTH . '" height="' . self::ROW_HEIGHT . '" fill="#fff8f1"/>';
+                $svg .= '<rect x="0" y="' . self::num($y - self::ROW_HEIGHT / 2) . '" width="' . self::WIDTH . '" height="' . self::ROW_HEIGHT . '" fill="' . $this->color_pale . '"/>';
             }
             $svg .= '<text x="10" y="' . self::num($y + 4) . '" font-size="13" fill="#222" font-family="inherit">'
                 . self::esc(self::shorten($row['label'], 22))
-                . ' <tspan fill="#a94208" font-weight="700">' . self::esc($count === 1 ? $count_label_one : sprintf($count_label, $count)) . '</tspan></text>';
+                . ' <tspan fill="' . $this->color_dark . '" font-weight="700">' . self::esc($count === 1 ? $count_label_one : sprintf($count_label, $count)) . '</tspan></text>';
 
             // the string: connects the pearls in time order
             if ($count > 1) {
                 $points = implode(' ', array_map(static fn(array $it): string => self::num($x($it[0])) . ',' . self::num($y), $items));
-                $svg .= '<polyline points="' . $points . '" fill="none" stroke="' . self::COLOR . '" stroke-opacity="0.45" stroke-width="2"/>';
+                $svg .= '<polyline points="' . $points . '" fill="none" stroke="' . $this->color . '" stroke-opacity="0.45" stroke-width="2"/>';
             }
 
             foreach ($items as [$t, $type, $tooltip]) {
                 $is_post = $type === self::TYPE_POST;
                 $svg .= '<circle class="udf-pearl" cx="' . self::num($x($t)) . '" cy="' . self::num($y) . '" r="' . self::PEARL_RADIUS . '"'
-                    . ' fill="' . ($is_post ? self::COLOR : '#fff') . '" stroke="' . self::COLOR . '" stroke-width="' . ($is_post ? '1.5' : '2.5') . '">'
+                    . ' fill="' . ($is_post ? $this->color : '#fff') . '" stroke="' . $this->color . '" stroke-width="' . ($is_post ? '1.5' : '2.5') . '">'
                     . '<title>' . self::esc($tooltip) . '</title></circle>';
             }
             $i++;

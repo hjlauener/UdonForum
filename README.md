@@ -65,6 +65,11 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
 - Udon Forum nur in **Kursen und Gruppen** anlegbar
 - **Online / offline** und **Markdown-Editor** direkt im Formular beim Anlegen
   (beide eingeschaltet, Cursor im Titel); später änderbar im Reiter *Einstellungen*
+- **Farbe** (Einstellung): Akzentfarbe des Forums aus traditionellen japanischen
+  Farben (和色) – Kaki (Orange, Standard), Ai (Indigoblau), Hanada (Blaugrün),
+  Tokiwa (Immergrün), Kuchiba (Herbstlaub), Enji (Karminrot), Botan (Päonienrosa),
+  Edo-Murasaki (Violett), Sumi (Tusche). Gilt für Schaltflächen, Filter, Links,
+  Etiketten, Spinnennetz und Perlenkette; alle Farben gut lesbar mit weisser Schrift
 - **Feed** mit Beitragskarten (Punkte, Kategorie, Titel, Autor, Zeit, Vorschau),
   25 pro Seite; Klick auf den Titel öffnet den ganzen Beitrag
 - **Filter** links: Alle / pro Kategorie. Kategorie und Sortierung bleiben pro
@@ -165,6 +170,7 @@ classes/
   class.ilUdfPearlChart.php        Perlenkette (Zeitachse und SVG)
   class.ilUdfCreatures.php         1000 ways Forum: die vier Figuren, Icons, Verteilung
   class.ilUdfUdonBowl.php          Udon-Schüssel: Ränge und Icon
+  class.ilUdfColors.php            Farben des Forums (japanische Farben, CSS-Variablen)
   class.ilUdfMembersTable.php      Daten und Sortierung der Mitglieder-Tabelle
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte

@@ -163,6 +163,9 @@ cat_custom#:#Own categories
 cat_custom_list#:#Categories
 cat_custom_info#:#Separate several categories with semicolons, e.g.: General; Questions; Exam
 cat_list_title#:#All categories at once
-cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed, they are not part of the name. The order is applied. Categories with the same name keep their posts. Removed or renamed categories are deleted, their posts then have no category.
+cat_list_info#:#Separate the categories with semicolons, e.g.: General; Questions; Exam. Spaces after a semicolon are allowed, they are not part of the name. The order is applied. Renaming: simply change the name at its place – the posts stay in the category. Removed categories are deleted, their posts are kept (under “All”, without category).
 cat_list_saved#:#The categories have been saved.
-cat_list_saved_details#:#%s new, %s removed, posts without category: %s.
+cat_list_created#:#%s new
+cat_list_renamed#:#%s renamed
+cat_list_removed#:#%s removed
+cat_list_unassigned#:#posts without category: %s

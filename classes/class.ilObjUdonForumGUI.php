@@ -2161,8 +2161,14 @@ JS);
 
         $result = $this->udf_repo->syncCategories($this->object->getId(), $titles);
         $message = $this->txt('cat_list_saved');
-        if ($result['created'] > 0 || $result['removed'] > 0) {
-            $message .= ' ' . sprintf($this->txt('cat_list_saved_details'), $result['created'], $result['removed'], $result['unassigned']);
+        $details = [];
+        foreach (['created', 'renamed', 'removed', 'unassigned'] as $key) {
+            if ($result[$key] > 0) {
+                $details[] = sprintf($this->txt('cat_list_' . $key), $result[$key]);
+            }
+        }
+        if ($details !== []) {
+            $message .= ' ' . implode(', ', $details) . '.';
         }
         $this->tpl->setOnScreenMessage('success', $message, true);
         $this->ctrl->redirect($this, 'showCategories');

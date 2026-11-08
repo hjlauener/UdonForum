@@ -163,6 +163,9 @@ cat_custom#:#Eigene Kategorien
 cat_custom_list#:#Kategorien
 cat_custom_info#:#Mehrere Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung
 cat_list_title#:#Alle Kategorien auf einmal
-cat_list_info#:#Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung. Leerzeichen nach dem Semikolon sind erlaubt, sie gehören nicht zum Namen. Die Reihenfolge wird übernommen. Kategorien mit gleichem Namen behalten ihre Beiträge. Entfernte oder umbenannte Kategorien werden gelöscht, ihre Beiträge sind danach keiner Kategorie zugeordnet.
+cat_list_info#:#Kategorien mit Semikolon trennen, z. B.: Allgemeines; Fragen; Prüfung. Leerzeichen nach dem Semikolon sind erlaubt, sie gehören nicht zum Namen. Die Reihenfolge wird übernommen. Umbenennen: einfach den Namen an seiner Stelle ändern – die Beiträge bleiben in der Kategorie. Entfernte Kategorien werden gelöscht, ihre Beiträge bleiben erhalten (unter „Alle“, ohne Kategorie).
 cat_list_saved#:#Die Kategorien wurden gespeichert.
-cat_list_saved_details#:#%s neu, %s entfernt, Beiträge ohne Kategorie: %s.
+cat_list_created#:#%s neu
+cat_list_renamed#:#%s umbenannt
+cat_list_removed#:#%s entfernt
+cat_list_unassigned#:#Beiträge ohne Kategorie: %s

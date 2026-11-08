@@ -638,30 +638,57 @@ class ilUdfRepository
     }
 
     /**
-     * Makes the categories of a forum match the given titles (in this order):
-     * categories with the same name (case is ignored) are kept with their
-     * posts, new names are added, missing categories are deleted (their posts
-     * are kept without category).
+     * Makes the categories of a forum match the given titles (in this order),
+     * without losing the assignment of posts:
+     *
+     * 1. same name as before (case is ignored): the category is kept
+     * 2. renamed: the remaining old and new names are paired in the order of
+     *    the list (e.g. "Haus; Hund; Katze" -> "Haus; Hunde; Katze" renames
+     *    Hund to Hunde); the category keeps its id and therefore its posts
+     * 3. what is left: new names are added, old categories are deleted
+     *    (their posts are kept, without category)
      *
      * @param string[] $titles
-     * @return array{created: int, removed: int, unassigned: int}
+     * @return array{created: int, renamed: int, removed: int, unassigned: int}
      */
     public function syncCategories(int $obj_id, array $titles): array
     {
-        $existing = [];
-        foreach ($this->getCategories($obj_id) as $cat) {
-            $existing[mb_strtolower($cat->getTitle())] ??= $cat;
+        $old = $this->getCategories($obj_id);
+
+        // 1. same name
+        $by_name = [];
+        foreach ($old as $cat) {
+            $by_name[mb_strtolower($cat->getTitle())] ??= $cat;
+        }
+        $assigned = [];      // index in $titles => category
+        $used = [];          // category id => true
+        foreach ($titles as $i => $title) {
+            $cat = $by_name[mb_strtolower($title)] ?? null;
+            if ($cat !== null && !isset($used[$cat->getId()])) {
+                $assigned[$i] = $cat;
+                $used[$cat->getId()] = true;
+            }
         }
 
-        $kept = [];
+        // 2. renamed: pair the remaining old and new names in list order
+        $free_old = array_values(array_filter($old, static fn(ilUdfCategory $c): bool => !isset($used[$c->getId()])));
+        $renamed = 0;
+        foreach ($titles as $i => $title) {
+            if (isset($assigned[$i]) || $free_old === []) {
+                continue;
+            }
+            $cat = array_shift($free_old);
+            $assigned[$i] = $cat;
+            $used[$cat->getId()] = true;
+            $renamed++;
+        }
+
+        // save in the new order; new names become new categories
         $created = 0;
         $sort = 0;
-        foreach ($titles as $title) {
-            $key = mb_strtolower($title);
-            if (isset($existing[$key]) && !isset($kept[$existing[$key]->getId()])) {
-                $cat = $existing[$key];
-                $kept[$cat->getId()] = true;
-            } else {
+        foreach ($titles as $i => $title) {
+            $cat = $assigned[$i] ?? null;
+            if ($cat === null) {
                 $cat = new ilUdfCategory();
                 $cat->setObjId($obj_id);
                 $created++;
@@ -669,21 +696,19 @@ class ilUdfRepository
             $cat->setTitle($title);
             $cat->setSortOrder($sort += 10);
             $this->saveCategory($cat);
-            $kept[$cat->getId()] = true;
         }
 
+        // 3. old categories that are no longer in the list
         $counts = $this->countPostsPerCategory($obj_id);
         $removed = 0;
         $unassigned = 0;
-        foreach ($this->getCategories($obj_id) as $cat) {
-            if (!isset($kept[$cat->getId()])) {
-                $unassigned += $counts[$cat->getId()] ?? 0;
-                $this->deleteCategory($cat);
-                $removed++;
-            }
+        foreach ($free_old as $cat) {
+            $unassigned += $counts[$cat->getId()] ?? 0;
+            $this->deleteCategory($cat);
+            $removed++;
         }
 
-        return ['created' => $created, 'removed' => $removed, 'unassigned' => $unassigned];
+        return ['created' => $created, 'renamed' => $renamed, 'removed' => $removed, 'unassigned' => $unassigned];
     }
 
     /**

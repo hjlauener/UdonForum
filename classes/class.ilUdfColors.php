@@ -83,6 +83,21 @@ class ilUdfColors
     }
 
     /**
+     * Text colour that is readable on the given background: white if the
+     * contrast is at least 4.5:1, otherwise a dark shade of the background.
+     */
+    public static function textOn(string $background): string
+    {
+        $luminance = 0.0;
+        foreach (self::rgb($background) as $i => $channel) {
+            $c = $channel / 255;
+            $c = $c <= 0.03928 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
+            $luminance += [0.2126, 0.7152, 0.0722][$i] * $c;
+        }
+        return 1.05 / ($luminance + 0.05) >= 4.5 ? '#ffffff' : self::mix($background, '#000000', 0.72);
+    }
+
+    /**
      * @return int[] [r, g, b]
      */
     private static function rgb(string $hex): array

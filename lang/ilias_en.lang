@@ -165,6 +165,35 @@ pearls_legend_post#:#Pearl: post opened
 pearls_legend_reply#:#Ring: reply
 pearls_legend_line#:#Line: connects the contributions of a person in time order – sorted by number of pearls
 
+# --- Statistics › Activity calendar ---
+stat_calendar#:#Activity calendar
+calendar_weekdays#:#Mon;Tue;Wed;Thu;Fri;Sat;Sun
+calendar_months#:#Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec
+calendar_tooltip#:#%s · posts: %s · replies: %s
+calendar_tooltip_none#:#%s · no activity
+calendar_summary#:#Posts and replies: %s · active days: %s
+calendar_busiest#:#busiest day: %s (%s)
+calendar_less#:#less
+calendar_more#:#more
+calendar_click_hint#:#Click on a coloured day to see its posts and replies.
+calendar_item_post#:#opened the post
+calendar_item_reply#:#replied to
+
+# --- Statistics › Participation funnel ---
+stat_funnel#:#Participation funnel
+funnel_info#:#How far did the members of the course or group get (without lecturers)? Each stage counts everybody who got at least this far. Click on a stage to see who stopped there.
+funnel_members#:#Members
+funnel_visited#:#Visited the forum
+funnel_read#:#Read posts
+funnel_voted#:#Voted
+funnel_replied#:#Replied
+funnel_posted#:#Opened a post
+funnel_share#:#%s%%
+funnel_drop#:#%s fewer than on the stage before
+funnel_stopped#:#Stopped here (%s):
+funnel_final#:#On the highest stage (%s):
+funnel_nobody#:#nobody
+
 # --- Members ---
 members_view#:#View
 members_roles#:#Assign roles

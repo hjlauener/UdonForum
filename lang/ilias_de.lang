@@ -165,6 +165,35 @@ pearls_legend_post#:#Perle: Beitrag eröffnet
 pearls_legend_reply#:#Ring: Antwort
 pearls_legend_line#:#Linie: verbindet die Beiträge einer Person in zeitlicher Reihenfolge – sortiert nach Anzahl Perlen
 
+# --- Statistik › Aktivitäts-Kalender ---
+stat_calendar#:#Aktivitäts-Kalender
+calendar_weekdays#:#Mo;Di;Mi;Do;Fr;Sa;So
+calendar_months#:#Jan;Feb;Mär;Apr;Mai;Jun;Jul;Aug;Sep;Okt;Nov;Dez
+calendar_tooltip#:#%s · Beiträge: %s · Antworten: %s
+calendar_tooltip_none#:#%s · keine Aktivität
+calendar_summary#:#Beiträge und Antworten: %s · aktive Tage: %s
+calendar_busiest#:#aktivster Tag: %s (%s)
+calendar_less#:#weniger
+calendar_more#:#mehr
+calendar_click_hint#:#Klicken Sie auf einen farbigen Tag, um seine Beiträge und Antworten zu sehen.
+calendar_item_post#:#Beitrag eröffnet:
+calendar_item_reply#:#Antwort auf
+
+# --- Statistik › Beteiligungs-Trichter ---
+stat_funnel#:#Beteiligungs-Trichter
+funnel_info#:#Wie weit sind die Mitglieder des Kurses bzw. der Gruppe gekommen (ohne Dozierende)? Jede Stufe zählt alle, die mindestens so weit gekommen sind. Klicken Sie auf eine Stufe, um zu sehen, wer dort stehen geblieben ist.
+funnel_members#:#Mitglieder
+funnel_visited#:#Forum besucht
+funnel_read#:#Beiträge gelesen
+funnel_voted#:#Bewertet
+funnel_replied#:#Geantwortet
+funnel_posted#:#Beitrag eröffnet
+funnel_share#:#%s %%
+funnel_drop#:#%s weniger als auf der Stufe davor
+funnel_stopped#:#Hier stehen geblieben (%s):
+funnel_final#:#Auf der höchsten Stufe (%s):
+funnel_nobody#:#niemand
+
 # --- Mitglieder ---
 members_view#:#Ansicht
 members_roles#:#Rollen zuteilen

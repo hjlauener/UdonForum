@@ -44,6 +44,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const SUBTAB_STAT_NETWORK = 'stat_network';
     private const SUBTAB_STAT_BUBBLES = 'stat_bubbles';
     private const SUBTAB_STAT_PEARLS = 'stat_pearls';
+    private const SUBTAB_STAT_CALENDAR = 'stat_calendar';
+    private const SUBTAB_STAT_FUNNEL = 'stat_funnel';
     /** colours of the topics in the bubble chart (distinguishable when overlapping) */
     private const BUBBLE_COLORS = ['#c95100', '#1971c2', '#2f9e44', '#ae3ec9', '#e03131', '#0c8599', '#f08c00', '#5f3dc4'];
     private const BUBBLE_COLOR_NO_CATEGORY = '#868e96';
@@ -93,6 +95,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'showNetwork',
         'showBubbles',
         'showPearls',
+        'showCalendar',
+        'showFunnel',
     ];
 
     /** Commands that need read permission (further checks inside) */
@@ -1863,6 +1867,16 @@ JS);
             $this->txt('stat_pearls'),
             $this->ctrl->getLinkTarget($this, 'showPearls')
         );
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_CALENDAR,
+            $this->txt('stat_calendar'),
+            $this->ctrl->getLinkTarget($this, 'showCalendar')
+        );
+        $this->tabs->addSubTab(
+            self::SUBTAB_STAT_FUNNEL,
+            $this->txt('stat_funnel'),
+            $this->ctrl->getLinkTarget($this, 'showFunnel')
+        );
         $this->tabs->activateSubTab($active);
     }
 
@@ -1949,6 +1963,170 @@ JS);
             . '<div class="udf-network-box">' . $chart->toSvg($this->txt('stat_pearls'), $this->txt('pearls_count'), $this->txt('pearls_count_one')) . '</div>'
             . '</div>'
         );
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Aktivitäts-Kalender": one square per day, the
+     * darker the more posts and replies; a click on a day lists its posts
+     * and replies with links.
+     */
+    protected function showCalendar(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_CALENDAR);
+
+        $timeline = $this->udf_repo->getContributionTimeline($this->object->getId());
+        if ($timeline === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('stat_no_activity'));
+            return;
+        }
+
+        $items = [];
+        $per_day = [];
+        foreach ($timeline as $item) {
+            $type = $item['type'] === 'post' ? ilUdfActivityCalendar::TYPE_POST : ilUdfActivityCalendar::TYPE_REPLY;
+            $items[] = [$item['created'], $type];
+            $per_day[ilUdfActivityCalendar::day($item['created'])->format('Y-m-d')][] = $item;
+        }
+
+        $calendar = new ilUdfActivityCalendar($items, ilUdfColors::accent($this->getForum()->getColor()), time());
+        $weekdays = array_map('trim', explode(';', $this->txt('calendar_weekdays')));
+        $months = array_map('trim', explode(';', $this->txt('calendar_months')));
+        $format_day = fn(DateTimeImmutable $day): string => ($weekdays[(int) $day->format('N') - 1] ?? '') . ', ' . $day->format('d.m.Y');
+
+        $svg = $calendar->toSvg(
+            $this->txt('stat_calendar'),
+            $weekdays,
+            $months,
+            fn(DateTimeImmutable $day, int $posts, int $replies): string => sprintf($this->txt('calendar_tooltip'), $format_day($day), $posts, $replies),
+            fn(DateTimeImmutable $day): string => sprintf($this->txt('calendar_tooltip_none'), $format_day($day))
+        );
+
+        // summary
+        $counts = $calendar->counts();
+        $summary = sprintf($this->txt('calendar_summary'), count($timeline), count($counts));
+        $busiest = $calendar->busiestDay();
+        if ($busiest !== null) {
+            $summary .= ' · ' . sprintf(
+                $this->txt('calendar_busiest'),
+                $format_day(new DateTimeImmutable($busiest[0])),
+                $busiest[1]
+            );
+        }
+
+        // legend: less ... more
+        $legend = '<span class="udf-cal-legend">' . $this->esc($this->txt('calendar_less'));
+        for ($level = 0; $level <= 4; $level++) {
+            $legend .= '<span class="udf-cal-swatch" style="background:' . $calendar->levelColor($level) . '"></span>';
+        }
+        $legend .= $this->esc($this->txt('calendar_more')) . '</span>';
+
+        // details of every day with activity (shown by the script on click)
+        $details = '';
+        foreach ($per_day as $day => $day_items) {
+            $details .= '<div class="udf-cal-detail" data-udf-day="' . $day . '" hidden>'
+                . '<h3 class="udf-cal-detail-title">' . $this->esc($format_day(new DateTimeImmutable($day))) . '</h3><ul>';
+            foreach ($day_items as $item) {
+                $details .= '<li><span class="udf-meta">' . date('H:i', $item['created']) . '</span> · '
+                    . $this->getUserName($item['user_id']) . ' · '
+                    . $this->esc($this->txt($item['type'] === 'post' ? 'calendar_item_post' : 'calendar_item_reply')) . ' '
+                    . '<a href="' . $this->esc($this->linkWithParams('showPost', ['post_id' => (string) $item['post_id']])) . '">'
+                    . $this->esc($item['title']) . '</a></li>';
+            }
+            $details .= '</ul></div>';
+        }
+
+        $this->addStatisticsScript();
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf-stat">'
+            . '<p class="udf-network-legend"><span>' . $this->esc($summary) . '</span>' . $legend . '</p>'
+            . '<div class="udf-network-box udf-calendar-box">' . $svg . '</div>'
+            . '<p class="udf-cal-hint udf-meta">' . $this->esc($this->txt('calendar_click_hint')) . '</p>'
+            . $details
+            . '</div>'
+        );
+    }
+
+    /**
+     * Tab "Statistik", sub tab "Beteiligungs-Trichter": how far the members
+     * (without lecturers) got: visited, read, voted, replied, opened a post.
+     * A click on a stage shows who stopped there.
+     */
+    protected function showFunnel(): void
+    {
+        $this->setStatisticsSubTabs(self::SUBTAB_STAT_FUNNEL);
+
+        $members = array_keys(array_filter($this->getMembers(), static fn(string $role): bool => $role !== self::ROLE_ADMIN));
+        if ($members === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('no_members'));
+            return;
+        }
+
+        $levels = ilUdfFunnel::levels($members, $this->udf_repo->getParticipation($this->object->getId()));
+        $names = [];
+        foreach ($members as $user_id) {
+            $names[$user_id] = html_entity_decode($this->getUserName($user_id), ENT_QUOTES, 'UTF-8');
+        }
+        $labels = [];
+        foreach (ilUdfFunnel::STAGES as $stage) {
+            $labels[$stage] = $this->txt('funnel_' . $stage);
+        }
+
+        $this->addStatisticsScript();
+        $this->tpl->setContent(
+            $this->getStyles()
+            . '<div class="udf-stat">'
+            . '<p class="udf-network-legend">' . $this->esc($this->txt('funnel_info')) . '</p>'
+            . '<div class="udf-network-box">'
+            . ilUdfFunnel::toHtml($levels, $names, ilUdfColors::accent($this->getForum()->getColor()), $labels, [
+                'share' => $this->txt('funnel_share'),
+                'drop_title' => $this->txt('funnel_drop'),
+                'stopped' => $this->txt('funnel_stopped'),
+                'final' => $this->txt('funnel_final'),
+                'nobody' => $this->txt('funnel_nobody'),
+            ])
+            . '</div></div>'
+        );
+    }
+
+    /**
+     * Clicks in the statistics: day of the activity calendar, stage of the funnel.
+     */
+    private function addStatisticsScript(): void
+    {
+        $this->tpl->addOnLoadCode(<<<'JS'
+(function () {
+    function showDay(cell) {
+        var day = cell.getAttribute('data-udf-day');
+        document.querySelectorAll('.udf-cal-cell').forEach(function (c) {
+            c.classList.toggle('udf-cal-selected', c === cell);
+        });
+        document.querySelectorAll('.udf-cal-detail').forEach(function (d) {
+            d.hidden = d.getAttribute('data-udf-day') !== day;
+        });
+        var hint = document.querySelector('.udf-cal-hint');
+        if (hint) { hint.hidden = true; }
+    }
+    document.querySelectorAll('.udf-cal-cell').forEach(function (cell) {
+        cell.addEventListener('click', function () { showDay(cell); });
+        cell.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showDay(cell); }
+        });
+    });
+    document.querySelectorAll('.udf-funnel-row').forEach(function (row) {
+        row.addEventListener('click', function () {
+            var stage = row.getAttribute('data-udf-stage');
+            var open = row.getAttribute('aria-expanded') !== 'true';
+            document.querySelectorAll('.udf-funnel-row').forEach(function (r) {
+                r.setAttribute('aria-expanded', open && r === row ? 'true' : 'false');
+            });
+            document.querySelectorAll('.udf-funnel-detail').forEach(function (d) {
+                d.hidden = !(open && d.getAttribute('data-udf-stage') === stage);
+            });
+        });
+    });
+})();
+JS);
     }
 
     /**
@@ -2642,6 +2820,33 @@ JS);
 .udf-network { width: 100%; height: auto; display: block; }
 .udf-network-node:hover circle { stroke-width: 3; }
 .udf-network-legend { font-size: 0.85rem; color: #555; display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
+.udf-calendar-box { overflow-x: auto; }
+.udf-calendar { display: block; max-width: 100%; height: auto; margin: 0.3rem auto; }
+.udf-cal-cell { cursor: pointer; outline: none; }
+.udf-cal-cell:hover, .udf-cal-cell:focus { stroke: var(--udf-a-darker); stroke-width: 1.5; }
+.udf-cal-cell.udf-cal-selected { stroke: #000; stroke-width: 2; }
+.udf-cal-legend { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; }
+.udf-cal-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.udf-cal-legend .udf-cal-swatch:first-of-type { margin-left: 4px; }
+.udf-cal-legend .udf-cal-swatch:last-of-type { margin-right: 4px; }
+.udf-cal-hint { margin-top: 0.6rem; }
+.udf-cal-detail { margin-top: 0.8rem; padding: 0.7rem 1rem; border-left: 4px solid var(--udf-a); background: var(--udf-a-pale); border-radius: 0 8px 8px 0; }
+.udf-cal-detail-title { font-size: 1rem; margin: 0 0 0.4rem; }
+.udf-cal-detail ul { margin: 0; padding-left: 1.1rem; }
+.udf-cal-detail li { margin: 0.15rem 0; }
+.udf-funnel { display: flex; flex-direction: column; gap: 6px; padding: 0.4rem; }
+.udf-funnel-row { display: grid; grid-template-columns: minmax(9rem, 15rem) 1fr 3.5rem 3rem; align-items: center; gap: 0.8rem;
+  width: 100%; background: none; border: 0; border-radius: 8px; padding: 4px 6px; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.udf-funnel-row:hover, .udf-funnel-row:focus-visible, .udf-funnel-row[aria-expanded="true"] { background: var(--udf-a-pale); outline: none; }
+.udf-funnel-label { font-weight: 600; }
+.udf-funnel-track { display: flex; justify-content: center; }
+.udf-funnel-bar { display: block; min-width: 2.4rem; padding: 0.35rem 0; border-radius: 6px; text-align: center; font-weight: 700; transition: width 0.4s; }
+.udf-funnel-share { text-align: right; font-variant-numeric: tabular-nums; }
+.udf-funnel-drop { text-align: right; color: #b02a37; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.udf-funnel-detail { margin: 0 6px 6px; padding: 0.6rem 0.9rem; border-left: 4px solid var(--udf-a); background: var(--udf-a-pale); border-radius: 0 8px 8px 0; }
+.udf-funnel-names { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+.udf-funnel-name { display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px; background: #fff; border: 1px solid var(--udf-a-light); font-size: 0.85rem; }
+@media (max-width: 600px) { .udf-funnel-row { grid-template-columns: 1fr 3.2rem 2.6rem; } .udf-funnel-track { grid-column: 1 / -1; grid-row: 2; } }
 .udf-legend-ring { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--udf-a); background: radial-gradient(circle, #000 0 3px, rgba(var(--udf-a-rgb),0.2) 3.5px); }
 .udf-legend-line { display: inline-block; width: 28px; height: 5px; border-radius: 3px; background: rgba(var(--udf-a-dark-rgb),0.45); margin-left: 1rem; }
 .udf-bubbles { width: 100%; height: auto; display: block; }

@@ -408,31 +408,75 @@ class ilUdfRepository
     }
 
     /**
-     * All contributions of a forum in time order (for the "Perlenkette").
+     * All contributions of a forum in time order (for the "Perlenkette" and the activity calendar).
      *
-     * @return array<int, array{user_id: int, created: int, type: string, title: string}> type: 'post' or 'reply'
+     * @return array<int, array{user_id: int, created: int, type: string, title: string, post_id: int}> type: 'post' or 'reply'
      */
     public function getContributionTimeline(int $obj_id): array
     {
         $list = [];
         $set = $this->db->query(
-            'SELECT user_id, created, title FROM ' . self::TABLE_POST .
+            'SELECT id, user_id, created, title FROM ' . self::TABLE_POST .
             ' WHERE obj_id = ' . $this->db->quote($obj_id, 'integer')
         );
         while ($rec = $this->db->fetchAssoc($set)) {
-            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'post', 'title' => (string) $rec['title']];
+            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'post', 'title' => (string) $rec['title'], 'post_id' => (int) $rec['id']];
         }
         $set = $this->db->query(
-            'SELECT c.user_id, c.created, p.title FROM ' . self::TABLE_COMMENT . ' c' .
+            'SELECT c.user_id, c.created, p.title, p.id FROM ' . self::TABLE_COMMENT . ' c' .
             ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
             ' WHERE p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
             ' AND c.is_deleted = ' . $this->db->quote(0, 'integer')
         );
         while ($rec = $this->db->fetchAssoc($set)) {
-            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'reply', 'title' => (string) $rec['title']];
+            $list[] = ['user_id' => (int) $rec['user_id'], 'created' => (int) $rec['created'], 'type' => 'reply', 'title' => (string) $rec['title'], 'post_id' => (int) $rec['id']];
         }
         usort($list, static fn(array $a, array $b): int => $a['created'] <=> $b['created']);
         return $list;
+    }
+
+    /**
+     * Who did what in the forum, for the participation funnel.
+     *
+     * - visited: opened the forum at least once (read status of the forum)
+     * - read:    opened at least one post
+     * - voted:   voted on a post or a reply
+     * - replied: wrote a reply (not deleted)
+     * - posted:  opened a post
+     *
+     * @return array{visited: array<int, true>, read: array<int, true>, voted: array<int, true>, replied: array<int, true>, posted: array<int, true>}
+     */
+    public function getParticipation(int $obj_id): array
+    {
+        $obj = $this->db->quote($obj_id, 'integer');
+        $queries = [
+            'visited' => 'SELECT DISTINCT user_id FROM ' . self::TABLE_READ . ' WHERE obj_id = ' . $obj,
+            'read' => 'SELECT DISTINCT user_id FROM ' . self::TABLE_READ . ' WHERE obj_id = ' . $obj .
+                ' AND post_id > ' . $this->db->quote(0, 'integer'),
+            'voted_posts' => 'SELECT DISTINCT v.user_id FROM ' . self::TABLE_VOTE . ' v' .
+                ' JOIN ' . self::TABLE_POST . ' p ON p.id = v.item_id' .
+                ' WHERE v.item_type = ' . $this->db->quote(self::ITEM_POST, 'text') .
+                ' AND v.vote_val <> ' . $this->db->quote(0, 'integer') . ' AND p.obj_id = ' . $obj,
+            'voted_replies' => 'SELECT DISTINCT v.user_id FROM ' . self::TABLE_VOTE . ' v' .
+                ' JOIN ' . self::TABLE_COMMENT . ' c ON c.id = v.item_id' .
+                ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+                ' WHERE v.item_type = ' . $this->db->quote(self::ITEM_COMMENT, 'text') .
+                ' AND v.vote_val <> ' . $this->db->quote(0, 'integer') . ' AND p.obj_id = ' . $obj,
+            'replied' => 'SELECT DISTINCT c.user_id FROM ' . self::TABLE_COMMENT . ' c' .
+                ' JOIN ' . self::TABLE_POST . ' p ON p.id = c.post_id' .
+                ' WHERE p.obj_id = ' . $obj . ' AND c.is_deleted = ' . $this->db->quote(0, 'integer'),
+            'posted' => 'SELECT DISTINCT user_id FROM ' . self::TABLE_POST . ' WHERE obj_id = ' . $obj,
+        ];
+
+        $result = ['visited' => [], 'read' => [], 'voted' => [], 'replied' => [], 'posted' => []];
+        foreach ($queries as $key => $sql) {
+            $target = str_starts_with($key, 'voted') ? 'voted' : $key;
+            $set = $this->db->query($sql);
+            while ($rec = $this->db->fetchAssoc($set)) {
+                $result[$target][(int) $rec['user_id']] = true;
+            }
+        }
+        return $result;
     }
 
     // ------------------------------------------------------------------

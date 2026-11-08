@@ -120,6 +120,14 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
     Zeitachse; jeder Beitrag ist eine Perle (gefüllt: Beitrag eröffnet, Ring:
     Antwort), die Perlen einer Person sind mit einer Linie verbunden; sortiert
     nach Anzahl Perlen
+  - Unterreiter *Aktivitäts-Kalender*: ein Kästchen pro Tag (Spalten = Wochen,
+    Montag oben) vom ersten Beitrag bis heute; je mehr Beiträge und Antworten,
+    desto dunkler (Farbe des Forums). Klick auf einen Tag zeigt seine Beiträge
+    und Antworten mit Links; dazu aktive Tage und aktivster Tag
+  - Unterreiter *Beteiligungs-Trichter*: Mitglieder (ohne Dozierende) → Forum
+    besucht → Beiträge gelesen → bewertet → geantwortet → Beitrag eröffnet,
+    mit Anzahl, Anteil und Verlust pro Stufe; Klick auf eine Stufe zeigt, wer
+    dort stehen geblieben ist
   - Beim Einführen des Rechts erhalten es alle Rollen, die das Forum
     bearbeiten dürfen.
 - **Mitglieder** (Reiter für alle): Unterreiter *Ansicht* mit allen Teilnehmenden
@@ -168,6 +176,8 @@ classes/
   class.ilUdfNetworkGraph.php      Spinnennetz (Layout und SVG)
   class.ilUdfBubbleChart.php       Bubble-Charts (Layout und SVG)
   class.ilUdfPearlChart.php        Perlenkette (Zeitachse und SVG)
+  class.ilUdfActivityCalendar.php  Aktivitäts-Kalender (Tage, Stufen und SVG)
+  class.ilUdfFunnel.php            Beteiligungs-Trichter (Stufen und Darstellung)
   class.ilUdfCreatures.php         1000 ways Forum: die vier Figuren, Icons, Verteilung
   class.ilUdfUdonBowl.php          Udon-Schüssel: Ränge und Icon
   class.ilUdfColors.php            Farben des Forums (japanische Farben, CSS-Variablen)

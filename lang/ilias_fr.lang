@@ -1,0 +1,258 @@
+# Udon Forum – fichier de langue français (vouvoiement, espaces insécables avant : ? ! et dans « »).
+# Les lignes commençant par # sont des commentaires. Mêmes clés et même ordre que ilias_de.lang.
+
+# --- Objet et droits ---
+obj_xudf#:#Udon Forum
+objs_xudf#:#Udon Forums
+xudf_new#:#Nouvel Udon Forum
+xudf_add#:#Ajouter un Udon Forum
+obj_xudf_duplicate#:#Copier l’Udon Forum
+# Textes pour les tableaux des droits d’ILIAS (droits, modèles de rôles, journal des droits)
+create_xudf#:#Créer un Udon Forum
+crs_create_xudf#:#Créer un Udon Forum dans le cours
+grp_create_xudf#:#Créer un Udon Forum dans le groupe
+xudf_visible#:#L’Udon Forum est visible
+xudf_read#:#Lire l’Udon Forum, rédiger des contributions et des réponses et voter
+xudf_write#:#Modifier les paramètres, les catégories et les rôles 1000 ways, supprimer les contributions et réponses d’autres personnes
+xudf_delete#:#Supprimer ou déplacer l’Udon Forum
+xudf_edit_permission#:#Modifier les paramètres des droits
+udf_statistics#:#Consulter les statistiques
+xudf_udf_statistics#:#Consulter les statistiques de l’Udon Forum (onglet « Statistiques »)
+
+# --- Onglets et textes généraux ---
+content#:#Contenu
+members#:#Membres
+statistics#:#Statistiques
+properties#:#Paramètres
+edit#:#Modifier
+actions#:#Actions
+confirm#:#Confirmer
+no_permission#:#Vous n’avez pas l’autorisation de le faire.
+back_to_forum#:#Retour au forum
+deleted_user#:#Utilisateur supprimé
+lecturer#:#Enseignant·e
+edited#:#modifié
+status#:#Statut
+
+# --- Paramètres ---
+online#:#En ligne
+offline#:#Hors ligne
+online_info#:#Les membres du cours ou du groupe ne voient le forum que s’il est en ligne.
+object_offline_info#:#Ce forum est hors ligne et n’est pas visible pour les membres du cours ou du groupe. Vous pouvez le mettre en ligne sous « Paramètres ».
+use_markdown#:#Éditeur Markdown
+use_markdown_info#:#Les contributions sont rédigées avec l’éditeur Markdown : boutons pour gras, italique, listes et liens ainsi qu’un aperçu. Sans l’éditeur Markdown, un simple champ de texte est proposé. Les contributions existantes restent affichées telles qu’elles ont été rédigées.
+thousand_ways#:#1000 ways Forum
+thousand_ways_info#:#Chaque membre (sauf les enseignant·e·s) reçoit au hasard l’un des quatre rôles qui définissent sa manière de discuter dans le forum : Hakutaku (faits), Kitsune (remise en question), Tanuki (exemples) ou Kodama (relier et concilier). Les rôles sont répartis de manière égale ; les enseignant·e·s peuvent les modifier ou les redistribuer dans l’onglet « Membres ».
+
+# --- Paramètres › couleur ---
+color#:#Couleur
+color_info#:#Couleur d’accent du forum pour les boutons, filtres, liens, étiquettes et statistiques – couleurs traditionnelles japonaises (和色, wairo).
+color_kaki#:#Kaki – orange
+color_ai#:#Ai – indigo
+color_hanada#:#Hanada – bleu-vert
+color_tokiwa#:#Tokiwa – vert persistant
+color_kuchiba#:#Kuchiba – feuilles d’automne
+color_enji#:#Enji – carmin
+color_botan#:#Botan – rose pivoine
+color_edomurasaki#:#Edo-murasaki – violet
+color_sumi#:#Sumi – encre de Chine
+
+# --- Catégories ---
+categories#:#Catégories
+category#:#Catégorie
+no_categories#:#Il n’y a pas encore de catégories. Les contributions peuvent alors être créées sans catégorie.
+no_category#:#Sans catégorie
+cat_option_info#:#Les catégories structurent les contributions du forum. Elles peuvent être modifiées plus tard sous « Paramètres › Catégories ».
+cat_choice#:#Modèle
+cat_custom#:#Catégories personnalisées
+cat_custom_list#:#Catégories
+cat_custom_info#:#Séparer plusieurs catégories par des points-virgules, p. ex. : Général; Questions; Examen
+cat_list_title#:#Toutes les catégories en une fois
+cat_list_info#:#Séparer les catégories par des points-virgules, p. ex. : Général; Questions; Examen. Les espaces après un point-virgule sont autorisés ; ils ne font pas partie du nom. L’ordre est repris. Renommer : il suffit de modifier le nom à sa place – les contributions restent dans la catégorie. Les catégories retirées sont supprimées ; leurs contributions sont conservées (sous « Toutes », sans catégorie).
+cat_list_saved#:#Les catégories ont été enregistrées.
+cat_list_created#:#%s nouvelle(s)
+cat_list_renamed#:#%s renommée(s)
+cat_list_removed#:#%s retirée(s)
+cat_list_unassigned#:#contributions sans catégorie : %s
+
+# --- Configuration du plugin (administration) ---
+config_title#:#Configuration de l’Udon Forum
+config_presets#:#Modèles de catégories
+config_presets_info#:#Ces modèles sont proposés lors de la création d’un Udon Forum. Un modèle par ligne : nom, deux-points, puis les catégories séparées par des points-virgules. Par exemple : « Cours: Général; Questions; Examen » ou « Séminaire: Organisation; Littérature; Discussion ».
+config_saved#:#La configuration a été enregistrée.
+
+# --- Fil : filtre, tri, pages ---
+all_posts#:#Toutes
+filter#:#Filtre
+sorting#:#Tri
+sort_popular#:#Populaires
+sort_new#:#Nouvelles
+sort_top#:#Mieux notées
+period_week#:#Cette semaine
+period_month#:#Ce mois-ci
+period_all#:#Depuis le début
+no_posts#:#Ce forum ne contient pas encore de contributions. Créez la première !
+no_posts_filtered#:#Aucune contribution trouvée.
+previous_page#:#Page précédente
+next_page#:#Page suivante
+new#:#Nouveau
+mark_all_read#:#Tout marquer comme lu
+marked_all_read#:#Toutes les contributions sont maintenant marquées comme lues.
+
+# --- Votes et indications de temps ---
+points#:#Points
+vote_up#:#Voter pour
+vote_down#:#Voter contre
+time_just_now#:#à l’instant
+time_minutes#:#il y a %s min
+time_hours#:#il y a %s h
+time_yesterday#:#hier
+time_days#:#il y a %s jours
+
+# --- Contributions ---
+new_post#:#Nouvelle contribution
+edit_post#:#Modifier la contribution
+delete_post#:#Supprimer la contribution
+post_title#:#Titre
+post_body#:#Texte
+post_body_info#:#Les boutons au-dessus du champ aident à la mise en forme (gras, italique, listes, liens). L’aperçu montre à quoi ressemblera la contribution.
+body_required#:#Veuillez saisir un texte.
+publish#:#Publier
+post_created#:#La contribution a été publiée.
+post_updated#:#La contribution a été enregistrée.
+post_deleted#:#La contribution a été supprimée.
+post_not_found#:#La contribution est introuvable.
+confirm_delete_post#:#Voulez-vous vraiment supprimer cette contribution avec toutes ses réponses ?
+
+# --- Réponses ---
+reply_count_one#:#1 réponse
+reply_count#:#%s réponses
+no_replies#:#Pas encore de réponses.
+your_reply#:#Votre réponse
+send_reply#:#Répondre
+edit_reply#:#Modifier la réponse
+reply_saved#:#La réponse a été publiée.
+reply_updated#:#La réponse a été enregistrée.
+reply_deleted#:#La réponse a été supprimée.
+reply_not_found#:#La réponse est introuvable.
+confirm_delete_reply#:#Voulez-vous vraiment supprimer cette réponse ?
+
+# --- Statistiques › Standard ---
+stat_standard#:#Standard
+stat_no_activity#:#Personne n’a encore été actif dans le forum.
+stat_participants#:#Participant·e·s
+stat_lastname#:#Nom
+stat_firstname#:#Prénom
+stat_email#:#E-mail
+stat_posts#:#Contributions ouvertes
+stat_replies#:#Réponses
+stat_words#:#Nombre de mots
+
+# --- Statistiques › Toile d’araignée ---
+stat_network#:#Toile d’araignée
+network_node_tooltip#:#%s : %s contributions ouvertes, %s réponses
+network_edge_tooltip#:#%s et %s : %s réponses mutuelles
+network_legend_ring#:#Cercle : grandit avec chaque contribution ouverte
+network_legend_line#:#Ligne : réponses entre deux personnes – plus il y en a, plus elle est épaisse
+
+# --- Statistiques › Graphiques à bulles ---
+stat_bubbles#:#Graphiques à bulles
+bubbles_posts#:#%s contributions
+bubbles_post_one#:#1 contribution
+bubbles_tooltip#:#%s : %s contributions, %s réponses, %s personnes actives
+bubbles_legend_size#:#Cercle : un thème (catégorie) – plus il est grand, plus il y a de contributions
+bubbles_legend_overlap#:#Chevauchement : thèmes apparentés dans lesquels les mêmes personnes sont actives
+bubbles_legend_pie#:#Camembert : part des contributions (foncé) et des réponses (clair)
+
+# --- Statistiques › Collier de perles ---
+stat_pearls#:#Collier de perles
+pearls_count#:#%s perles
+pearls_count_one#:#1 perle
+pearl_tooltip_post#:#%s · %s · contribution ouverte : « %s »
+pearl_tooltip_reply#:#%s · %s · réponse à « %s »
+pearls_legend_post#:#Perle : contribution ouverte
+pearls_legend_reply#:#Anneau : réponse
+pearls_legend_line#:#Ligne : relie les contributions d’une personne dans l’ordre chronologique – triées selon le nombre de perles
+
+# --- Statistiques › Calendrier d’activité ---
+stat_calendar#:#Calendrier d’activité
+calendar_weekdays#:#lun.;mar.;mer.;jeu.;ven.;sam.;dim.
+calendar_months#:#janv.;févr.;mars;avr.;mai;juin;juil.;août;sept.;oct.;nov.;déc.
+calendar_tooltip#:#%s · contributions : %s · réponses : %s
+calendar_tooltip_none#:#%s · aucune activité
+calendar_summary#:#Contributions et réponses : %s · jours actifs : %s
+calendar_busiest#:#jour le plus actif : %s (%s)
+calendar_less#:#moins
+calendar_more#:#plus
+calendar_click_hint#:#Cliquez sur un jour coloré pour voir ses contributions et réponses.
+calendar_item_post#:#a ouvert la contribution
+calendar_item_reply#:#a répondu à
+
+# --- Statistiques › Entonnoir de participation ---
+stat_funnel#:#Entonnoir de participation
+funnel_info#:#Jusqu’où les membres du cours ou du groupe sont-ils allés (sans les enseignant·e·s) ? Chaque étape compte toutes les personnes arrivées au moins jusque-là. Cliquez sur une étape pour voir qui s’y est arrêté.
+funnel_members#:#Membres
+funnel_visited#:#Ont visité le forum
+funnel_read#:#Ont lu des contributions
+funnel_voted#:#Ont voté
+funnel_replied#:#Ont répondu
+funnel_posted#:#Ont ouvert une contribution
+funnel_share#:#%s %%
+funnel_drop#:#%s de moins qu’à l’étape précédente
+funnel_stopped#:#Arrêtés ici (%s) :
+funnel_final#:#À l’étape la plus haute (%s) :
+funnel_nobody#:#personne
+
+# --- Membres ---
+members_view#:#Vue
+members_roles#:#Attribuer les rôles
+member_role#:#Rôle
+no_members#:#Ce forum ne se trouve ni dans un cours ni dans un groupe ; il n’a donc pas de membres.
+role_admin#:#Enseignant·e
+role_tutor#:#Tuteur·rice
+role_member#:#Membre
+
+# --- 1000 ways Forum : créatures et chef ---
+thousand_ways_role#:#Rôle 1000 ways
+creature_your_role#:#Votre rôle : %s (%s) – %s
+creature_hakutaku#:#Hakutaku
+creature_hakutaku_role#:#Le gardien des faits
+creature_hakutaku_hint#:#Comme la bête blanche omnisciente, vous apportez des faits à la discussion : définitions, chiffres et sources. Par exemple : « Selon le support de cours … », « La définition est … », « Source : … ».
+creature_kitsune#:#Kitsune
+creature_kitsune_role#:#La questionneuse
+creature_kitsune_hint#:#Comme le renard rusé, vous regardez derrière les choses : demandez des justifications, montrez les contradictions et les lacunes. Par exemple : « Comment le savons-nous ? », « Est-ce aussi valable si … ? », « Qu’est-ce qui s’y oppose ? ».
+creature_tanuki#:#Tanuki
+creature_tanuki_role#:#Le donneur d’exemples
+creature_tanuki_hint#:#Comme le chien viverrin qui aime se métamorphoser, vous rendez l’abstrait concret : avec des exemples, des comparaisons et des situations du quotidien. Par exemple : « Imagine … », « Un exemple du quotidien : … », « Concrètement, cela signifie … ».
+creature_kodama#:#Kodama
+creature_kodama_role#:#La rassembleuse
+creature_kodama_hint#:#Comme l’esprit de l’arbre qui porte l’écho à travers la forêt, vous faites le lien : reliez les contributions, résumez, cherchez les points communs et conciliez. Par exemple : « Si je combine A et B … », « Au fond, vous dites tous les deux … », « En résumé : … ».
+creature_chef#:#Chef
+creature_chef_numbered#:#Chef %s
+creature_chef_role#:#Dirige la discussion
+creature_chef_hint#:#En tant que chef, vous dirigez la discussion : donnez des impulsions et des questions, veillez à ce que les quatre rôles aient la parole et retenez les résultats à la fin. Par exemple : « Qu’en pensez-vous … ? », « Kitsune, qu’est-ce qui s’y oppose ? », « Retenons : … ».
+chef_info#:#Les enseignant·e·s (administrateurs du cours ou du groupe) ont automatiquement le rôle « Chef » ; s’ils sont plusieurs : « Chef 1 », « Chef 2 », etc.
+reshuffle#:#Redistribuer
+confirm_reshuffle#:#Voulez-vous redistribuer au hasard les rôles de tous les membres ? La répartition actuelle sera perdue.
+roles_saved#:#Les rôles ont été enregistrés.
+roles_reshuffled#:#Les rôles ont été redistribués.
+
+# --- Bol d’udon ---
+udon_bowl#:#Bol d’udon
+udon_bowl_tooltip#:#Bol d’udon : %s nouilles – %s
+udon_bowl_tooltip_one#:#Bol d’udon : %s nouille – %s
+udon_bowl_info#:#Bol d’udon : chaque ▲ reçu sur une de ses propres contributions ajoute une nouille dans le bol.
+udon_rank_apprentice#:#Apprenti nouilles
+udon_rank_broth#:#Connaisseur du bouillon
+udon_rank_tempura#:#Maître tempura
+udon_rank_sensei#:#Sensei udon
+udon_rank_from#:#dès %s nouilles
+
+# --- Salutation du soir (20 h – 5 h) ---
+goodnight_title#:#Bonne nuit !
+goodnight_title_name#:#Bonne nuit, %s !
+goodnight_1#:#Il est déjà plus de 20 h. Les nouilles se reposent – accordez-vous aussi une pause. On continue demain.
+goodnight_2#:#Le Kodama dort déjà profondément dans la forêt. Ce qui est resté sans réponse aujourd’hui attendra volontiers demain.
+goodnight_3#:#Même les senseis udon ont besoin de sommeil. Dormez bien – le forum garde le bouillon au chaud.
+goodnight_4#:#Le Tanuki s’est transformé en oreiller. Il est temps de refermer l’écran.
+goodnight_close#:#Masquer pour cette nuit

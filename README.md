@@ -182,7 +182,7 @@ classes/
   class.ilUdfUdonBowl.php          Udon-Schüssel: Ränge und Icon
   class.ilUdfColors.php            Farben des Forums (japanische Farben, CSS-Variablen)
   class.ilUdfMembersTable.php      Daten und Sortierung der Mitglieder-Tabelle
-lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
+lang/ilias_de/en/fr.lang          Sprachvariablen (Deutsch, Englisch, Französisch)
 sql/dbupdate.php                   Datenbank-Updateschritte
 templates/images/icon_xudf.svg     Objekt-Icon
 dev/                               Entwicklungs-Helfer (Befehl "udf", Docker-ILIAS)

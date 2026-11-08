@@ -7,22 +7,25 @@ ILIAS 11 in Docker). Aufbau und Arbeitsweise wie beim Gruppenmanagement-Plugin
 
 ## Sprachdateien
 
-- **Jeder neue oder geänderte Text kommt immer in beide Dateien:**
-  `lang/ilias_de.lang` und `lang/ilias_en.lang`. Die Schlüssel beider Dateien
-  müssen identisch sein (gleiche Reihenfolge).
+- **Jeder neue oder geänderte Text kommt immer in alle drei Dateien:**
+  `lang/ilias_de.lang`, `lang/ilias_en.lang` und `lang/ilias_fr.lang`. Die
+  Schlüssel aller Dateien müssen identisch sein (gleiche Reihenfolge).
 - Deutsch ohne englische Begriffe. Ausnahme auf Wunsch des Auftraggebers:
   „Online“ / „Offline“ für die Sichtbarkeit des Forums.
   Schweizer Schreibweise (ss statt ß).
 - Kein Text fest im PHP-Code; Plugin-Texte über `$this->txt("key")`.
 - Die Dateien sind in Abschnitte gegliedert (`# --- Abschnitt ---`; Zeilen mit
   `#` am Anfang ignoriert ILIAS). Neue Schlüssel in den passenden Abschnitt,
-  in beiden Dateien an derselben Stelle. Deutsch mit „Sie“, Englisch britisch.
-- Vom Auftraggeber gewählte Namen bleiben: „Bubble-Charts“, „1000 ways Forum“.
+  in allen Dateien an derselben Stelle. Deutsch mit „Sie“, Englisch britisch,
+  Französisch mit „vous“, Beitrag = « contribution », Antwort = « réponse »,
+  geschütztes Leerzeichen (U+00A0) vor : ? ! und innerhalb « ».
+- Vom Auftraggeber gewählte Namen bleiben: „Bubble-Charts“ (im Deutschen; Französisch « Graphiques à bulles »), „1000 ways Forum“ (in allen Sprachen).
 
 Prüfen:
 
 ```bash
 diff <(cut -d'#' -f1 lang/ilias_de.lang) <(cut -d'#' -f1 lang/ilias_en.lang)
+diff <(cut -d'#' -f1 lang/ilias_de.lang) <(cut -d'#' -f1 lang/ilias_fr.lang)
 ```
 
 ## Oberfläche

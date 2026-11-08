@@ -486,6 +486,28 @@ class ilUdfRepository
     }
 
     /**
+     * Udon bowl: number of ▲ every person received on their posts in this forum.
+     *
+     * @return array<int, int> user id => number of noodles
+     */
+    public function getNoodles(int $obj_id): array
+    {
+        $set = $this->db->query(
+            'SELECT p.user_id, COUNT(*) cnt FROM ' . self::TABLE_VOTE . ' v' .
+            ' JOIN ' . self::TABLE_POST . ' p ON p.id = v.item_id' .
+            ' WHERE v.item_type = ' . $this->db->quote(self::ITEM_POST, 'text') .
+            ' AND v.vote_val = ' . $this->db->quote(1, 'integer') .
+            ' AND p.obj_id = ' . $this->db->quote($obj_id, 'integer') .
+            ' GROUP BY p.user_id'
+        );
+        $noodles = [];
+        while ($rec = $this->db->fetchAssoc($set)) {
+            $noodles[(int) $rec['user_id']] = (int) $rec['cnt'];
+        }
+        return $noodles;
+    }
+
+    /**
      * Votes of a user for the given items.
      *
      * @param int[] $item_ids

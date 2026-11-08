@@ -136,6 +136,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private ?array $udf_members = null;
     /** @var array<int, string>|null user id => creature (1000 ways Forum) */
     private ?array $udf_creatures = null;
+    /** @var array<int, int>|null user id => noodles in the udon bowl */
+    private ?array $udf_noodles = null;
 
     protected function afterConstructor(): void
     {
@@ -439,6 +441,7 @@ JS);
         $posts = array_slice($posts, 0, self::POSTS_PER_PAGE);
 
         $html = $this->getStyles() . '<div class="udf">';
+        $html .= $this->renderGoodNight();
         $html .= $this->renderFeedControls($state);
 
         if ($posts === []) {
@@ -1614,6 +1617,7 @@ JS);
                 'firstname' => (string) $name['firstname'],
                 'email' => ilObjUser::_lookupEmail($user_id),
                 'role' => $this->txt('role_' . $role),
+                'bowl' => $this->getBowlText($user_id),
             ];
             if ($thousand_ways) {
                 $records[$user_id]['creature'] = $creature !== null
@@ -1632,6 +1636,7 @@ JS);
         if ($thousand_ways) {
             $columns['creature'] = $col->text($this->txt('thousand_ways_role'));
         }
+        $columns['bowl'] = $col->text($this->txt('udon_bowl'));
 
         $table = $this->ui_factory->table()->data(
             new ilUdfMembersTable($records),
@@ -1653,7 +1658,8 @@ JS);
             $legend .= '</div>';
         }
 
-        $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $legend . $this->ui_renderer->render($table) . '</div>');
+        $this->tpl->setContent($this->getStyles() . '<div class="udf-stat">' . $legend . $this->renderBowlRanks()
+            . $this->ui_renderer->render($table) . '</div>');
     }
 
     /**
@@ -2438,13 +2444,104 @@ JS);
     /**
      * "Firstname Lastname [Lecturer] · 2 hours ago · edited"
      */
+    /**
+     * Good night greeting: from 8 pm to 5 am (clock of the viewer's device) a
+     * night banner appears above the feed; it can be closed for that night.
+     * Rendered hidden, the script decides with the local time.
+     */
+    private function renderGoodNight(): string
+    {
+        $variants = ['goodnight_1', 'goodnight_2', 'goodnight_3', 'goodnight_4'];
+        $text = $this->txt($variants[random_int(0, count($variants) - 1)]);
+        $first_name = (string) (ilObjUser::_lookupName($this->udf_user->getId())['firstname'] ?? '');
+        $title = $first_name !== '' && $this->isLoggedIn()
+            ? sprintf($this->txt('goodnight_title_name'), $first_name)
+            : $this->txt('goodnight_title');
+
+        $this->tpl->addOnLoadCode(<<<'JS'
+(function () {
+    var box = document.querySelector('.udf-goodnight');
+    if (!box) { return; }
+    var now = new Date();
+    var hour = now.getHours();
+    if (hour < 20 && hour >= 5) { return; }
+    // the night belongs to the evening on which it started
+    var evening = new Date(now.getTime() - (hour < 5 ? 86400000 : 0));
+    var key = 'udf-goodnight-' + evening.getFullYear() + '-' + (evening.getMonth() + 1) + '-' + evening.getDate();
+    try { if (window.localStorage.getItem(key)) { return; } } catch (e) {}
+    box.hidden = false;
+    var close = box.querySelector('.udf-goodnight-close');
+    if (close) {
+        close.addEventListener('click', function () {
+            box.hidden = true;
+            try { window.localStorage.setItem(key, '1'); } catch (e) {}
+        });
+    }
+})();
+JS);
+
+        return '<div class="udf-goodnight" hidden role="status">'
+            . '<svg class="udf-goodnight-moon" viewBox="0 0 64 64" width="52" height="52" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">'
+            . '<path d="M40 8a24 24 0 1 0 16 38A20 20 0 0 1 40 8z" fill="#ffd43b"/>'
+            . '<circle cx="12" cy="12" r="1.6" fill="#fff"/><circle cx="54" cy="16" r="1.2" fill="#fff"/><circle cx="20" cy="54" r="1.1" fill="#fff"/>'
+            . '<path d="M50 30l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#fff"/></svg>'
+            . '<div class="udf-goodnight-text"><div class="udf-goodnight-jp">おやすみなさい · Oyasumi nasai</div>'
+            . '<div class="udf-goodnight-title">' . $this->esc($title) . '</div>'
+            . '<div>' . $this->esc($text) . '</div></div>'
+            . '<button type="button" class="udf-goodnight-close" aria-label="' . $this->esc($this->txt('goodnight_close')) . '"'
+            . ' title="' . $this->esc($this->txt('goodnight_close')) . '">×</button>'
+            . '</div>';
+    }
+
+    /**
+     * Udon bowl of a person: one noodle for every ▲ on their posts.
+     */
+    private function getNoodles(int $user_id): int
+    {
+        $this->udf_noodles ??= $this->udf_repo->getNoodles($this->object->getId());
+        return $this->udf_noodles[$user_id] ?? 0;
+    }
+
+    private function getBowlText(int $user_id): string
+    {
+        $noodles = $this->getNoodles($user_id);
+        return sprintf(
+            $this->txt($noodles === 1 ? 'udon_bowl_tooltip_one' : 'udon_bowl_tooltip'),
+            $noodles,
+            $this->txt('udon_rank_' . ilUdfUdonBowl::rank($noodles))
+        );
+    }
+
+    private function renderBowl(int $user_id): string
+    {
+        $noodles = $this->getNoodles($user_id);
+        $text = $this->getBowlText($user_id);
+        return '<span class="udf-bowl" title="' . $this->esc($text) . '" aria-label="' . $this->esc($text) . '">'
+            . ilUdfUdonBowl::icon($noodles, 20) . ($noodles > 0 ? '<span class="udf-bowl-count">' . $noodles . '</span>' : '') . '</span>';
+    }
+
+    /**
+     * Explanation of the udon bowl ranks (tab "Mitglieder").
+     */
+    private function renderBowlRanks(): string
+    {
+        $html = '<div class="udf-bowl-ranks"><span class="udf-bowl-ranks-title">' . $this->esc($this->txt('udon_bowl_info')) . '</span>';
+        foreach (ilUdfUdonBowl::RANKS as $rank => $minimum) {
+            $html .= '<span class="udf-bowl-rank">' . ilUdfUdonBowl::icon(max($minimum, 1), 22)
+                . '<strong>' . $this->esc($this->txt('udon_rank_' . $rank)) . '</strong> '
+                . $this->esc(sprintf($this->txt('udon_rank_from'), $minimum)) . '</span>';
+        }
+        return $html . '</div>';
+    }
+
     private function renderMeta(int $user_id, int $created, bool $edited): string
     {
         $creature = $this->getCreatureOf($user_id);
         $is_chef = $creature === ilUdfCreatures::CHEF;
         $parts = ['<span class="udf-author">' . $this->getUserName($user_id) . '</span>'
             . (!$is_chef && $this->isLecturer($user_id) ? ' <span class="udf-badge">' . $this->txt('lecturer') . '</span>' : '')
-            . ($creature !== null ? ' ' . $this->renderCreatureLabel($creature, $user_id) : '')];
+            . ($creature !== null ? ' ' . $this->renderCreatureLabel($creature, $user_id) : '')
+            . ' ' . $this->renderBowl($user_id)];
         $parts[] = '<span title="' . $this->esc($this->formatDate($created)) . '">' . $this->esc($this->formatRelativeTime($created)) . '</span>';
         if ($edited) {
             $parts[] = '<span class="udf-edited">' . $this->txt('edited') . '</span>';
@@ -2567,6 +2664,22 @@ JS);
 .udf-creature-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0 0 1rem; }
 .udf-creature-card { display: flex; gap: 0.5rem; align-items: center; border: 1px solid var(--udf-creature); border-left-width: 4px; border-radius: 8px; padding: 0.4rem 0.7rem; font-size: 0.85rem; background: #fff; }
 .udf-kanji { color: #777; font-weight: 400; }
+/* udon bowl */
+.udf-bowl { display: inline-flex; align-items: center; gap: 0.1rem; font-size: 0.75rem; font-weight: 700; color: #a94208; vertical-align: middle; cursor: default; }
+.udf-bowl-icon { flex: none; }
+.udf-bowl-ranks { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; font-size: 0.85rem; margin: 0 0 1rem; padding: 0.5rem 0.8rem; border: 1px solid #f0b27a; border-radius: 8px; background: #fffaf5; }
+.udf-bowl-ranks-title { color: #555; width: 100%; }
+.udf-bowl-rank { display: inline-flex; align-items: center; gap: 0.3rem; }
+/* good night greeting */
+.udf-goodnight { display: flex; align-items: center; gap: 1rem; margin: 0 0 1rem; padding: 0.8rem 1rem; border-radius: 12px; color: #f1f3f5; position: relative;
+  background: radial-gradient(circle at 85% 20%, rgba(255,255,255,0.18) 0 1.5px, transparent 2px), radial-gradient(circle at 70% 70%, rgba(255,255,255,0.15) 0 1px, transparent 1.5px), linear-gradient(135deg, #1b2440, #3b2a5a); }
+.udf-goodnight[hidden] { display: none; }
+.udf-goodnight-moon { flex: none; }
+.udf-goodnight-text { flex: 1; line-height: 1.45; }
+.udf-goodnight-jp { font-size: 0.8rem; color: #ffd43b; letter-spacing: 0.03em; }
+.udf-goodnight-title { font-weight: 700; font-size: 1.05rem; }
+.udf-goodnight-close { position: absolute; top: 0.3rem; right: 0.5rem; background: none; border: 0; color: #ced4da; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.udf-goodnight-close:hover { color: #fff; }
 /* statistics: no sort button above the table (sorting via column headers) */
 .udf-stat .il-viewcontrol-sortation { display: none !important; }
 .udf-network-box { border: 1px solid #f0b27a; border-radius: 8px; background: #fff; padding: 0.5rem; }

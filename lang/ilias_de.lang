@@ -151,3 +151,19 @@ reshuffle#:#Neu mischen
 confirm_reshuffle#:#Sollen die Rollen aller Mitglieder neu und zufällig verteilt werden? Die bisherige Zuteilung geht verloren.
 roles_saved#:#Die Rollen wurden gespeichert.
 roles_reshuffled#:#Die Rollen wurden neu gemischt.
+udon_bowl#:#Udon-Schüssel
+udon_bowl_tooltip#:#Udon-Schüssel: %s Nudeln – %s
+udon_bowl_tooltip_one#:#Udon-Schüssel: %s Nudel – %s
+udon_bowl_info#:#Udon-Schüssel: Jedes ▲, das jemand auf einen eigenen Beitrag erhält, gibt eine Nudel in die Schüssel.
+udon_rank_apprentice#:#Nudel-Lehrling
+udon_rank_broth#:#Brühe-Kenner
+udon_rank_tempura#:#Tempura-Meister
+udon_rank_sensei#:#Udon-Sensei
+udon_rank_from#:#ab %s Nudeln
+goodnight_title#:#Gute Nacht!
+goodnight_title_name#:#Gute Nacht, %s!
+goodnight_1#:#Es ist schon nach 20 Uhr. Die Nudeln ruhen sich aus – gönnen Sie sich auch eine Pause. Morgen geht es weiter.
+goodnight_2#:#Der Kodama schläft schon tief im Wald. Was heute unbeantwortet blieb, wartet gern bis morgen.
+goodnight_3#:#Auch Udon-Sensei brauchen Schlaf. Schlafen Sie gut – das Forum hält die Brühe warm.
+goodnight_4#:#Der Tanuki hat sich in ein Kopfkissen verwandelt. Zeit, den Bildschirm zuzuklappen.
+goodnight_close#:#Für heute Nacht ausblenden

@@ -151,3 +151,19 @@ reshuffle#:#Reshuffle
 confirm_reshuffle#:#Do you want to distribute the roles of all members anew at random? The current assignment will be lost.
 roles_saved#:#The roles have been saved.
 roles_reshuffled#:#The roles have been reshuffled.
+udon_bowl#:#Udon bowl
+udon_bowl_tooltip#:#Udon bowl: %s noodles – %s
+udon_bowl_tooltip_one#:#Udon bowl: %s noodle – %s
+udon_bowl_info#:#Udon bowl: every ▲ someone receives on their own post puts a noodle into the bowl.
+udon_rank_apprentice#:#Noodle apprentice
+udon_rank_broth#:#Broth connoisseur
+udon_rank_tempura#:#Tempura master
+udon_rank_sensei#:#Udon sensei
+udon_rank_from#:#from %s noodles
+goodnight_title#:#Good night!
+goodnight_title_name#:#Good night, %s!
+goodnight_1#:#It is already after 8 pm. The noodles are resting – take a break, too. We will continue tomorrow.
+goodnight_2#:#The Kodama is already asleep deep in the forest. Whatever remained unanswered today will happily wait until tomorrow.
+goodnight_3#:#Even udon senseis need sleep. Sleep well – the forum keeps the broth warm.
+goodnight_4#:#The Tanuki has turned into a pillow. Time to close the screen.
+goodnight_close#:#Hide for tonight

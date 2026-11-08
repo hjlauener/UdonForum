@@ -123,6 +123,13 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   *Rollen zuteilen* oder mischen sie neu. Die Dozierenden (Administratoren des
   Kurses/der Gruppe) haben die Rolle *Chef* (大将) mit Krone – bei mehreren
   *Chef 1*, *Chef 2* usw. (Reihenfolge nach Benutzerkonto).
+- **Udon-Schüssel** statt Karma: Jedes ▲ auf einen eigenen Beitrag ist eine
+  Nudel; die Schüssel neben dem Namen füllt sich in vier Rängen (Nudel-Lehrling,
+  Brühe-Kenner ab 5, Tempura-Meister ab 15, Udon-Sensei ab 40); Spalte und
+  Erklärung im Reiter *Mitglieder*
+- **Gute-Nacht-Gruss**: von 20 bis 5 Uhr (Uhrzeit des eigenen Geräts) ein
+  Nacht-Banner über dem Feed („おやすみなさい“, wechselnde Grüsse), für die
+  Nacht ausblendbar
 - Etikett **„Dozierende“** für Personen mit Schreibrecht, Hinweis „bearbeitet“
 
 Rechte: *Lesen* = lesen, Beiträge und Antworten schreiben, bewerten;
@@ -149,6 +156,7 @@ classes/
   class.ilUdfBubbleChart.php       Bubble-Charts (Layout und SVG)
   class.ilUdfPearlChart.php        Perlenkette (Zeitachse und SVG)
   class.ilUdfCreatures.php         1000 ways Forum: die vier Figuren, Icons, Verteilung
+  class.ilUdfUdonBowl.php          Udon-Schüssel: Ränge und Icon
   class.ilUdfMembersTable.php      Daten und Sortierung der Mitglieder-Tabelle
 lang/ilias_de.lang, ilias_en.lang  Sprachvariablen
 sql/dbupdate.php                   Datenbank-Updateschritte

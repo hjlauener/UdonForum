@@ -647,6 +647,55 @@ class ilUdfRepository
     }
 
     /**
+     * Makes the categories of a forum match the given titles (in this order):
+     * categories with the same name (case is ignored) are kept with their
+     * posts, new names are added, missing categories are deleted (their posts
+     * are kept without category).
+     *
+     * @param string[] $titles
+     * @return array{created: int, removed: int, unassigned: int}
+     */
+    public function syncCategories(int $obj_id, array $titles): array
+    {
+        $existing = [];
+        foreach ($this->getCategories($obj_id) as $cat) {
+            $existing[mb_strtolower($cat->getTitle())] ??= $cat;
+        }
+
+        $kept = [];
+        $created = 0;
+        $sort = 0;
+        foreach ($titles as $title) {
+            $key = mb_strtolower($title);
+            if (isset($existing[$key]) && !isset($kept[$existing[$key]->getId()])) {
+                $cat = $existing[$key];
+                $kept[$cat->getId()] = true;
+            } else {
+                $cat = new ilUdfCategory();
+                $cat->setObjId($obj_id);
+                $created++;
+            }
+            $cat->setTitle($title);
+            $cat->setSortOrder($sort += 10);
+            $this->saveCategory($cat);
+            $kept[$cat->getId()] = true;
+        }
+
+        $counts = $this->countPostsPerCategory($obj_id);
+        $removed = 0;
+        $unassigned = 0;
+        foreach ($this->getCategories($obj_id) as $cat) {
+            if (!isset($kept[$cat->getId()])) {
+                $unassigned += $counts[$cat->getId()] ?? 0;
+                $this->deleteCategory($cat);
+                $removed++;
+            }
+        }
+
+        return ['created' => $created, 'removed' => $removed, 'unassigned' => $unassigned];
+    }
+
+    /**
      * Deletes a category. Its posts are kept, but no longer have a category.
      */
     public function deleteCategory(ilUdfCategory $cat): void

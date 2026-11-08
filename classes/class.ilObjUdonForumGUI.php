@@ -89,6 +89,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'deleteCategory',
         'moveCategoryUp',
         'moveCategoryDown',
+        'saveCategoryList',
         'editCreatures',
         'saveCreatures',
         'reshuffleCreatures',
@@ -2136,8 +2137,10 @@ JS);
         ));
 
         $categories = $this->getCategories();
+        $list_form = $this->initCategoryListForm()->getHTML();
         if ($categories === []) {
             $this->tpl->setOnScreenMessage('info', $this->txt('no_categories'));
+            $this->tpl->setContent($list_form);
             return;
         }
 
@@ -2176,7 +2179,47 @@ JS);
             [$this->ui_factory->item()->group('', $items)]
         );
 
-        $this->tpl->setContent($this->ui_renderer->render(array_merge([$panel], $modals)));
+        $this->tpl->setContent($list_form . $this->ui_renderer->render(array_merge([$panel], $modals)));
+    }
+
+    /**
+     * All categories as one semicolon separated list (like in the creation
+     * form). Spaces after a semicolon are allowed; they are not part of the name.
+     */
+    private function initCategoryListForm(): ilPropertyFormGUI
+    {
+        $form = new ilPropertyFormGUI();
+        $form->setTitle($this->txt('cat_list_title'));
+        $form->setFormAction($this->ctrl->getFormAction($this, 'saveCategoryList'));
+
+        $list = new ilTextInputGUI($this->txt('cat_custom_list'), 'cat_list');
+        $list->setInfo($this->txt('cat_list_info'));
+        $list->setMaxLength(4000);
+        $list->setValue(implode('; ', array_map(static fn(ilUdfCategory $c): string => $c->getTitle(), $this->getCategories())));
+        $form->addItem($list);
+
+        $form->addCommandButton('saveCategoryList', $this->lng->txt('save'));
+        return $form;
+    }
+
+    /**
+     * Saves the semicolon list: existing categories (same name, case is
+     * ignored) keep their posts and get the new order, new names are added,
+     * missing ones are deleted (their posts are then without category).
+     */
+    protected function saveCategoryList(): void
+    {
+        $form = $this->initCategoryListForm();
+        $form->checkInput();
+        $titles = ilUdfCategoryPresets::parseList((string) $form->getInput('cat_list'));
+
+        $result = $this->udf_repo->syncCategories($this->object->getId(), $titles);
+        $message = $this->txt('cat_list_saved');
+        if ($result['created'] > 0 || $result['removed'] > 0) {
+            $message .= ' ' . sprintf($this->txt('cat_list_saved_details'), $result['created'], $result['removed'], $result['unassigned']);
+        }
+        $this->tpl->setOnScreenMessage('success', $message, true);
+        $this->ctrl->redirect($this, 'showCategories');
     }
 
     protected function createCategory(?ilPropertyFormGUI $form = null): void

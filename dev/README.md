@@ -1,5 +1,11 @@
 # Lokal entwickeln mit ILIAS in Docker (Mac)
 
+Noch kein ILIAS in Docker? Mit `dev/ilias-slim/` richtet ein einziger Befehl
+**ILIAS Slim** (verschlanktes ILIAS 11) ein – siehe
+[dev/ilias-slim/README.md](ilias-slim/README.md). Reihenfolge: unten Schritt 1
+(Repository holen), dann ILIAS Slim starten, dann hier weiter ab Schritt 3
+(Schritt 2 entfällt: `udf` kopiert das Plugin selbst in den Container).
+
 ## Einmalig einrichten
 
 ### 1. Repository auf den Mac holen

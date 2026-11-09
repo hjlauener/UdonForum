@@ -202,6 +202,7 @@ funnel_drop#:#%s de moins qu’à l’étape précédente
 funnel_stopped#:#Arrêtés ici (%s) :
 funnel_final#:#À l’étape la plus haute (%s) :
 funnel_nobody#:#personne
+funnel_no_members#:#À part les enseignant·e·s, le cours ou le groupe n’a pas encore de membres.
 
 # --- Membres ---
 members_view#:#Vue

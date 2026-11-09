@@ -202,6 +202,7 @@ funnel_drop#:#%s fewer than on the stage before
 funnel_stopped#:#Stopped here (%s):
 funnel_final#:#On the highest stage (%s):
 funnel_nobody#:#nobody
+funnel_no_members#:#Apart from the lecturers, the course or group has no members yet.
 
 # --- Members ---
 members_view#:#View

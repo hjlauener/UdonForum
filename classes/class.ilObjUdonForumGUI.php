@@ -2186,7 +2186,8 @@ JS);
 
         $members = array_keys(array_filter($this->getMembers(), static fn(string $role): bool => $role !== self::ROLE_ADMIN));
         if ($members === []) {
-            $this->tpl->setOnScreenMessage('info', $this->txt('no_members'));
+            // not in a course/group at all, or only lecturers so far
+            $this->tpl->setOnScreenMessage('info', $this->txt($this->getMembers() === [] ? 'no_members' : 'funnel_no_members'));
             return;
         }
 

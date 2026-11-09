@@ -202,6 +202,7 @@ funnel_drop#:#%s weniger als auf der Stufe davor
 funnel_stopped#:#Hier stehen geblieben (%s):
 funnel_final#:#Auf der höchsten Stufe (%s):
 funnel_nobody#:#niemand
+funnel_no_members#:#Im Kurs bzw. in der Gruppe gibt es ausser den Dozierenden noch keine Mitglieder.
 
 # --- Mitglieder ---
 members_view#:#Ansicht

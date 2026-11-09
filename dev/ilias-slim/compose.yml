@@ -1,0 +1,58 @@
+# ILIAS Slim lokal in Docker – starten mit ./ilias-slim.sh (siehe README.md)
+#
+# Sicherheit: Der Webserver ist nur auf diesem Rechner erreichbar (127.0.0.1),
+# die Datenbank gar nicht von aussen (kein ports-Eintrag).
+# Passwörter stehen in .env (wird von ilias-slim.sh beim ersten Start erzeugt).
+
+name: ilias-slim
+
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ilias
+      MARIADB_USER: ilias
+      MARIADB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD fehlt – bitte ./ilias-slim.sh verwenden}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD fehlt – bitte ./ilias-slim.sh verwenden}
+    # Einstellungen laut install.md von ILIAS 11
+    command:
+      - --character-set-server=utf8mb3
+      - --collation-server=utf8mb3_general_ci
+      - --join-buffer-size=256K
+      - --table-open-cache=1024
+      - --innodb-buffer-pool-size=512M
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  ilias:
+    build: .
+    image: ilias-slim-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${ILIAS_PORT:-8080}:80"
+    environment:
+      ILIAS_URL: http://localhost:${ILIAS_PORT:-8080}
+      ILIAS_MASTER_PASSWORD: ${ILIAS_MASTER_PASSWORD:?ILIAS_MASTER_PASSWORD fehlt – bitte ./ilias-slim.sh verwenden}
+      DB_HOST: db
+      DB_NAME: ilias
+      DB_USER: ilias
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - code:/var/www/html
+      - files:/var/www/files
+      - logs:/var/www/logs
+
+volumes:
+  db:
+  code:
+  files:
+  logs:

@@ -231,7 +231,7 @@ sync_code() {
     in_root find "$target" -mindepth 1 -delete
     # COPYFILE_DISABLE verhindert macOS-Metadaten (._*-Dateien)
     COPYFILE_DISABLE=1 tar -C "$PLUGIN_DIR" \
-        --exclude=.git --exclude='./dev/config.env' --exclude='.DS_Store' --exclude='.mount-check-*' \
+        --exclude=.git --exclude='./dev/config.env' --exclude='./dev/ilias-slim' --exclude='./dev/logs' --exclude='.DS_Store' --exclude='.mount-check-*' \
         -cf - . | docker exec -i -u 0 "$CONTAINER" tar -xf - -C "$target" 2>/dev/null \
         || die "Kopieren fehlgeschlagen."
     in_root chown -R "$CODE_USER" "$target"

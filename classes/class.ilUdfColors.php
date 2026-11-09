@@ -98,6 +98,21 @@ class ilUdfColors
     }
 
     /**
+     * The colour, darkened just enough that white text on it has a contrast
+     * of at least 4.5:1 (e.g. for a pressed button).
+     */
+    public static function darkEnoughForWhite(string $color): string
+    {
+        for ($share = 0.0; $share < 0.6; $share += 0.04) {
+            $candidate = self::mix($color, '#000000', $share);
+            if (self::textOn($candidate) === '#ffffff') {
+                return $candidate;
+            }
+        }
+        return self::mix($color, '#000000', 0.6);
+    }
+
+    /**
      * @return int[] [r, g, b]
      */
     private static function rgb(string $hex): array

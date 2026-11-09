@@ -234,7 +234,9 @@ creature_chef_hint#:#As chef you lead the discussion: give prompts and questions
 chef_info#:#The lecturers (administrators of the course or group) automatically have the role “Chef”, with several “Chef 1”, “Chef 2” and so on.
 reshuffle#:#Reshuffle
 confirm_reshuffle#:#Do you want to distribute the roles of all members anew at random? The current assignment will be lost.
-roles_saved#:#The roles have been saved.
+roles_intro#:#Click on a creature to change the role immediately – no need to save.
+role_switch_label#:#Role of %s
+role_saved#:#%s is now %s.
 roles_reshuffled#:#The roles have been reshuffled.
 
 # --- Udon bowl ---

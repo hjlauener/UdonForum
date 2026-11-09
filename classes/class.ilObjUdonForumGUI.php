@@ -63,6 +63,8 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
     private const PARAM_RETURN = 'ret';
     private const POST_FIELD_DIRECTION = 'udf_dir';
     private const POST_FIELD_ASYNC = 'udf_async';
+    /** role buttons: value "<user id>:<creature>" */
+    private const POST_FIELD_CREATURE = 'udf_creature';
     private const CREATE_FIELD_ONLINE = 'udf_online';
     private const CREATE_FIELD_MARKDOWN = 'udf_markdown';
     private const CREATE_FIELD_CATEGORIES = 'udf_categories';
@@ -85,7 +87,7 @@ class ilObjUdonForumGUI extends ilObjectPluginGUI
         'showCategories',
         'saveCategoryList',
         'editCreatures',
-        'saveCreatures',
+        'setCreature',
         'reshuffleCreatures',
     ];
 
@@ -579,7 +581,8 @@ JS);
             $preview = rtrim(mb_substr($preview, 0, self::PREVIEW_LENGTH)) . ' …';
         }
 
-        return '<article class="udf-card udf-card-voted' . ($is_new ? ' udf-unread' : '') . '" id="udf-p' . $post->getId() . '">'
+        return '<article class="udf-card udf-card-voted' . ($is_new ? ' udf-unread' : '') . '" id="udf-p' . $post->getId() . '"'
+            . $this->creatureTint($post->getUserId()) . '>'
             . $this->renderVote(
                 $post->getId(),
                 $post->getScore(),
@@ -1075,7 +1078,8 @@ JS);
 
         $user_id = $this->udf_user->getId();
         $post_vote = $this->udf_repo->getUserVotes(ilUdfRepository::ITEM_POST, [$post->getId()], $user_id)[$post->getId()] ?? 0;
-        $html .= '<article class="udf-card udf-card-full udf-card-voted" id="udf-p' . $post->getId() . '">'
+        $html .= '<article class="udf-card udf-card-full udf-card-voted" id="udf-p' . $post->getId() . '"'
+            . $this->creatureTint($post->getUserId()) . '>'
             . $this->renderVote(
                 $post->getId(),
                 $post->getScore(),
@@ -1390,7 +1394,8 @@ JS);
                 );
             }
 
-            $html .= '<article class="udf-reply" id="udf-r' . $reply->getId() . '">'
+            $html .= '<article class="udf-reply" id="udf-r' . $reply->getId() . '"'
+                . $this->creatureTint($reply->getUserId()) . '>'
                 . '<div class="udf-meta">' . $this->renderMeta($reply->getUserId(), $reply->getCreated(), $reply->isEdited()) . '</div>'
                 . '<div class="udf-body udf-md">' . $this->renderBody($reply->getBody(), $reply->isMarkdown()) . '</div>'
                 . ($actions !== [] ? '<div class="udf-reply-actions">' . implode(' · ', $actions) . '</div>' : '')
@@ -1638,6 +1643,21 @@ JS);
         return $number > 0 ? sprintf($this->txt('creature_chef_numbered'), $number) : $this->txt('creature_chef');
     }
 
+    /**
+     * With "1000 ways Forum": very light background in the colour of the
+     * author's role (data attribute + CSS variables, see .udf-tinted).
+     */
+    private function creatureTint(int $user_id): string
+    {
+        $creature = $this->getCreatureOf($user_id);
+        if ($creature === null) {
+            return '';
+        }
+        $color = ilUdfCreatures::color($creature);
+        return ' data-udf-creature="' . $creature . '" style="--udf-tint:' . ilUdfColors::mix($color, '#ffffff', 0.94)
+            . ';--udf-tint-border:' . ilUdfColors::mix($color, '#ffffff', 0.7) . '"';
+    }
+
     private function renderCreatureLabel(string $creature, int $user_id): string
     {
         return '<span class="udf-creature" style="--udf-creature:' . ilUdfCreatures::color($creature) . '"'
@@ -1751,7 +1771,12 @@ JS);
      * Sub tab "Rollen zuteilen" (lecturers): change the role of every member,
      * or distribute all roles anew.
      */
-    protected function editCreatures(?ilPropertyFormGUI $form = null): void
+    /**
+     * Sub tab "Rollen zuteilen": one row per member with four buttons, one per
+     * creature; a click changes the role at once (in the background, without
+     * reloading). The lecturers are shown as "Chef" without buttons.
+     */
+    protected function editCreatures(): void
     {
         if (!$this->getForum()->isThousandWays()) {
             $this->ctrl->redirect($this, 'showMembers');
@@ -1768,60 +1793,163 @@ JS);
             $this->ui_factory->button()->standard($this->txt('reshuffle'), '')->withOnClick($modal->getShowSignal())
         );
 
-        $form ??= $this->initCreaturesForm();
-        $this->tpl->setContent($form->getHTML() . $this->ui_renderer->render($modal));
-    }
-
-    private function initCreaturesForm(): ilPropertyFormGUI
-    {
-        $form = new ilPropertyFormGUI();
-        $form->setTitle($this->txt('members_roles'));
-        $form->setDescription($this->txt('chef_info'));
-        $form->setFormAction($this->ctrl->getFormAction($this, 'saveCreatures'));
-
-        $options = [];
-        foreach (ilUdfCreatures::ALL as $creature) {
-            $options[$creature] = $this->txt('creature_' . $creature) . ' – ' . $this->txt('creature_' . $creature . '_role');
-        }
-
-        $this->udf_creatures ??= $this->udf_repo->getCreatures($this->object->getId());
-        $names = [];
-        foreach ($this->getCreatureMembers() as $user_id) {
-            $name = ilObjUser::_lookupName($user_id);
-            $names[$user_id] = trim($name['lastname'] . ', ' . $name['firstname'], ', ');
-        }
-        asort($names, SORT_NATURAL | SORT_FLAG_CASE);
-
-        foreach ($names as $user_id => $name) {
-            $select = new ilSelectInputGUI($name, 'creature_' . $user_id);
-            $select->setOptions($options);
-            $select->setValue($this->udf_creatures[$user_id] ?? ilUdfCreatures::KITSUNE);
-            $form->addItem($select);
-        }
-
-        $form->addCommandButton('saveCreatures', $this->lng->txt('save'));
-        return $form;
-    }
-
-    protected function saveCreatures(): void
-    {
-        if (!$this->getForum()->isThousandWays()) {
-            $this->ctrl->redirect($this, 'showMembers');
-        }
-        $form = $this->initCreaturesForm();
-        if (!$form->checkInput()) {
-            $form->setValuesByPost();
-            $this->editCreatures($form);
+        $members = $this->getCreatureMembers();
+        $admins = array_keys(array_filter($this->getMembers(), static fn(string $role): bool => $role === self::ROLE_ADMIN));
+        if ($members === [] && $admins === []) {
+            $this->tpl->setOnScreenMessage('info', $this->txt('no_members'));
             return;
         }
+
+        $this->udf_creatures = $this->udf_repo->getCreatures($this->object->getId());
+        $sorted_names = function (array $ids): array {
+            $names = [];
+            foreach ($ids as $user_id) {
+                $name = ilObjUser::_lookupName($user_id);
+                $names[$user_id] = trim(($name['lastname'] ?? '') . ', ' . ($name['firstname'] ?? ''), ', ');
+            }
+            asort($names, SORT_NATURAL | SORT_FLAG_CASE);
+            return $names;
+        };
+
+        $html = '<form class="udf-roles" method="post" action="' . $this->esc($this->ctrl->getFormAction($this, 'setCreature')) . '">'
+            . '<p class="udf-roles-intro">' . $this->esc($this->txt('roles_intro')) . ' ' . $this->esc($this->txt('chef_info')) . '</p>'
+            . $this->renderCreatureCounts()
+            . '<p class="udf-roles-status udf-meta" role="status" aria-live="polite"></p>';
+
+        foreach ($sorted_names($admins) as $user_id => $name) {
+            $html .= '<div class="udf-role-row"><span class="udf-role-name">' . $this->esc($name) . '</span>'
+                . '<span class="udf-role-chef">' . $this->renderCreatureLabel(ilUdfCreatures::CHEF, $user_id) . '</span></div>';
+        }
+        foreach ($sorted_names($members) as $user_id => $name) {
+            $html .= '<div class="udf-role-row"><span class="udf-role-name">' . $this->esc($name) . '</span>'
+                . $this->renderCreatureSwitch($user_id, $name, $this->udf_creatures[$user_id] ?? '') . '</div>';
+        }
+        $html .= '</form>';
+
+        $this->addCreatureSwitchScript();
+        $this->tpl->setContent($this->getStyles() . $html . $this->ui_renderer->render($modal));
+    }
+
+    /**
+     * Four buttons in a row, the current creature is pressed.
+     */
+    private function renderCreatureSwitch(int $user_id, string $name, string $current): string
+    {
+        $html = '<div class="udf-role-switch" role="group" aria-label="' . $this->esc(sprintf($this->txt('role_switch_label'), $name)) . '">';
+        foreach (ilUdfCreatures::ALL as $creature) {
+            $active = $creature === $current;
+            $html .= '<button type="submit" name="' . self::POST_FIELD_CREATURE . '" value="' . $user_id . ':' . $creature . '"'
+                . ' class="udf-role-btn' . ($active ? ' udf-role-active' : '') . '" data-udf-creature="' . $creature . '"'
+                . ' aria-pressed="' . ($active ? 'true' : 'false') . '"'
+                . ' style="--udf-creature:' . ilUdfColors::darkEnoughForWhite(ilUdfCreatures::color($creature))
+                . ';--udf-creature-tint:' . ilUdfColors::mix(ilUdfCreatures::color($creature), '#ffffff', 0.88) . '"'
+                . ' title="' . $this->esc($this->txt('creature_' . $creature . '_role')) . '"'
+                . ' aria-label="' . $this->esc($this->txt('creature_' . $creature) . ' – ' . $this->txt('creature_' . $creature . '_role')) . '">'
+                . ilUdfCreatures::icon($creature, 18) . '<span>' . $this->esc($this->txt('creature_' . $creature)) . '</span></button>';
+        }
+        return $html . '</div>';
+    }
+
+    /**
+     * How many members have which creature (updated by the script after a change).
+     */
+    private function renderCreatureCounts(): string
+    {
+        $counts = array_fill_keys(ilUdfCreatures::ALL, 0);
         foreach ($this->getCreatureMembers() as $user_id) {
-            $creature = (string) $form->getInput('creature_' . $user_id);
-            if (ilUdfCreatures::isValid($creature)) {
-                $this->udf_repo->setCreature($this->object->getId(), $user_id, $creature);
+            $creature = $this->udf_creatures[$user_id] ?? '';
+            if (isset($counts[$creature])) {
+                $counts[$creature]++;
             }
         }
-        $this->tpl->setOnScreenMessage('success', $this->txt('roles_saved'), true);
+        $html = '<div class="udf-role-counts">';
+        foreach ($counts as $creature => $count) {
+            $html .= '<span class="udf-creature" style="--udf-creature:' . ilUdfCreatures::color($creature) . '">'
+                . ilUdfCreatures::icon($creature, 16) . $this->esc($this->txt('creature_' . $creature))
+                . ' <strong data-udf-count="' . $creature . '">' . $count . '</strong></span>';
+        }
+        return $html . '</div>';
+    }
+
+    /**
+     * One click on a role button: saves the creature of one member.
+     * In the background (udf_async) the answer is JSON, otherwise a redirect.
+     */
+    protected function setCreature(): void
+    {
+        $async = $this->udf_post->has(self::POST_FIELD_ASYNC);
+        [$user_id, $creature] = array_pad(explode(':', $this->getRequestedString($this->udf_post, self::POST_FIELD_CREATURE), 2), 2, '');
+        $user_id = (int) $user_id;
+
+        $valid = $this->getForum()->isThousandWays()
+            && ilUdfCreatures::isValid($creature)
+            && in_array($user_id, $this->getCreatureMembers(), true);
+        if (!$valid) {
+            if ($async) {
+                $this->sendJson(['error' => $this->txt('no_permission')]);
+            }
+            $this->tpl->setOnScreenMessage('failure', $this->txt('no_permission'), true);
+            $this->ctrl->redirect($this, 'editCreatures');
+        }
+
+        $this->udf_repo->setCreature($this->object->getId(), $user_id, $creature);
+        $name = ilObjUser::_lookupName($user_id);
+        $message = sprintf(
+            $this->txt('role_saved'),
+            trim(($name['firstname'] ?? '') . ' ' . ($name['lastname'] ?? '')),
+            $this->txt('creature_' . $creature)
+        );
+
+        if ($async) {
+            $this->sendJson(['creature' => $creature, 'message' => $message]);
+        }
+        $this->tpl->setOnScreenMessage('success', $message, true);
         $this->ctrl->redirect($this, 'editCreatures');
+    }
+
+    /**
+     * Role buttons: save in the background, mark the new role, update the counts.
+     */
+    private function addCreatureSwitchScript(): void
+    {
+        $this->tpl->addOnLoadCode(<<<'JS'
+(function () {
+    var form = document.querySelector('form.udf-roles');
+    if (!form || !window.fetch || !window.FormData) { return; }
+    var status = form.querySelector('.udf-roles-status');
+    form.addEventListener('submit', function (e) {
+        var button = e.submitter;
+        if (!button || !button.classList.contains('udf-role-btn')) { return; }
+        e.preventDefault();
+        if (button.classList.contains('udf-role-active')) { return; }
+        var group = button.closest('.udf-role-switch');
+        var previous = group.querySelector('.udf-role-active');
+        var data = new FormData(form);
+        data.append(button.name, button.value);
+        data.append('udf_async', '1');
+        group.classList.add('udf-role-busy');
+        fetch(form.action, {method: 'POST', body: data, credentials: 'same-origin'})
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                group.classList.remove('udf-role-busy');
+                if (j.creature !== button.getAttribute('data-udf-creature')) { window.location.reload(); return; }
+                group.querySelectorAll('.udf-role-btn').forEach(function (b) {
+                    var on = b === button;
+                    b.classList.toggle('udf-role-active', on);
+                    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+                function add(creature, n) {
+                    var c = form.querySelector('[data-udf-count="' + creature + '"]');
+                    if (c) { c.textContent = String(parseInt(c.textContent, 10) + n); }
+                }
+                if (previous) { add(previous.getAttribute('data-udf-creature'), -1); }
+                add(j.creature, 1);
+                if (status) { status.textContent = j.message || ''; }
+            })
+            .catch(function () { window.location.reload(); });
+    });
+})();
+JS);
     }
 
     protected function reshuffleCreatures(): void
@@ -2907,6 +3035,28 @@ button.udf-arrow:hover { background: #eef1f5; }
 .udf-score { font-weight: 700; font-size: 0.9rem; color: #333; min-width: 1.2rem; text-align: center; }
 .udf-new { display: inline-block; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; background: var(--udf-a-soft); color: var(--udf-a-dark); }
 .udf-card.udf-unread { border-left: 4px solid var(--udf-a-bright); }
+.udf-card[data-udf-creature] { background: var(--udf-tint); border-color: var(--udf-tint-border); }
+.udf-card-full[data-udf-creature]:hover { border-color: var(--udf-tint-border); }
+.udf-card.udf-unread[data-udf-creature] { border-left-color: var(--udf-a-bright); }
+.udf-reply[data-udf-creature] { background: var(--udf-tint); border-left-color: var(--udf-tint-border); border-radius: 0 8px 8px 0; padding-right: 0.9rem; }
+.udf-roles { max-width: 60rem; }
+.udf-roles-intro { color: #555; }
+.udf-role-counts { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: 0.4rem 0 0.2rem; }
+.udf-roles-status { min-height: 1.3em; margin: 0.2rem 0 0.4rem; }
+.udf-role-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1rem; padding: 0.45rem 0.3rem; border-bottom: 1px solid #eee; }
+.udf-role-row:hover { background: #fafafa; }
+.udf-role-name { flex: 1 1 12rem; font-weight: 600; }
+.udf-role-chef { flex: 0 0 auto; }
+.udf-role-switch { display: inline-flex; flex-wrap: wrap; border: 1px solid #d0d0d0; border-radius: 999px; overflow: hidden; background: #fff; }
+.udf-role-switch.udf-role-busy { opacity: 0.6; }
+.udf-role-btn { display: inline-flex; align-items: center; gap: 0.35rem; border: 0; border-right: 1px solid #e3e3e3; background: #fff; color: #333;
+  padding: 0.25rem 0.75rem 0.25rem 0.35rem; font: inherit; font-size: 0.9rem; cursor: pointer; line-height: 1.4; }
+.udf-role-btn:last-child { border-right: 0; }
+.udf-role-btn:hover { background: var(--udf-creature-tint); }
+.udf-role-btn:focus-visible { outline: 2px solid var(--udf-creature); outline-offset: -2px; }
+.udf-role-btn.udf-role-active { background: var(--udf-creature); color: #fff; font-weight: 700; }
+.udf-role-btn.udf-role-active .udf-creature-icon circle:first-child { stroke: #fff; stroke-width: 1.5; }
+@media (max-width: 600px) { .udf-role-btn span { display: none; } .udf-role-btn { padding: 0.3rem 0.45rem; } }
 .udf-chip-small { font-size: 0.8rem; padding: 0.1rem 0.6rem; }
 @media (max-width: 600px) { .udf-card { padding: 0.6rem 0.7rem; } .udf-card-voted { gap: 0.5rem; } }
 </style>

@@ -138,8 +138,11 @@ Kategorien gefiltert; auf jeden Beitrag kann man antworten (eine Ebene).
   japanischen Sagenwelt: *Hakutaku* (Fakten), *Kitsune* (Hinterfragen),
   *Tanuki* (Beispiele), *Kodama* (Verbinden und Schlichten). Zusätzliche Spalte
   in *Mitglieder*, Etikett mit Icon neben dem Namen in Beiträgen und Antworten,
-  Hinweis über dem Schreibfeld. Dozierende ändern die Rollen im Unterreiter
-  *Rollen zuteilen* oder mischen sie neu. Die Dozierenden (Administratoren des
+  Hinweis über dem Schreibfeld. Beiträge und Antworten sind ganz hell in der
+  Farbe der Rolle des Autors hinterlegt. Dozierende ändern die Rollen im
+  Unterreiter *Rollen zuteilen*: pro Person vier Knöpfe nebeneinander, ein
+  Klick speichert sofort (ohne Neuladen, Zähler pro Rolle oben); *Neu mischen*
+  in der Werkzeugleiste (mit Rückfrage). Die Dozierenden (Administratoren des
   Kurses/der Gruppe) haben die Rolle *Chef* (大将) mit Krone – bei mehreren
   *Chef 1*, *Chef 2* usw. (Reihenfolge nach Benutzerkonto).
 - **Udon-Schüssel** statt Karma: Jedes ▲ auf einen eigenen Beitrag ist eine

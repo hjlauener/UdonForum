@@ -234,7 +234,9 @@ creature_chef_hint#:#En tant que chef, vous dirigez la discussion : donnez des 
 chef_info#:#Les enseignant·e·s (administrateurs du cours ou du groupe) ont automatiquement le rôle « Chef » ; s’ils sont plusieurs : « Chef 1 », « Chef 2 », etc.
 reshuffle#:#Redistribuer
 confirm_reshuffle#:#Voulez-vous redistribuer au hasard les rôles de tous les membres ? La répartition actuelle sera perdue.
-roles_saved#:#Les rôles ont été enregistrés.
+roles_intro#:#Cliquez sur une créature pour changer immédiatement le rôle – inutile d’enregistrer.
+role_switch_label#:#Rôle de %s
+role_saved#:#%s est maintenant %s.
 roles_reshuffled#:#Les rôles ont été redistribués.
 
 # --- Bol d’udon ---

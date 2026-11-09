@@ -234,7 +234,9 @@ creature_chef_hint#:#Als Chef leiten Sie die Diskussion: Geben Sie Impulse und F
 chef_info#:#Die Dozierenden (Administratoren des Kurses bzw. der Gruppe) haben automatisch die Rolle „Chef“, bei mehreren „Chef 1“, „Chef 2“ usw.
 reshuffle#:#Neu mischen
 confirm_reshuffle#:#Sollen die Rollen aller Mitglieder neu und zufällig verteilt werden? Die bisherige Zuteilung geht verloren.
-roles_saved#:#Die Rollen wurden gespeichert.
+roles_intro#:#Klicken Sie auf eine Figur, um die Rolle sofort zu ändern – ein Speichern ist nicht nötig.
+role_switch_label#:#Rolle von %s
+role_saved#:#%s ist jetzt %s.
 roles_reshuffled#:#Die Rollen wurden neu gemischt.
 
 # --- Udon-Schüssel ---
